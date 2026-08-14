@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { searchSchema } from "@/lib/validation";
 import { priceLabel } from "@/lib/price";
@@ -32,6 +31,8 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const allOffers = (data ?? []) as SearchOffer[];
   const qatarDate = (date: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Qatar", year:"numeric", month:"2-digit", day:"2-digit" }).format(date);
   const todayKey = qatarDate(new Date());
+  // The page is dynamic; the current timestamp is intentionally evaluated per request.
+  // eslint-disable-next-line react-hooks/purity
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const tomorrowKey = qatarDate(tomorrow);
   const offers = allOffers.filter((offer) => {
