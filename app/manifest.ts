@@ -1,6 +1,21 @@
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
+  const icons: MetadataRoute.Manifest["icons"] = [192, 512].flatMap((size) => [
+    {
+      src: `/pwa/icon/${size}`,
+      sizes: `${size}x${size}`,
+      type: "image/png",
+      purpose: "any" as const,
+    },
+    {
+      src: `/pwa/icon/${size}`,
+      sizes: `${size}x${size}`,
+      type: "image/png",
+      purpose: "maskable" as const,
+    },
+  ]);
+
   return {
     id: "/",
     name: "أسناني قطر",
@@ -13,19 +28,6 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#0f766e",
     lang: "ar",
     dir: "rtl",
-    icons: [
-      {
-        src: "/pwa/icon/192",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "any maskable",
-      },
-      {
-        src: "/pwa/icon/512",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "any maskable",
-      },
-    ],
+    icons,
   };
 }
