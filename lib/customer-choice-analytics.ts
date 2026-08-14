@@ -9,21 +9,34 @@ export type CustomerChoiceAnalytics = {
     total_events: number;
     unique_sessions: number;
     searches: number;
+    search_sessions: number;
     booking_clicks: number;
+    booking_click_sessions: number;
     login_required: number;
+    login_required_sessions: number;
     booking_successes: number;
+    booking_success_sessions: number;
     booking_failures: number;
+    booking_failure_sessions: number;
     location_requested: number;
+    location_requested_sessions: number;
     location_acquired: number;
+    location_acquired_sessions: number;
     location_denied: number;
+    location_denied_sessions: number;
     searches_with_location: number;
+    searches_with_location_sessions: number;
+    search_to_click_sessions: number;
+    click_to_success_sessions: number;
+    search_to_success_sessions: number;
+    location_request_to_acquired_sessions: number;
     last_event_at: string | null;
   };
-  top_treatments: Array<{ id: string; name_ar: string; name_en: string; searches: number }>;
-  top_variants: Array<{ id: string; name_ar: string; name_en: string; treatment_name_ar: string; searches: number }>;
-  appointment_preferences: Array<{ preference: string; searches: number }>;
-  weekday_searches: Array<{ iso_day: number; searches: number }>;
-  hourly_searches: Array<{ hour: number; searches: number }>;
+  top_treatments: Array<{ id: string; name_ar: string; name_en: string; searches: number; search_sessions: number }>;
+  top_variants: Array<{ id: string; name_ar: string; name_en: string; treatment_name_ar: string; searches: number; search_sessions: number }>;
+  appointment_preferences: Array<{ preference: string; searches: number; search_sessions: number }>;
+  weekday_searches: Array<{ iso_day: number; searches: number; search_sessions: number }>;
+  hourly_searches: Array<{ hour: number; searches: number; search_sessions: number }>;
   recent_events: Array<{
     event_name: string;
     created_at: string;
@@ -55,7 +68,7 @@ function asCount(value: unknown): number {
 
 export function conversionRate(numerator: number, denominator: number): number {
   if (denominator <= 0 || numerator <= 0) return 0;
-  return Math.round((numerator / denominator) * 1000) / 10;
+  return Math.min(100, Math.round((numerator / denominator) * 1000) / 10);
 }
 
 export function parseCustomerChoiceAnalytics(value: Json | null): CustomerChoiceAnalytics {
@@ -71,19 +84,38 @@ export function parseCustomerChoiceAnalytics(value: Json | null): CustomerChoice
       total_events: asCount(metrics.total_events),
       unique_sessions: asCount(metrics.unique_sessions),
       searches: asCount(metrics.searches),
+      search_sessions: asCount(metrics.search_sessions),
       booking_clicks: asCount(metrics.booking_clicks),
+      booking_click_sessions: asCount(metrics.booking_click_sessions),
       login_required: asCount(metrics.login_required),
+      login_required_sessions: asCount(metrics.login_required_sessions),
       booking_successes: asCount(metrics.booking_successes),
+      booking_success_sessions: asCount(metrics.booking_success_sessions),
       booking_failures: asCount(metrics.booking_failures),
+      booking_failure_sessions: asCount(metrics.booking_failure_sessions),
       location_requested: asCount(metrics.location_requested),
+      location_requested_sessions: asCount(metrics.location_requested_sessions),
       location_acquired: asCount(metrics.location_acquired),
+      location_acquired_sessions: asCount(metrics.location_acquired_sessions),
       location_denied: asCount(metrics.location_denied),
+      location_denied_sessions: asCount(metrics.location_denied_sessions),
       searches_with_location: asCount(metrics.searches_with_location),
+      searches_with_location_sessions: asCount(metrics.searches_with_location_sessions),
+      search_to_click_sessions: asCount(metrics.search_to_click_sessions),
+      click_to_success_sessions: asCount(metrics.click_to_success_sessions),
+      search_to_success_sessions: asCount(metrics.search_to_success_sessions),
+      location_request_to_acquired_sessions: asCount(metrics.location_request_to_acquired_sessions),
       last_event_at: asNullableString(metrics.last_event_at),
     },
     top_treatments: asArray(root.top_treatments).map((item) => {
       const row = asRecord(item);
-      return { id: asString(row.id), name_ar: asString(row.name_ar), name_en: asString(row.name_en), searches: asCount(row.searches) };
+      return {
+        id: asString(row.id),
+        name_ar: asString(row.name_ar),
+        name_en: asString(row.name_en),
+        searches: asCount(row.searches),
+        search_sessions: asCount(row.search_sessions),
+      };
     }).filter((row) => row.id && row.name_ar),
     top_variants: asArray(root.top_variants).map((item) => {
       const row = asRecord(item);
@@ -93,19 +125,32 @@ export function parseCustomerChoiceAnalytics(value: Json | null): CustomerChoice
         name_en: asString(row.name_en),
         treatment_name_ar: asString(row.treatment_name_ar),
         searches: asCount(row.searches),
+        search_sessions: asCount(row.search_sessions),
       };
     }).filter((row) => row.id && row.name_ar),
     appointment_preferences: asArray(root.appointment_preferences).map((item) => {
       const row = asRecord(item);
-      return { preference: asString(row.preference, "unknown"), searches: asCount(row.searches) };
+      return {
+        preference: asString(row.preference, "unknown"),
+        searches: asCount(row.searches),
+        search_sessions: asCount(row.search_sessions),
+      };
     }),
     weekday_searches: asArray(root.weekday_searches).map((item) => {
       const row = asRecord(item);
-      return { iso_day: Math.min(Math.max(asCount(row.iso_day), 1), 7), searches: asCount(row.searches) };
+      return {
+        iso_day: Math.min(Math.max(asCount(row.iso_day), 1), 7),
+        searches: asCount(row.searches),
+        search_sessions: asCount(row.search_sessions),
+      };
     }),
     hourly_searches: asArray(root.hourly_searches).map((item) => {
       const row = asRecord(item);
-      return { hour: Math.min(Math.max(asCount(row.hour), 0), 23), searches: asCount(row.searches) };
+      return {
+        hour: Math.min(Math.max(asCount(row.hour), 0), 23),
+        searches: asCount(row.searches),
+        search_sessions: asCount(row.search_sessions),
+      };
     }),
     recent_events: asArray(root.recent_events).map((item) => {
       const row = asRecord(item);
