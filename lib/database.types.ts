@@ -17,6 +17,10 @@ export type Database = {
         { id:string; display_name:string|null; phone:string|null; locale:string; created_at:string; updated_at:string },
         { id:string; display_name?:string|null; phone?:string|null; locale?:string; created_at?:string; updated_at?:string }
       >;
+      customer_choice_events: Table<
+        { id:string; event_id:string; session_id:string; event_name:string; page_path:string; treatment_id:string|null; variant_id:string|null; offer_id:string|null; slot_id:string|null; choice_value:Json; created_at:string },
+        { id?:string; event_id:string; session_id:string; event_name:string; page_path?:string; treatment_id?:string|null; variant_id?:string|null; offer_id?:string|null; slot_id?:string|null; choice_value?:Json; created_at?:string }
+      >;
       clinics: Table<
         { id:string; legal_name:string; display_name:string; status:string } & Timestamped,
         { id?:string; legal_name:string; display_name:string; status?:string; created_at?:string; updated_at?:string }
@@ -76,6 +80,10 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      admin_customer_choice_analytics: {
+        Args: { p_days?: number };
+        Returns: Json;
+      };
       book_slot: {
         Args: { p_idempotency_key:string; p_offer_id:string; p_slot_id:string };
         Returns: { booking_code:string; booking_id:string; booking_status:string }[];
