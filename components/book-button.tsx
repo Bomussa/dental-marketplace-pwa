@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui";
+import { CalendarIcon, CheckIcon } from "@/components/icons";
 
 export function BookButton({ offerId, slotId }: { offerId: string; slotId: string }) {
   const [state, setState] = useState<"idle" | "loading" | "error" | "done">("idle");
@@ -10,31 +11,19 @@ export function BookButton({ offerId, slotId }: { offerId: string; slotId: strin
   async function book() {
     setState("loading");
     setMessage("");
-    const response = await fetch("/api/book", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ offer_id: offerId, slot_id: slotId, idempotency_key: crypto.randomUUID() }),
-    });
-    if (response.status === 401) {
-      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
-      return;
-    }
+    const response = await fetch("/api/book", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ offer_id: offerId, slot_id: slotId, idempotency_key: crypto.randomUUID() }) });
+    if (response.status === 401) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`; return; }
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setState("error");
-      setMessage(body.error ?? "تعذر تأكيد الموعد. حدّث النتائج وحاول مرة أخرى.");
-      return;
-    }
-    setState("done");
-    setMessage(`تم إنشاء الحجز: ${body.booking_code}`);
+    if (!response.ok) { setState("error"); setMessage(body.error ?? "تعذر تأكيد الموعد. حدّث النتائج وحاول مرة أخرى."); return; }
+    setState("done"); setMessage(`تم إنشاء الحجز: ${body.booking_code}`);
   }
 
   return (
     <div className="grid gap-2">
-      <Button onClick={book} disabled={state === "loading" || state === "done"} className="w-full bg-teal-600 hover:bg-teal-700">
-        {state === "loading" ? "جاري قفل الموعد…" : state === "done" ? "تم الحجز" : "احجز هذا الموعد"}
+      <Button onClick={book} disabled={state === "loading" || state === "done"} className={`w-full gap-2 ${state === "done" ? "bg-[#34C759] hover:bg-[#34C759]" : ""}`}>
+        {state === "done" ? <CheckIcon size={18}/> : <CalendarIcon size={18}/>} {state === "loading" ? "جاري تأمين الموعد…" : state === "done" ? "تم الحجز" : "احجز هذا الموعد"}
       </Button>
-      {message && <p className={`text-xs font-bold ${state === "error" ? "text-red-700" : "text-emerald-700"}`}>{message}</p>}
+      {message && <p className={`text-xs font-extrabold ${state === "error" ? "text-red-700" : "text-emerald-700"}`}>{message}</p>}
     </div>
   );
 }
