@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  async rewrites() {
+    return [
+      { source: "/favicon.ico", destination: "/pwa/icon/192" },
+      { source: "/favicon.png", destination: "/pwa/icon/192" },
+    ];
+  },
 };
 
 export default nextConfig;
