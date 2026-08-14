@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
 import { CalendarIcon, CheckIcon } from "@/components/icons";
+import { trackChoice } from "@/lib/choice-events.client";
 
 export function BookButton({ offerId, slotId }: { offerId: string; slotId: string }) {
   const [state, setState] = useState<"idle" | "loading" | "error" | "done">("idle");
@@ -11,11 +12,31 @@ export function BookButton({ offerId, slotId }: { offerId: string; slotId: strin
   async function book() {
     setState("loading");
     setMessage("");
-    const response = await fetch("/api/book", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ offer_id: offerId, slot_id: slotId, idempotency_key: crypto.randomUUID() }) });
-    if (response.status === 401) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`; return; }
+    trackChoice({ event_name: "offer_booking_clicked", offer_id: offerId, slot_id: slotId });
+
+    const response = await fetch("/api/book", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ offer_id: offerId, slot_id: slotId, idempotency_key: crypto.randomUUID() }),
+    });
+
+    if (response.status === 401) {
+      trackChoice({ event_name: "booking_login_required", offer_id: offerId, slot_id: slotId, choice_value: { response_status: 401 } });
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      return;
+    }
+
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) { setState("error"); setMessage(body.error ?? "تعذر تأكيد الموعد. حدّث النتائج وحاول مرة أخرى."); return; }
-    setState("done"); setMessage(`تم إنشاء الحجز: ${body.booking_code}`);
+    if (!response.ok) {
+      trackChoice({ event_name: "booking_failed", offer_id: offerId, slot_id: slotId, choice_value: { response_status: response.status } });
+      setState("error");
+      setMessage(body.error ?? "تعذر تأكيد الموعد. حدّث النتائج وحاول مرة أخرى.");
+      return;
+    }
+
+    trackChoice({ event_name: "booking_succeeded", offer_id: offerId, slot_id: slotId, choice_value: { response_status: response.status } });
+    setState("done");
+    setMessage(`تم إنشاء الحجز: ${body.booking_code}`);
   }
 
   return (
