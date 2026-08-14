@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge, Button, Card, Select } from "@/components/ui";
-import { CalendarIcon, CheckIcon, ClockIcon, StarIcon, UserIcon } from "@/components/icons";
+import { CalendarIcon, ClockIcon, StarIcon, UserIcon } from "@/components/icons";
 import { cancelBooking, submitReview } from "./actions";
 
 export const dynamic = "force-dynamic";

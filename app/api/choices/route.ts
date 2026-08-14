@@ -1,33 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { z } from "zod";
-
-const eventName = z.enum([
-  "treatment_selected",
-  "variant_selected",
-  "appointment_preference_selected",
-  "location_requested",
-  "location_acquired",
-  "location_denied",
-  "search_submitted",
-  "offer_booking_clicked",
-  "booking_login_required",
-  "booking_succeeded",
-  "booking_failed",
-]);
-
-const scalar = z.union([z.string().max(220), z.number().finite(), z.boolean(), z.null()]);
-const choiceEventSchema = z.object({
-  event_id: z.string().uuid(),
-  session_id: z.string().uuid(),
-  event_name: eventName,
-  page_path: z.string().startsWith("/").max(300),
-  treatment_id: z.string().uuid().optional(),
-  variant_id: z.string().uuid().optional(),
-  offer_id: z.string().uuid().optional(),
-  slot_id: z.string().uuid().optional(),
-  choice_value: z.record(z.string().max(80), scalar).default({}),
-});
+import { choiceEventSchema } from "@/lib/validation";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
