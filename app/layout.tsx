@@ -8,8 +8,7 @@ export const metadata: Metadata = {
   description: "مقارنة أسعار خدمات الأسنان والتوفر والحجز لدى العيادات المشاركة في قطر.",
   applicationName: "أسناني قطر",
 };
-
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0f766e" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#007AFF" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -18,8 +17,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <PwaRegister />
         <SiteHeader />
         {children}
-        <footer className="mx-auto max-w-7xl px-4 py-10 text-center text-xs leading-6 text-slate-500">
-          المنصة أداة بحث وحجز وليست جهة تشخيص أو علاج. الأسعار والتوفر تخص العيادات المشاركة وتخضع لوقت آخر تحقق.
+        <footer className="mx-auto max-w-7xl px-4 py-10 text-center text-[11px] font-medium leading-6 text-slate-500 sm:px-6">
+          <div className="mx-auto mb-5 h-px max-w-3xl bg-slate-200/70" />
+          أسناني قطر أداة مقارنة وحجز وليست جهة تشخيص أو علاج. الأسعار والتوفر تخص العيادات المشاركة وتخضع لوقت آخر تحقق.
         </footer>
       </body>
     </html>
