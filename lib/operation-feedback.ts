@@ -4,7 +4,7 @@ export type OperationFailureCode = "invalid" | "forbidden" | "conflict" | "unava
 export function operationFailureCode(error: unknown): OperationFailureCode {
   const code = error instanceof Error ? error.message : "";
   if (code === "42501" || code === "FORBIDDEN" || code === "AUTHORIZATION_FAILED") return "forbidden";
-  if (code === "23505" || code === "P0001" || code === "CONFLICT") return "conflict";
+  if (["23505", "23P01", "55000", "P0001", "CONFLICT"].includes(code)) return "conflict";
   return "unavailable";
 }
 
