@@ -1,6 +1,6 @@
 # Applied Supabase migrations — qatar-dental-dev
 
-Canonical DEV project ref: `bqvcukxfsnchvkgejolz`
+Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`
 
 The following migration ledger was retrieved from the connected Supabase management API on 2026-08-15:
 
@@ -42,6 +42,19 @@ The following migration ledger was retrieved from the connected Supabase managem
 36. `20260815080906_new_account_self_patient_profile_v1`
 37. `20260815081009_patient_booking_server_only_hardening_v1`
 38. `20260815081707_rate_limit_buckets_server_only_v1`
-39. `20260815082137_bookings_patient_profile_index_v1`
+39. `20260815082138_bookings_patient_profile_index_v1`
+40. `20260815160747_booking_cancellation_server_only_v1`
+41. `20260815192828_customer_choice_server_only_ingestion_v1`
+42. `20260815194453_offer_verification_trigger_security_context_v1`
+43. `20260815195113_admin_verify_activate_atomic_v1`
+44. `20260815201835_device_installation_server_upsert_v1`
 
-> The remote DEV project remains the current schema source of truth. The management connector exposes apply/list operations but not exact migration-body download. Run `supabase db pull` when the CLI/package registry is available, review the diff, and commit the materialized migration SQL before any production promotion.
+## Repository alignment status
+
+- Migration files that exist in `supabase/migrations` from item 16 onward are named with the exact versions recorded by the remote ledger on this branch. SQL bodies were not changed by the filename alignment.
+- Items 1–15 predate the materialized migration files currently available in this repository. Their exact historical SQL bodies are not exposed by the connected management API, so they must **not** be reconstructed from guesses.
+- Until items 1–15 are materialized from a trusted schema/baseline export, the remote database remains the authoritative starting schema for a fresh environment.
+
+## Required baseline recovery
+
+When an authenticated Supabase CLI/database export channel is available, run a controlled schema pull/baseline export against this project, review it against the live schema, and commit a reproducible baseline without replaying destructive changes against the existing database. Do not edit the remote migration ledger merely to make local filenames look clean.
