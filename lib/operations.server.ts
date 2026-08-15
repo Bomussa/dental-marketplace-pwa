@@ -22,7 +22,14 @@ async function callOperationalRpc<T extends keyof import("@/lib/database.types")
 ) {
   const admin = createAdminClient();
   const { data, error } = await admin.rpc(functionName, args);
-  if (error) throw new Error(error.code || "OPERATION_FAILED");
+  if (error) {
+    console.error("Operational RPC failed", {
+      functionName,
+      code: error.code,
+      message: error.message,
+    });
+    throw new Error(error.code || "OPERATION_FAILED");
+  }
   return data;
 }
 
