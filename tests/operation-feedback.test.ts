@@ -7,8 +7,10 @@ describe("operation feedback", () => {
     expect(operationFailureUrl("clinic", "createOffer", "forbidden")).toBe("/operation-error?area=clinic&action=createOffer&code=forbidden");
   });
 
-  it("maps uniqueness and controlled business conflicts", () => {
+  it("maps uniqueness, exclusion, stale-state, and controlled business conflicts", () => {
     expect(operationFailureCode(new Error("23505"))).toBe("conflict");
+    expect(operationFailureCode(new Error("23P01"))).toBe("conflict");
+    expect(operationFailureCode(new Error("55000"))).toBe("conflict");
     expect(operationFailureCode(new Error("P0001"))).toBe("conflict");
   });
 
