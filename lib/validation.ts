@@ -155,3 +155,66 @@ export const reviewSchema = z.object({
   rating: z.coerce.number().int().min(1).max(5),
   review_text: z.string().trim().max(1500).optional().default(""),
 });
+
+export const offerRevisionSchema = z.object({
+  offer_id: uuid,
+  price_type: z.enum(["fixed", "from", "range", "package", "consultation_required"]),
+  min_qar: z.coerce.number().min(0).max(100000).optional(),
+  max_qar: z.coerce.number().min(0).max(100000).optional(),
+  duration_minutes: z.coerce.number().int().min(5).max(480),
+  reason: z.string().trim().min(3).max(500),
+}).superRefine((value, ctx) => {
+  const issue = (path: "min_qar" | "max_qar", message: string) => ctx.addIssue({ code: "custom", path: [path], message });
+  if (value.price_type === "consultation_required" && (value.min_qar !== undefined || value.max_qar !== undefined)) issue("min_qar", "سعر الاستشارة لا يحمل مبلغًا");
+  if (["fixed", "from", "package"].includes(value.price_type) && value.min_qar === undefined) issue("min_qar", "السعر الأدنى مطلوب");
+  if (value.price_type === "range" && (value.min_qar === undefined || value.max_qar === undefined)) issue("max_qar", "حدا النطاق مطلوبان");
+  if (value.min_qar !== undefined && value.max_qar !== undefined && value.max_qar < value.min_qar) issue("max_qar", "السعر الأعلى يجب ألا يقل عن الأدنى");
+});
+
+export const attendanceSchema = z.object({
+  booking_id: uuid,
+  reason: z.string().trim().min(3).max(500).optional().default(""),
+});
+
+export const attendanceReversalSchema = z.object({
+  booking_id: uuid,
+  reason: z.string().trim().min(3).max(500),
+});
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+export const settlementPeriodSchema = z.object({
+  clinic_id: uuid,
+  period_start: isoDate,
+  period_end: isoDate,
+  period_kind: z.enum(["weekly", "monthly", "annual", "manual"]),
+  notes: z.string().trim().max(1000).optional().default(""),
+}).refine((value) => value.period_end >= value.period_start, { path: ["period_end"], message: "نهاية الفترة يجب أن تكون بعد بدايتها" });
+
+export const financialReportSchema = z.object({
+  clinic_id: uuid,
+  period_start: isoDate,
+  period_end: isoDate,
+}).refine((value) => value.period_end >= value.period_start, { path: ["period_end"], message: "نهاية التقرير يجب أن تكون بعد بدايته" });
+
+export const supportMessageSchema = z.object({
+  message: z.string().trim().min(1).max(2000),
+  locale: z.enum(["ar", "en"]),
+  conversation_id: uuid.optional(),
+});
+
+export const supportKnowledgeArticleSchema = z.object({
+  slug: z.string().trim().regex(/^[a-z0-9-]{3,100}$/),
+  locale: z.enum(["ar", "en"]),
+  title: z.string().trim().min(3).max(200),
+  body_markdown: z.string().trim().min(10).max(20000),
+  category: z.enum(["booking", "pricing", "availability", "account", "clinic", "policy", "safety"]),
+  audience: z.enum(["public", "clinic", "admin"]),
+});
+
+export const notificationTemplateSchema = z.object({
+  template_key: z.string().trim().regex(/^[a-z0-9_.-]{3,80}$/),
+  channel: z.enum(["email", "sms", "push"]),
+  locale: z.enum(["ar", "en"]),
+  subject: z.string().trim().max(200).optional().default(""),
+  body: z.string().trim().min(1).max(4000),
+});

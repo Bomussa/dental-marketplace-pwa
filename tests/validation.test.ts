@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingSchema, choiceEventSchema, offerSchema, searchSchema } from "@/lib/validation";
+import { bookingSchema, choiceEventSchema, notificationTemplateSchema, offerSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema } from "@/lib/validation";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -62,5 +62,17 @@ describe("validation", () => {
   it("requires offer and slot identifiers for booking events", () => {
     expect(choiceEventSchema.safeParse({ ...eventBase, event_name:"offer_booking_clicked", offer_id:offerId, slot_id:slotId, choice_value:{} }).success).toBe(true);
     expect(choiceEventSchema.safeParse({ ...eventBase, event_name:"offer_booking_clicked", offer_id:offerId, choice_value:{} }).success).toBe(false);
+  });
+
+  it("accepts a bounded bilingual support message and rejects oversized input", () => {
+    expect(supportMessageSchema.safeParse({ message: "How do I book an appointment?", locale: "en" }).success).toBe(true);
+    expect(supportMessageSchema.safeParse({ message: "x".repeat(2001), locale: "ar" }).success).toBe(false);
+  });
+
+  it("requires governed formats for knowledge articles and notification templates", () => {
+    expect(supportKnowledgeArticleSchema.safeParse({ slug: "booking-basics", locale: "en", title: "Booking basics", body_markdown: "Use the results page to compare appointments.", category: "booking", audience: "public" }).success).toBe(true);
+    expect(supportKnowledgeArticleSchema.safeParse({ slug: "عنوان عربي", locale: "ar", title: "الحجز", body_markdown: "نص كافٍ للمقال", category: "booking", audience: "public" }).success).toBe(false);
+    expect(notificationTemplateSchema.safeParse({ template_key: "booking_confirmed", channel: "push", locale: "ar", body: "تم تأكيد حجزك" }).success).toBe(true);
+    expect(notificationTemplateSchema.safeParse({ template_key: "حجز", channel: "push", locale: "ar", body: "تم تأكيد حجزك" }).success).toBe(false);
   });
 });
