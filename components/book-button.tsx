@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { CalendarIcon, CheckIcon } from "@/components/icons";
 import { bookingIntentKey, clearBookingIntent } from "@/lib/booking-intent.client";
 import { trackChoice } from "@/lib/choice-events.client";
 
 export function BookButton({ offerId, slotId }: { offerId: string; slotId: string }) {
+  const router = useRouter();
   const [state, setState] = useState<"idle" | "loading" | "error" | "done">("idle");
   const [message, setMessage] = useState("");
 
@@ -24,7 +26,7 @@ export function BookButton({ offerId, slotId }: { offerId: string; slotId: strin
 
       if (response.status === 401) {
         trackChoice({ event_name: "booking_login_required", offer_id: offerId, slot_id: slotId, choice_value: { response_status: 401 } });
-        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        router.push(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
         return;
       }
 
