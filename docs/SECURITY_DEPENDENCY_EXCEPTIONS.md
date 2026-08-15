@@ -29,4 +29,4 @@ The repository does not currently import `next/image`, and no application featur
 4. Do not use `npm audit fix --force` without reviewing the resulting framework version and running the complete CI/Preview/Production acceptance chain.
 5. Remove this exception as soon as a stable, compatible dependency set clears the findings.
 
-The repository issue titled `Security dependency watch — stable Next.js upstream advisories` tracks this exception. Close it only after a stable update clears the relevant audit findings and the locked-head CI, Preview, and Production smoke chain passes.
+This exception remains open until a stable update clears the relevant audit findings and the locked-head CI, Preview, and Production smoke chain passes again.
