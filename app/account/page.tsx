@@ -22,17 +22,27 @@ const statusLabel: Record<string, string> = {
   failed: "غير مكتمل",
 };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ booking_error?: string }> }) {
-  const bookingError = (await searchParams).booking_error;
-  const bookingErrorMessage = bookingError === "forbidden"
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ booking_error?: string; patient_profile_error?: string }> }) {
+  const params = await searchParams;
+  const bookingErrorMessage = params.booking_error === "forbidden"
     ? "لا تملك صلاحية إلغاء هذا الحجز."
-    : bookingError === "not_cancellable"
+    : params.booking_error === "not_cancellable"
       ? "لا يمكن إلغاء هذا الحجز في حالته الحالية أو بعد وقت الموعد."
-      : bookingError === "invalid"
+      : params.booking_error === "invalid"
         ? "تعذر العثور على الحجز المطلوب."
-        : bookingError === "unavailable"
+        : params.booking_error === "unavailable"
           ? "خدمة إلغاء الحجز غير متاحة مؤقتًا. حاول مرة أخرى لاحقًا."
           : null;
+  const patientProfileErrorMessage = params.patient_profile_error === "self_exists"
+    ? "ملف «أنا» موجود بالفعل في حسابك."
+    : params.patient_profile_error === "cannot_archive_self"
+      ? "لا يمكن أرشفة ملفك الأساسي."
+      : params.patient_profile_error === "invalid"
+        ? "بيانات الشخص غير صالحة أو لم يعد السجل متاحًا."
+        : params.patient_profile_error === "unavailable"
+          ? "تعذر حفظ بيانات الشخص الآن. لم نعلن نجاح العملية؛ حاول مرة أخرى لاحقًا."
+          : null;
+
   const supabase = await createClient();
   const { data: claimsData, error } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
@@ -71,6 +81,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.14em] text-[#0066CC]">Family profiles</p><h2 className="mt-1 text-2xl font-black">لمن تحجز المواعيد؟</h2><p className="mt-1 text-sm font-medium text-slate-500">أضف أفراد العائلة بالحد الأدنى من البيانات. لا نخزن أي ملف طبي هنا.</p></div><UserIcon className="text-[#007AFF]" size={24}/></div>
+        {patientProfileErrorMessage && <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{patientProfileErrorMessage}</div>}
         <Card className="p-5 sm:p-6">
           <div className="grid gap-3 sm:grid-cols-2">{patientProfiles.map((patientProfile) => <div key={patientProfile.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70"><div><p className="font-black">{patientProfile.display_name}</p><p className="mt-1 text-xs font-bold text-slate-500">{patientProfile.relationship === "self" ? "أنا" : patientProfile.relationship === "child" ? "ابن/ابنة" : patientProfile.relationship === "spouse" ? "زوج/زوجة" : patientProfile.relationship === "parent" ? "أب/أم" : "فرد من العائلة"}</p></div>{patientProfile.relationship !== "self" && <form action={archivePatientProfile}><input type="hidden" name="patient_profile_id" value={patientProfile.id}/><button className="min-h-11 rounded-full px-3 text-xs font-black text-red-700 ring-1 ring-red-200 transition hover:bg-red-50">أرشفة</button></form>}</div>)}</div>
           <form action={createPatientProfile} className="mt-5 grid gap-3 border-t border-slate-200/70 pt-5 sm:grid-cols-[1fr_180px_auto]">
