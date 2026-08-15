@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-08-15
 
-This file records dependency findings that are visible in `npm audit` but cannot be removed today without moving the core application from the current stable Next.js line to a preview release. It is not a waiver for new Critical findings.
+This file records dependency findings that are visible in `npm audit` but cannot be removed today without moving the core application from the current stable Next.js line to a Preview release. It is not a waiver for new Critical findings.
 
 ## Current stable framework pin
 
@@ -29,4 +29,4 @@ The repository does not currently import `next/image`, and no application featur
 4. Do not use `npm audit fix --force` without reviewing the resulting framework version and running the complete CI/Preview/Production acceptance chain.
 5. Remove this exception as soon as a stable, compatible dependency set clears the findings.
 
-Tracking issue: create/maintain a repository issue for the next stable Next.js security update and close it only after locked-head CI, Preview, and Production smoke pass.
+The repository issue titled `Security dependency watch — stable Next.js upstream advisories` tracks this exception. Close it only after a stable update clears the relevant audit findings and the locked-head CI, Preview, and Production smoke chain passes.
