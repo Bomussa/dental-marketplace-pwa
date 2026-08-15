@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
-import { createSettlementPeriod, reviewOfferRevision } from "@/lib/operations.server";
+import { createSettlementPeriod, reviewOfferRevision, verifyAndActivateSubject } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { featureFlagSchema, notificationTemplateSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, uuid, verificationSchema } from "@/lib/validation";
 
@@ -30,21 +30,14 @@ function adminActionFailure(action: string, error: unknown): never {
 export async function verifyAndActivate(formData: FormData): Promise<void> {
   const parsed = verificationSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) validationFailure("verifyAndActivate");
-  const supabase = await requireAdmin();
+  await requireAdmin();
   try {
-    const { subject_type, subject_id, source, identifier } = parsed.data;
-    const { error: verificationError } = await supabase.from("verification_records").insert({ subject_type, subject_id, source, identifier: identifier || null, status: "verified", verified_at: new Date().toISOString() });
-    if (verificationError) throw new Error(verificationError.code);
-    if (subject_type === "practitioner") {
-      const { error: activationError } = await supabase.from("practitioners").update({ active: true }).eq("id", subject_id);
-      if (activationError) throw new Error(activationError.code);
-    } else if (subject_type === "clinic") {
-      const { error: activationError } = await supabase.from("clinics").update({ status: "active" }).eq("id", subject_id);
-      if (activationError) throw new Error(activationError.code);
-    } else {
-      const { error: activationError } = await supabase.from("branches").update({ status: "active" }).eq("id", subject_id);
-      if (activationError) throw new Error(activationError.code);
-    }
+    await verifyAndActivateSubject({
+      subjectType: parsed.data.subject_type,
+      subjectId: parsed.data.subject_id,
+      source: parsed.data.source,
+      identifier: parsed.data.identifier || undefined,
+    });
     revalidatePath("/admin");
     revalidatePath("/clinic");
   } catch (error) {
