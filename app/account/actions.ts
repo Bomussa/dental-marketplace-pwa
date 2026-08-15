@@ -18,6 +18,10 @@ function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "c
   redirect(`/account?patient_profile_error=${code}`);
 }
 
+function bookingActionError(code: "invalid" | "unavailable" | "forbidden" | "not_cancellable"): never {
+  redirect(`/account?booking_error=${code}`);
+}
+
 function requireAdmin() {
   try {
     return createAdminClient();
@@ -87,9 +91,22 @@ export async function archivePatientProfile(formData: FormData) {
 
 export async function cancelBooking(formData: FormData) {
   const parsed = z.object({ booking_id: uuid }).safeParse({ booking_id: formData.get("booking_id") });
-  if (!parsed.success) return;
-  const { supabase } = await requireUser();
-  await supabase.from("bookings").update({ status: "patient_cancelled" }).eq("id", parsed.data.booking_id);
+  if (!parsed.success) return bookingActionError("invalid");
+
+  const { userId } = await requireUser();
+  const admin = requireAdmin();
+  const { error } = await admin.rpc("cancel_booking_server", {
+    p_actor_id: userId,
+    p_booking_id: parsed.data.booking_id,
+  });
+
+  if (error) {
+    if (error.code === "42501") return bookingActionError("forbidden");
+    if (error.code === "55000") return bookingActionError("not_cancellable");
+    if (error.code === "P0002" || error.code === "22023") return bookingActionError("invalid");
+    return bookingActionError("unavailable");
+  }
+
   revalidatePath("/account");
 }
 

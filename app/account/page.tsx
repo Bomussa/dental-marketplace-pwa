@@ -22,7 +22,17 @@ const statusLabel: Record<string, string> = {
   failed: "غير مكتمل",
 };
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ booking_error?: string }> }) {
+  const bookingError = (await searchParams).booking_error;
+  const bookingErrorMessage = bookingError === "forbidden"
+    ? "لا تملك صلاحية إلغاء هذا الحجز."
+    : bookingError === "not_cancellable"
+      ? "لا يمكن إلغاء هذا الحجز في حالته الحالية أو بعد وقت الموعد."
+      : bookingError === "invalid"
+        ? "تعذر العثور على الحجز المطلوب."
+        : bookingError === "unavailable"
+          ? "خدمة إلغاء الحجز غير متاحة مؤقتًا. حاول مرة أخرى لاحقًا."
+          : null;
   const supabase = await createClient();
   const { data: claimsData, error } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
@@ -73,9 +83,10 @@ export default async function AccountPage() {
 
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.14em] text-[#0066CC]">Bookings</p><h2 className="mt-1 text-2xl font-black">حجوزاتي</h2></div><CalendarIcon className="text-[#007AFF]" size={24}/></div>
+        {bookingErrorMessage && <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{bookingErrorMessage}</div>}
         {bookings.length === 0 ? <Card className="p-10 text-center"><CalendarIcon className="mx-auto text-slate-300" size={34}/><h3 className="mt-4 font-black">لا توجد حجوزات بعد</h3><p className="mt-2 text-sm text-slate-500">ابدأ من البحث، واختر عرضًا لديه موعد صالح للحجز.</p></Card> : <div className="space-y-4">{bookings.map((b) => {
           const snap = (b.offer_snapshot ?? {}) as Record<string, unknown>;
-          const canCancel = ["pending_hold", "pending_clinic_confirmation", "confirmed"].includes(b.status);
+          const canCancel = ["pending_clinic_confirmation", "confirmed"].includes(b.status);
           const existingReview = reviewed.get(b.id);
           const tone = b.status === "completed" ? "green" : b.status.includes("cancel") || b.status === "failed" ? "red" : "blue";
           return <Card key={b.id} className="lift overflow-hidden p-0"><div className="grid md:grid-cols-[1fr_230px]"><div className="p-5 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-black">{String(snap.variant_name_ar ?? snap.treatment_name_ar ?? "حجز أسنان")}</h3><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-slate-500"><span className="inline-flex items-center gap-1.5"><CalendarIcon size={14}/>{new Intl.DateTimeFormat("ar-QA", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" }).format(new Date(b.start_at))}</span><span dir="ltr">#{b.booking_code}</span></div></div><Badge tone={tone}>{statusLabel[b.status] ?? b.status}</Badge></div>{canCancel && <form action={cancelBooking} className="mt-5"><input type="hidden" name="booking_id" value={b.id}/><Button className="bg-white text-red-700 shadow-none ring-1 ring-red-200 hover:bg-red-50">إلغاء الحجز</Button></form>}</div><aside className="border-t border-slate-200/70 bg-slate-50/60 p-5 md:border-s md:border-t-0"><div className="flex items-center gap-2 text-xs font-extrabold text-slate-500"><ClockIcon size={15}/>حالة الزيارة</div><div className="mt-2 text-sm font-black">{statusLabel[b.status] ?? b.status}</div>{b.status === "completed" && <div className="mt-4">{existingReview ? <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/70"><div className="flex items-center gap-1.5 font-black"><StarIcon size={15} className="text-amber-500"/>{existingReview.rating}/5</div><div className="mt-1 text-xs font-bold text-slate-500">{existingReview.status}</div></div> : <span className="text-xs font-bold text-slate-500">يمكنك تقييم هذه الزيارة.</span>}</div>}</aside></div>{b.status === "completed" && !existingReview && <form action={submitReview} className="border-t border-slate-200/70 bg-white/70 p-5 sm:p-6"><input type="hidden" name="booking_id" value={b.id}/><div className="flex items-center gap-2 text-sm font-black"><StarIcon size={18} className="text-amber-500"/>قيّم زيارتك الموثقة</div><div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr_auto]"><Select name="rating" defaultValue="5"><option value="5">5 / 5</option><option value="4">4 / 5</option><option value="3">3 / 5</option><option value="2">2 / 5</option><option value="1">1 / 5</option></Select><textarea name="review_text" maxLength={1500} className="min-h-12 rounded-2xl border border-slate-200/80 bg-white p-3 text-sm font-medium outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-blue-500/10" placeholder="اكتب تجربتك بدون معلومات طبية حساسة"/><Button>إرسال للمراجعة</Button></div></form>}</Card>;

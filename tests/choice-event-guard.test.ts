@@ -1,13 +1,12 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   choiceRequestBodyIsTooLarge,
   choiceRequestClientKey,
   choiceRequestOriginIsAllowed,
-  consumeChoiceEventRateLimit,
+  CHOICE_EVENT_WINDOW_SECONDS,
   MAX_CHOICE_EVENT_BYTES,
   MAX_CHOICE_EVENTS_PER_WINDOW,
   readChoiceRequestTextWithinLimit,
-  resetChoiceEventRateLimitForTests,
 } from "@/lib/choice-event-guard";
 
 const sameOrigin = new Request("https://example.test/api/choices", {
@@ -15,8 +14,6 @@ const sameOrigin = new Request("https://example.test/api/choices", {
 });
 
 describe("choice event request guard", () => {
-  beforeEach(() => resetChoiceEventRateLimitForTests());
-
   it("accepts only explicit same-origin requests", () => {
     expect(choiceRequestOriginIsAllowed(sameOrigin)).toBe(true);
     expect(choiceRequestOriginIsAllowed(new Request("https://example.test/api/choices"))).toBe(false);
@@ -36,20 +33,14 @@ describe("choice event request guard", () => {
     await expect(readChoiceRequestTextWithinLimit(oversized)).resolves.toBeNull();
   });
 
-  it("hashes the forwarded address instead of retaining it as an in-memory key", () => {
+  it("hashes the forwarded address before it reaches distributed rate limiting", () => {
     const key = choiceRequestClientKey(sameOrigin);
     expect(key).not.toContain("203.0.113.4");
     expect(key).toHaveLength(24);
   });
 
-  it("limits a client within a fixed minute window and resets after it", () => {
-    const now = 1_000_000;
-    for (let index = 0; index < MAX_CHOICE_EVENTS_PER_WINDOW; index += 1) {
-      expect(consumeChoiceEventRateLimit("client", now).allowed).toBe(true);
-    }
-    const denied = consumeChoiceEventRateLimit("client", now);
-    expect(denied.allowed).toBe(false);
-    expect(denied.retryAfterSeconds).toBeGreaterThan(0);
-    expect(consumeChoiceEventRateLimit("client", now + 60_000).allowed).toBe(true);
+  it("uses a bounded one-minute policy for the distributed rate limiter", () => {
+    expect(CHOICE_EVENT_WINDOW_SECONDS).toBe(60);
+    expect(MAX_CHOICE_EVENTS_PER_WINDOW).toBe(60);
   });
 });
