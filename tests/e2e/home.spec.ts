@@ -41,8 +41,25 @@ test("appointment preference survives into the results URL", async ({ page }) =>
   await expect(page.getByRole("heading", { level: 1, name: "علاج عصب — ضرس" })).toBeVisible();
 });
 
-test("location denial degrades safely and keeps search usable", async ({ page, context }) => {
-  await context.clearPermissions();
+test("location denial degrades safely and keeps search usable", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition: (_success: PositionCallback, error?: PositionErrorCallback) => {
+          error?.({
+            code: 1,
+            message: "permission denied by deterministic E2E fixture",
+            PERMISSION_DENIED: 1,
+            POSITION_UNAVAILABLE: 2,
+            TIMEOUT: 3,
+          } as GeolocationPositionError);
+        },
+        watchPosition: () => 0,
+        clearWatch: () => undefined,
+      },
+    });
+  });
   await page.goto("/");
   await page.getByRole("button", { name: "استخدم موقعي لترتيب الأقرب" }).click();
   await expect(page.getByText("يمكنك المتابعة بدون موقع؛ لن يظهر ترتيب المسافة.")).toBeVisible();
