@@ -15,6 +15,13 @@ export function SupportChat() {
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
 
+  function errorMessage(code?: string) {
+    if (code === "AUTH_REQUIRED") return t("support.authRequired");
+    if (code === "RATE_LIMITED") return t("support.rateLimited");
+    if (code === "SUPPORT_NOT_CONFIGURED") return t("support.notConfigured");
+    return t("support.unavailable");
+  }
+
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
@@ -31,7 +38,7 @@ export function SupportChat() {
       });
       const body = await response.json().catch(() => ({})) as { answer?: string; conversation_id?: string; error?: string };
       if (!response.ok || !body.answer) {
-        setError(body.error === "AUTH_REQUIRED" ? t("support.authRequired") : t("support.unavailable"));
+        setError(errorMessage(body.error));
         return;
       }
       setConversationId(body.conversation_id);

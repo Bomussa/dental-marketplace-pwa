@@ -74,6 +74,8 @@ const en: Translation = {
   "support.sending": "Sending…",
   "support.authRequired": "Please sign in first to start a private, secure support conversation.",
   "support.unavailable": "The assistant is unavailable right now. Please try again later or contact support.",
+  "support.rateLimited": "You have reached the temporary support-message limit. Please try again later.",
+  "support.notConfigured": "The assistant service is not configured right now. Please contact support.",
   "support.medical": "The assistant does not provide medical diagnosis or treatment. For health concerns, please contact a qualified dentist.",
 };
 

@@ -33,6 +33,17 @@ export async function POST(request: Request) {
   const parsed = supportMessageSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "VALIDATION_FAILED" }, { status: 400 });
 
+  const category: SafetyCategory = MEDICAL_OR_EMERGENCY.test(parsed.data.message)
+    ? (/طارئ|emergency|نزيف شديد|severe bleeding|صعوبة.*تنفس|difficulty breathing/i.test(parsed.data.message) ? "emergency" : "medical")
+    : "standard";
+  const baseUrl = process.env.OPENAI_API_BASE;
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (category === "standard" && (!baseUrl || !apiKey)) {
+    return NextResponse.json({ error: "SUPPORT_NOT_CONFIGURED" }, { status: 503 });
+  }
+  const configuredBaseUrl = baseUrl ?? "";
+  const configuredApiKey = apiKey ?? "";
+
   let supportRateAllowed;
   try {
     supportRateAllowed = await consumeRateLimit({
@@ -51,7 +62,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return NextResponse.json({ error: "SUPPORT_UNAVAILABLE" }, { status: 503 });
+  }
+
   let conversationId = parsed.data.conversation_id;
   if (conversationId) {
     const { data: existingConversation, error } = await admin.from("support_conversations").select("id,status").eq("id", conversationId).eq("user_id", userId).maybeSingle();
@@ -63,7 +80,6 @@ export async function POST(request: Request) {
     conversationId = createdConversation.id;
   }
 
-  const category: SafetyCategory = MEDICAL_OR_EMERGENCY.test(parsed.data.message) ? (/طارئ|emergency|نزيف شديد|severe bleeding|صعوبة.*تنفس|difficulty breathing/i.test(parsed.data.message) ? "emergency" : "medical") : "standard";
   const { error: userMessageError } = await admin.from("support_messages").insert({ conversation_id: conversationId, role: "user", content: parsed.data.message, safety_category: category, sources: [] });
   if (userMessageError) return NextResponse.json({ error: "MESSAGE_NOT_RECORDED" }, { status: 503 });
 
@@ -85,18 +101,15 @@ export async function POST(request: Request) {
 
     const knowledge = (articles ?? []).map((article) => `# ${article.title}\n${article.body_markdown.slice(0, 1800)}`).join("\n\n");
     sourceTitles = (articles ?? []).map((article) => article.title);
-    const baseUrl = process.env.OPENAI_API_BASE;
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!baseUrl || !apiKey) return NextResponse.json({ error: "SUPPORT_UNAVAILABLE" }, { status: 503 });
 
     const system = parsed.data.locale === "ar"
       ? "أنت مساعد خدمة عملاء لمنصة أسناني قطر. أجب بالعربية فقط. استخدم قاعدة المعرفة أدناه فقط لحقائق المنصة. ساعد في الحجز والأسعار والتوفر والحساب والخصوصية فقط. لا تقدّم تشخيصًا أو علاجًا طبيًا، ولا تخترع سعرًا أو موعدًا أو سياسة. إذا لم تجد الإجابة في قاعدة المعرفة فاذكر ذلك بوضوح واقترح التواصل مع فريق الدعم. اجعل الإجابة موجزة وعملية."
       : "You are the customer support assistant for Asnani Qatar. Answer only in English. Use only the knowledge base below for platform facts. Help only with booking, prices, availability, accounts, and privacy. Do not diagnose or recommend medical treatment, and never invent a price, appointment, or policy. If the answer is not in the knowledge base, say so clearly and suggest contacting support. Keep the answer concise and practical.";
 
     try {
-      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+      const response = await fetch(`${configuredBaseUrl.replace(/\/$/, "")}/chat/completions`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${configuredApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "gpt-5-mini",
           max_completion_tokens: 500,
