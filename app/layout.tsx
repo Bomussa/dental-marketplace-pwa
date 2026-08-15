@@ -5,6 +5,7 @@ import { LocaleProvider } from "@/components/locale-provider";
 import { SiteHeader } from "@/components/site-header";
 import { PwaRegister } from "@/components/pwa-register";
 import { DeviceInstallationRegistrar } from "@/components/device-installation-registrar";
+import { ThemeProvider } from "@/components/theme-provider";
 import { getDictionary, getDirection, getLocale } from "@/lib/i18n";
 
 export const metadata: Metadata = {
@@ -19,17 +20,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const locale = getLocale(cookieStore.get("asnani_locale")?.value);
   const t = getDictionary(locale);
   return (
-    <html lang={locale} dir={getDirection(locale)}>
+    <html lang={locale} dir={getDirection(locale)} data-theme="patient">
       <body>
         <PwaRegister />
         <DeviceInstallationRegistrar />
         <LocaleProvider locale={locale}>
-          <SiteHeader />
-          {children}
-          <footer className="mx-auto max-w-7xl px-4 py-10 text-center text-[11px] font-medium leading-6 text-slate-500 sm:px-6">
-            <div className="mx-auto mb-5 h-px max-w-3xl bg-slate-200/70" />
-            {t["footer.disclaimer"]}
-          </footer>
+          <ThemeProvider>
+            <SiteHeader />
+            {children}
+            <footer className="mx-auto max-w-7xl px-4 py-10 text-center text-[11px] font-medium leading-6 text-[var(--muted)] sm:px-6">
+              <div className="mx-auto mb-5 h-px max-w-3xl bg-[var(--line)]" />
+              {t["footer.disclaimer"]}
+            </footer>
+          </ThemeProvider>
         </LocaleProvider>
       </body>
     </html>
