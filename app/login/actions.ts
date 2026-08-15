@@ -20,6 +20,9 @@ export async function sendMagicLink(formData: FormData) {
   const redirectTo = new URL("/auth/confirm", origin);
   redirectTo.searchParams.set("next", parsed.data.next);
   const { error } = await supabase.auth.signInWithOtp({ email: parsed.data.email, options: { emailRedirectTo: redirectTo.toString() } });
-  if (error) redirect("/login?error=send_failed");
+  if (error) {
+    console.warn("magic_link_send_failed", { code: error.code ?? null, status: error.status ?? null });
+    redirect("/login?error=send_failed");
+  }
   redirect(`/login?sent=1&next=${encodeURIComponent(parsed.data.next)}`);
 }
