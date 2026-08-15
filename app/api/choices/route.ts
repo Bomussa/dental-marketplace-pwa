@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import {
   CHOICE_EVENT_WINDOW_SECONDS,
   choiceRequestBodyIsTooLarge,
@@ -9,16 +8,8 @@ import {
   readChoiceRequestTextWithinLimit,
 } from "@/lib/choice-event-guard";
 import { consumeRateLimit } from "@/lib/operations.server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { choiceEventSchema } from "@/lib/validation";
-
-function analyticsClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !publishableKey) throw new Error("SUPABASE_PUBLIC_ENV_MISSING");
-  return createClient(url, publishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
-}
 
 function json(body: unknown, status: number, headers?: HeadersInit) {
   return NextResponse.json(body, {
@@ -64,17 +55,19 @@ export async function POST(request: Request) {
   const parsed = choiceEventSchema.safeParse(payload);
   if (!parsed.success) return json({ error: "invalid_choice_event" }, 400);
 
-  let error;
+  let admin;
   try {
-    ({ error } = await analyticsClient().from("customer_choice_events").insert(parsed.data));
-  } catch (clientError) {
-    console.error("choice_event_client_unavailable", { code: clientError instanceof Error ? clientError.message : "UNKNOWN" });
+    admin = createAdminClient();
+  } catch {
     return json({ error: "choice_event_not_recorded" }, 503);
   }
+
+  const { error } = await admin.from("customer_choice_events").insert(parsed.data);
   if (error?.code === "23505") return json({ ok: true, duplicate: true }, 200);
   if (error) {
-    console.error("choice_event_insert_failed", { code: error.code, message: error.message });
+    console.error("choice_event_insert_failed", { code: error.code });
     return json({ error: "choice_event_not_recorded" }, 503);
   }
+
   return json({ ok: true }, 201);
 }
