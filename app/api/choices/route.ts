@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
+  CHOICE_EVENT_WINDOW_SECONDS,
   choiceRequestBodyIsTooLarge,
   choiceRequestClientKey,
   choiceRequestOriginIsAllowed,
-  consumeChoiceEventRateLimit,
+  MAX_CHOICE_EVENTS_PER_WINDOW,
   readChoiceRequestTextWithinLimit,
 } from "@/lib/choice-event-guard";
+import { consumeRateLimit } from "@/lib/operations.server";
 import { choiceEventSchema } from "@/lib/validation";
 
 function analyticsClient() {
@@ -29,12 +31,23 @@ export async function POST(request: Request) {
   if (!choiceRequestOriginIsAllowed(request)) return json({ error: "forbidden_origin" }, 403);
   if (choiceRequestBodyIsTooLarge(request)) return json({ error: "choice_event_too_large" }, 413);
 
-  const rate = consumeChoiceEventRateLimit(choiceRequestClientKey(request));
-  if (!rate.allowed) {
+  let rateAllowed;
+  try {
+    rateAllowed = await consumeRateLimit({
+      scope: "choice_event",
+      subject: choiceRequestClientKey(request),
+      maxRequests: MAX_CHOICE_EVENTS_PER_WINDOW,
+      windowSeconds: CHOICE_EVENT_WINDOW_SECONDS,
+    });
+  } catch {
+    return json({ error: "choice_event_protection_unavailable" }, 503);
+  }
+
+  if (!rateAllowed) {
     return json(
       { error: "choice_event_rate_limited" },
       429,
-      { "retry-after": String(rate.retryAfterSeconds) },
+      { "retry-after": String(CHOICE_EVENT_WINDOW_SECONDS) },
     );
   }
 

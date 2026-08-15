@@ -2260,6 +2260,13 @@ export type Database = {
           booking_status: string
         }[]
       }
+      cancel_booking_server: {
+        Args: {
+          p_actor_id: string
+          p_booking_id: string
+        }
+        Returns: string
+      }
       consume_rate_limit_server: {
         Args: {
           p_limit: number

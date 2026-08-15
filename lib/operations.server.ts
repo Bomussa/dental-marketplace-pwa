@@ -27,7 +27,7 @@ async function callOperationalRpc<T extends keyof import("@/lib/database.types")
 }
 
 export async function consumeRateLimit(input: {
-  scope: "booking" | "device_installation" | "support_message";
+  scope: "booking" | "device_installation" | "support_message" | "choice_event";
   subject: string;
   maxRequests: number;
   windowSeconds: number;
