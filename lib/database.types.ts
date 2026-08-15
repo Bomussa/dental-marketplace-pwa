@@ -1617,6 +1617,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_buckets: {
+        Row: {
+          created_at: string
+          expires_at: string
+          request_count: number
+          scope: string
+          subject_key: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          request_count?: number
+          scope: string
+          subject_key: string
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          request_count?: number
+          scope?: string
+          subject_key?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       reconciliation_exceptions: {
         Row: {
           booking_id: string | null
@@ -2229,6 +2259,15 @@ export type Database = {
           booking_id: string
           booking_status: string
         }[]
+      }
+      consume_rate_limit_server: {
+        Args: {
+          p_limit: number
+          p_scope: string
+          p_subject_key: string
+          p_window_seconds: number
+        }
+        Returns: boolean
       }
       create_branch_application: {
         Args: {

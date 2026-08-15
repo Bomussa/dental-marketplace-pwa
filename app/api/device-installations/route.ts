@@ -2,11 +2,30 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { deviceInstallationSchema } from "@/lib/validation";
+import { consumeRateLimit } from "@/lib/operations.server";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = deviceInstallationSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "بيانات التثبيت غير صالحة" }, { status: 400 });
+
+  let installationRateAllowed;
+  try {
+    installationRateAllowed = await consumeRateLimit({
+      scope: "device_installation",
+      subject: parsed.data.installation_id,
+      maxRequests: 60,
+      windowSeconds: 60 * 60,
+    });
+  } catch {
+    return NextResponse.json({ error: "خدمة حماية التثبيت غير متاحة مؤقتًا" }, { status: 503 });
+  }
+  if (!installationRateAllowed) {
+    return NextResponse.json(
+      { error: "تم تجاوز عدد محاولات التثبيت المسموح به مؤقتًا." },
+      { status: 429, headers: { "retry-after": "3600", "cache-control": "no-store" } },
+    );
+  }
 
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,6 +24,28 @@ async function callOperationalRpc<T extends keyof import("@/lib/database.types")
   const { data, error } = await admin.rpc(functionName, args);
   if (error) throw new Error(error.code || "OPERATION_FAILED");
   return data;
+}
+
+export async function consumeRateLimit(input: {
+  scope: "booking" | "device_installation" | "support_message";
+  subject: string;
+  maxRequests: number;
+  windowSeconds: number;
+}) {
+  const subject = input.subject.trim();
+  if (!subject) throw new Error("RATE_LIMIT_SUBJECT_INVALID");
+
+  const subjectKey = createHash("sha256")
+    .update(`${input.scope}:${subject}`)
+    .digest("hex");
+  const allowed = await callOperationalRpc("consume_rate_limit_server", {
+    p_scope: input.scope,
+    p_subject_key: subjectKey,
+    p_limit: input.maxRequests,
+    p_window_seconds: input.windowSeconds,
+  });
+
+  return allowed === true;
 }
 
 export async function requestOfferRevision(input: {

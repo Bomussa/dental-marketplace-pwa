@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { bookingSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { consumeRateLimit } from "@/lib/operations.server";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -18,6 +19,24 @@ export async function POST(request: Request) {
     admin = createAdminClient();
   } catch {
     return NextResponse.json({ error: "خدمة الحجز غير متاحة مؤقتًا" }, { status: 503 });
+  }
+
+  let bookingRateAllowed;
+  try {
+    bookingRateAllowed = await consumeRateLimit({
+      scope: "booking",
+      subject: userId,
+      maxRequests: 10,
+      windowSeconds: 60 * 60,
+    });
+  } catch {
+    return NextResponse.json({ error: "خدمة حماية الحجز غير متاحة مؤقتًا" }, { status: 503 });
+  }
+  if (!bookingRateAllowed) {
+    return NextResponse.json(
+      { error: "تم تجاوز عدد محاولات الحجز المسموح به مؤقتًا. حاول بعد قليل." },
+      { status: 429, headers: { "retry-after": "3600", "cache-control": "no-store" } },
+    );
   }
 
   const { data, error } = await admin.rpc("book_slot_server", {

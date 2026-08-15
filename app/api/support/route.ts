@@ -3,6 +3,7 @@ import type { Json } from "@/lib/database.types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { supportMessageSchema } from "@/lib/validation";
+import { consumeRateLimit } from "@/lib/operations.server";
 
 const MEDICAL_OR_EMERGENCY = /(?:ألم شديد|نزيف|تورم|عدوى|طارئ|emergency|severe pain|bleeding|swelling|infection)/i;
 
@@ -31,6 +32,24 @@ export async function POST(request: Request) {
 
   const parsed = supportMessageSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "VALIDATION_FAILED" }, { status: 400 });
+
+  let supportRateAllowed;
+  try {
+    supportRateAllowed = await consumeRateLimit({
+      scope: "support_message",
+      subject: userId,
+      maxRequests: 30,
+      windowSeconds: 60 * 60,
+    });
+  } catch {
+    return NextResponse.json({ error: "RATE_LIMIT_UNAVAILABLE" }, { status: 503 });
+  }
+  if (!supportRateAllowed) {
+    return NextResponse.json(
+      { error: "RATE_LIMITED" },
+      { status: 429, headers: { "retry-after": "3600", "cache-control": "no-store" } },
+    );
+  }
 
   const admin = createAdminClient();
   let conversationId = parsed.data.conversation_id;

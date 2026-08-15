@@ -32,5 +32,16 @@ The following migration ledger was retrieved from the connected Supabase managem
 26. `20260815051946_grant_private_schema_usage_for_public_search_helper`
 27. `20260815052459_denormalize_synthetic_clinic_visibility`
 28. `20260815052839_revoke_private_schema_usage_after_search_guard`
+29. `20260815065426_operational_finance_core_v1`
+30. `20260815065524_notification_support_core_v1`
+31. `20260815065653_operational_service_rpcs_v1`
+32. `20260815065937_operational_rpcs_server_only_v1`
+33. `20260815071750_transactional_notification_outbox_triggers_v1`
+34. `20260815073143_operational_performance_indexes_rls_v1`
+35. `20260815080505_patient_profiles_and_device_installations_v1`
+36. `20260815080906_new_account_self_patient_profile_v1`
+37. `20260815081009_patient_booking_server_only_hardening_v1`
+38. `20260815081707_rate_limit_buckets_server_only_v1`
+39. `20260815082137_bookings_patient_profile_index_v1`
 
 > The remote DEV project remains the current schema source of truth. The management connector exposes apply/list operations but not exact migration-body download. Run `supabase db pull` when the CLI/package registry is available, review the diff, and commit the materialized migration SQL before any production promotion.
