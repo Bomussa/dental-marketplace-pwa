@@ -14,11 +14,11 @@ const messages: Record<OperationFailureCode, { title: string; body: string }> = 
   },
   conflict: {
     title: "تعارض مع الحالة الحالية",
-    body: "لم يتم تنفيذ التغيير لأن السجل تغيّر أو توجد عملية أخرى متعارضة. ارجع وحدّث الصفحة ثم حاول مرة أخرى.",
+    body: "تعذر تنفيذ التغيير بسبب تعارض مع الحالة الحالية. ارجع وحدّث الصفحة قبل إعادة المحاولة.",
   },
   unavailable: {
-    title: "لم يتم حفظ التغيير",
-    body: "تعذّر إتمام العملية الآن. لم نعرض نجاحًا وهميًا ولم نغيّر الحالة محليًا. حاول مرة أخرى بعد قليل.",
+    title: "تعذر تأكيد اكتمال العملية",
+    body: "حدث عطل أثناء تنفيذ الطلب. ارجع وحدّث الصفحة للتحقق من الحالة الفعلية قبل إعادة المحاولة.",
   },
 };
 
@@ -50,7 +50,7 @@ export default async function OperationErrorPage({
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-red-50 text-red-600 ring-1 ring-red-100">
           <AlertCircleIcon size={27} />
         </span>
-        <p className="mt-5 text-xs font-black uppercase tracking-[.16em] text-red-600">لم تُنفذ العملية</p>
+        <p className="mt-5 text-xs font-black uppercase tracking-[.16em] text-red-600">لم تكتمل العملية كما هو متوقع</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight">{message.title}</h1>
         <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-7 text-slate-500">{message.body}</p>
         <Link
