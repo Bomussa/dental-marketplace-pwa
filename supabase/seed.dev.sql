@@ -1,8 +1,8 @@
 -- DEV ONLY. Synthetic clinics; never run in production.
-insert into public.clinics(id,legal_name,display_name,status) values
-('10000000-0000-4000-8000-000000000001','DEV Synthetic Alpha LLC','DEV Dental Alpha','pending'),
-('10000000-0000-4000-8000-000000000002','DEV Synthetic Beta LLC','DEV Dental Beta','pending'),
-('10000000-0000-4000-8000-000000000003','DEV Synthetic Gamma LLC','DEV Dental Gamma','pending')
+insert into public.clinics(id,legal_name,display_name,status,is_synthetic) values
+('10000000-0000-4000-8000-000000000001','DEV Synthetic Alpha LLC','DEV Dental Alpha','pending',true),
+('10000000-0000-4000-8000-000000000002','DEV Synthetic Beta LLC','DEV Dental Beta','pending',true),
+('10000000-0000-4000-8000-000000000003','DEV Synthetic Gamma LLC','DEV Dental Gamma','pending',true)
 on conflict (id) do nothing;
 
 insert into public.verification_records(subject_type,subject_id,source,identifier,status,verified_at) values

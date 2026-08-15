@@ -5,8 +5,10 @@ import type { Treatment, TreatmentVariant } from "@/lib/models";
 import { Button } from "@/components/ui";
 import { CalendarIcon, LocationIcon, SearchIcon, ToothIcon } from "@/components/icons";
 import { trackChoice } from "@/lib/choice-events.client";
+import { getDictionary, type Locale } from "@/lib/i18n";
 
-export function SearchForm({ treatments, variants }: { treatments: Treatment[]; variants: TreatmentVariant[] }) {
+export function SearchForm({ treatments, variants, locale }: { treatments: Treatment[]; variants: TreatmentVariant[]; locale: Locale }) {
+  const t = getDictionary(locale);
   const [treatmentId, setTreatmentId] = useState(treatments[0]?.id ?? "");
   const [variantId, setVariantId] = useState("");
   const [when, setWhen] = useState<"earliest" | "today" | "tomorrow">("earliest");
@@ -49,28 +51,28 @@ export function SearchForm({ treatments, variants }: { treatments: Treatment[]; 
   }
 
   return (
-    <form action="/results" onSubmit={submitSearch} className="grid gap-3" aria-label="البحث عن علاج أسنان">
+    <form action="/results" onSubmit={submitSearch} className="grid gap-3" aria-label={t["search.aria"]}>
       <div className="segmented-search grid overflow-hidden rounded-[30px] lg:grid-cols-[1.05fr_1.15fr_.72fr_auto] lg:items-stretch lg:rounded-full">
         <label className="search-segment min-w-0 border-b border-slate-200/70 px-5 py-3.5 lg:border-b-0 lg:border-e">
-          <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500"><ToothIcon size={15}/>العلاج</span>
+          <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500"><ToothIcon size={15}/>{t["search.treatment"]}</span>
           <select name="treatment" value={treatmentId} onChange={(e) => { const next = e.target.value; setTreatmentId(next); setVariantId(""); trackChoice({ event_name: "treatment_selected", treatment_id: next }); }} required className="mt-1.5 h-7 w-full min-w-0 bg-transparent text-sm font-black text-slate-950 outline-none">
-            {treatments.map((t) => <option key={t.id} value={t.id}>{t.name_ar} — {t.name_en}</option>)}
+            {treatments.map((treatment) => <option key={treatment.id} value={treatment.id}>{locale === "ar" ? treatment.name_ar : treatment.name_en}</option>)}
           </select>
         </label>
         <label className="search-segment min-w-0 border-b border-slate-200/70 px-5 py-3.5 lg:border-b-0 lg:border-e">
-          <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500"><SearchIcon size={15}/>النوع الدقيق</span>
+          <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500"><SearchIcon size={15}/>{t["search.variant"]}</span>
           <select name="variant" value={effectiveVariant} onChange={(e) => { const next = e.target.value; setVariantId(next); trackChoice({ event_name: "variant_selected", treatment_id: treatmentId || undefined, variant_id: next }); }} required className="mt-1.5 h-7 w-full min-w-0 bg-transparent text-sm font-black text-slate-950 outline-none">
-            {availableVariants.map((v) => <option key={v.id} value={v.id}>{v.name_ar} — {v.name_en}</option>)}
+            {availableVariants.map((variant) => <option key={variant.id} value={variant.id}>{locale === "ar" ? variant.name_ar : variant.name_en}</option>)}
           </select>
         </label>
         <label className="search-segment border-b border-slate-200/70 px-5 py-3.5 lg:border-b-0 lg:border-e">
-          <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500"><CalendarIcon size={15}/>الموعد</span>
+          <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500"><CalendarIcon size={15}/>{t["search.appointment"]}</span>
           <select name="when" value={when} onChange={(e) => { const next = e.target.value as "earliest" | "today" | "tomorrow"; setWhen(next); trackChoice({ event_name: "appointment_preference_selected", treatment_id: treatmentId || undefined, variant_id: effectiveVariant || undefined, choice_value: { when: next } }); }} className="mt-1.5 h-7 w-full bg-transparent text-sm font-black text-slate-950 outline-none">
-            <option value="earliest">أقرب موعد</option><option value="today">اليوم</option><option value="tomorrow">غدًا</option>
+            <option value="earliest">{t["search.earliest"]}</option><option value="today">{t["search.today"]}</option><option value="tomorrow">{t["search.tomorrow"]}</option>
           </select>
         </label>
         <div className="flex items-center p-2.5">
-          <Button type="submit" disabled={!effectiveVariant} className="w-full gap-2 lg:w-auto lg:px-5"><SearchIcon size={18}/><span>عرض النتائج</span></Button>
+          <Button type="submit" disabled={!effectiveVariant} className="w-full gap-2 lg:w-auto lg:px-5"><SearchIcon size={18}/><span>{t["search.results"]}</span></Button>
         </div>
       </div>
       <input type="hidden" name="lat" value={lat} />
@@ -78,10 +80,10 @@ export function SearchForm({ treatments, variants }: { treatments: Treatment[]; 
       <input type="hidden" name="radius" value="10" />
       <div className="flex min-h-9 flex-wrap items-center justify-center gap-2.5 px-2 lg:justify-start">
         <button type="button" onClick={locate} className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white/75 px-3.5 text-xs font-extrabold text-slate-700 ring-1 ring-slate-200/80 transition hover:bg-white">
-          <LocationIcon size={16}/>{geoState === "loading" ? "جاري تحديد الموقع…" : geoState === "ok" ? "تم استخدام موقعك التقريبي" : "استخدم موقعي لترتيب الأقرب"}
+          <LocationIcon size={16}/>{geoState === "loading" ? t["search.locating"] : geoState === "ok" ? t["search.locationUsed"] : t["search.useLocation"]}
         </button>
-        {geoState === "ok" && <span className="text-[11px] font-bold text-slate-500">نقرّب الإحداثيات قبل البحث حفاظًا على الخصوصية، ولا نخزنها في سجل الاختيارات.</span>}
-        {geoState === "error" && <span className="text-[11px] font-bold text-amber-700">يمكنك المتابعة بدون الموقع؛ لن يظهر ترتيب المسافة.</span>}
+        {geoState === "ok" && <span className="text-[11px] font-bold text-slate-500">{t["search.locationPrivacy"]}</span>}
+        {geoState === "error" && <span className="text-[11px] font-bold text-amber-700">{t["search.locationUnavailable"]}</span>}
       </div>
     </form>
   );

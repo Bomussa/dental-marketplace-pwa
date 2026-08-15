@@ -26,8 +26,8 @@ export async function searchLiveOffers(input: LiveSearchInput) {
     supabase.from("treatment_variants").select("name_ar,name_en").eq("id", input.variant).single(),
     supabase.rpc("search_dental_offers", {
       p_variant_id: input.variant,
-      p_lat: input.lat,
-      p_lng: input.lng,
+      p_lat: input.lat ?? undefined,
+      p_lng: input.lng ?? undefined,
       p_radius_km: input.radius,
     }),
   ]);
