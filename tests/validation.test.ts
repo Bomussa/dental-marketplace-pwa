@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingSchema, choiceEventSchema, notificationTemplateSchema, offerSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema } from "@/lib/validation";
+import { bookingSchema, choiceEventSchema, deviceInstallationSchema, notificationTemplateSchema, offerSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema } from "@/lib/validation";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -25,8 +25,19 @@ describe("validation", () => {
     expect(offerSchema.safeParse({ branch_id:"11111111-1111-4111-8111-111111111111", variant_id:"22222222-2222-4222-8222-222222222222", price_type:"range", min_qar:"200", duration_minutes:"30" }).success).toBe(false);
   });
 
-  it("rejects short idempotency keys", () => {
-    expect(bookingSchema.safeParse({ offer_id:"11111111-1111-4111-8111-111111111111", slot_id:"22222222-2222-4222-8222-222222222222", idempotency_key:"abc" }).success).toBe(false);
+  it("requires a patient profile and a sufficiently long idempotency key for booking", () => {
+    const request = { offer_id:"11111111-1111-4111-8111-111111111111", slot_id:"22222222-2222-4222-8222-222222222222", patient_profile_id:"33333333-3333-4333-8333-333333333333", idempotency_key:"booking-key-123" };
+    expect(bookingSchema.safeParse(request).success).toBe(true);
+    expect(bookingSchema.safeParse({ ...request, patient_profile_id: undefined }).success).toBe(false);
+    expect(bookingSchema.safeParse({ ...request, idempotency_key:"abc" }).success).toBe(false);
+  });
+
+  it("validates a minimal patient profile and rejects unsupported relationship or device class", () => {
+    expect(patientProfileSchema.safeParse({ display_name: "ريتال", relationship: "child", date_of_birth: "2018-04-15" }).success).toBe(true);
+    expect(patientProfileSchema.safeParse({ display_name: "", relationship: "child" }).success).toBe(false);
+    expect(patientProfileSchema.safeParse({ display_name: "شخص", relationship: "unknown" }).success).toBe(false);
+    expect(deviceInstallationSchema.safeParse({ installation_id: "77777777-7777-4777-8777-777777777777", device_class: "mobile", platform: "iOS" }).success).toBe(true);
+    expect(deviceInstallationSchema.safeParse({ installation_id: "77777777-7777-4777-8777-777777777777", device_class: "watch" }).success).toBe(false);
   });
 
   it("accepts a complete search event", () => {

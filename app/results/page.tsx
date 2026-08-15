@@ -4,6 +4,7 @@ import { searchLiveOffers, type WhenPreference } from "@/lib/search-offers";
 import { priceLabel } from "@/lib/price";
 import { Badge, Card } from "@/components/ui";
 import { BookButton } from "@/components/book-button";
+import { createClient } from "@/lib/supabase/server";
 import { ArrowUpLeftIcon, ClockIcon, LocationIcon, ShieldCheckIcon, SlidersIcon, StarIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,16 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const lng = parsed.data.lng === "" || parsed.data.lng === undefined ? null : parsed.data.lng;
   const rawWhen = scalar(raw.when) ?? "earliest";
   const when: WhenPreference = rawWhen === "today" || rawWhen === "tomorrow" ? rawWhen : "earliest";
-  const { variant, offers, error } = await searchLiveOffers({ variant: parsed.data.variant, lat, lng, radius: parsed.data.radius, when });
+  const supabase = await createClient();
+  const [{ variant, offers, error }, { data: claimsData }] = await Promise.all([
+    searchLiveOffers({ variant: parsed.data.variant, lat, lng, radius: parsed.data.radius, when }),
+    supabase.auth.getClaims(),
+  ]);
+  const userId = claimsData?.claims?.sub;
+  const { data: patientProfileData } = userId
+    ? await supabase.from("patient_profiles").select("id,display_name,relationship").is("archived_at", null).order("created_at", { ascending: true })
+    : { data: [] };
+  const patientProfiles = patientProfileData ?? [];
   const whenLabel = when === "today" ? "اليوم" : when === "tomorrow" ? "غدًا" : "أقرب موعد";
 
   return (
@@ -58,7 +68,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                 <aside className="border-t border-slate-200/70 bg-slate-50/55 p-5 sm:p-6 lg:border-s lg:border-t-0">
                   <div className="text-xs font-extrabold text-slate-500">السعر المعلن</div><div className="mt-1 text-2xl font-black tracking-tight text-slate-950">{priceLabel(offer.price_type, offer.min_minor, offer.max_minor)}</div>
                   <div className="mt-5 text-xs font-extrabold text-slate-500">أقرب موعد صالح</div><div className="mt-1 min-h-10 text-sm font-black leading-6">{offer.earliest_slot_at ? new Intl.DateTimeFormat("ar-QA", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" }).format(new Date(offer.earliest_slot_at)) : "لا يوجد موعد منشور الآن"}</div>
-                  <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} /> : <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">العرض متاح للمقارنة فقط حاليًا؛ لا يوجد Slot صالح للحجز.</div>}</div>
+                  <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} patientProfiles={patientProfiles} /> : <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">العرض متاح للمقارنة فقط حاليًا؛ لا يوجد Slot صالح للحجز.</div>}</div>
                 </aside>
               </div>
             </Card>

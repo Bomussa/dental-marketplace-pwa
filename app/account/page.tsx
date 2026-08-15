@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge, Button, Card, Select } from "@/components/ui";
 import { CalendarIcon, ClockIcon, StarIcon, UserIcon } from "@/components/icons";
-import { cancelBooking, submitReview } from "./actions";
+import { archivePatientProfile, cancelBooking, createPatientProfile, submitReview } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 type BookingRow = { id:string; booking_code:string; start_at:string; end_at:string; status:string; offer_snapshot:unknown; created_at:string };
 type ReviewRow = { booking_id:string; status:string; rating:number };
+type PatientProfileRow = { id:string; display_name:string; relationship:string; date_of_birth:string | null; gender:string | null; created_at:string };
 
 const statusLabel: Record<string, string> = {
   pending_hold: "قيد تأمين الموعد",
@@ -27,14 +28,16 @@ export default async function AccountPage() {
   const userId = claimsData?.claims?.sub;
   if (error || !userId) redirect("/login?next=/account");
 
-  const [{ data: profile }, { data: bookingData }, { data: reviewData }] = await Promise.all([
+  const [{ data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }] = await Promise.all([
     supabase.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle(),
     supabase.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").order("created_at", { ascending: false }).limit(20),
     supabase.from("reviews").select("booking_id,status,rating").eq("patient_id", userId),
+    supabase.from("patient_profiles").select("id,display_name,relationship,date_of_birth,gender,created_at").is("archived_at", null).order("created_at", { ascending: true }),
   ]);
 
   const bookings = (bookingData ?? []) as BookingRow[];
   const reviews = (reviewData ?? []) as ReviewRow[];
+  const patientProfiles = (patientProfileData ?? []) as PatientProfileRow[];
   const reviewed = new Map(reviews.map((r) => [r.booking_id, r]));
   const upcoming = bookings.filter((b) => ["pending_hold", "pending_clinic_confirmation", "confirmed", "checked_in"].includes(b.status)).length;
   const completed = bookings.filter((b) => b.status === "completed").length;
@@ -54,6 +57,18 @@ export default async function AccountPage() {
           <div className="rounded-2xl bg-blue-50/75 p-4 ring-1 ring-blue-100"><div className="text-2xl font-black text-[#0066CC]">{upcoming}</div><div className="mt-1 text-xs font-bold text-slate-500">قادمة أو قيد التأكيد</div></div>
           <div className="rounded-2xl bg-emerald-50/75 p-4 ring-1 ring-emerald-100"><div className="text-2xl font-black text-emerald-700">{completed}</div><div className="mt-1 text-xs font-bold text-slate-500">زيارات مكتملة</div></div>
         </div>
+      </section>
+
+      <section className="mt-8">
+        <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.14em] text-[#0066CC]">Family profiles</p><h2 className="mt-1 text-2xl font-black">لمن تحجز المواعيد؟</h2><p className="mt-1 text-sm font-medium text-slate-500">أضف أفراد العائلة بالحد الأدنى من البيانات. لا نخزن أي ملف طبي هنا.</p></div><UserIcon className="text-[#007AFF]" size={24}/></div>
+        <Card className="p-5 sm:p-6">
+          <div className="grid gap-3 sm:grid-cols-2">{patientProfiles.map((patientProfile) => <div key={patientProfile.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70"><div><p className="font-black">{patientProfile.display_name}</p><p className="mt-1 text-xs font-bold text-slate-500">{patientProfile.relationship === "self" ? "أنا" : patientProfile.relationship === "child" ? "ابن/ابنة" : patientProfile.relationship === "spouse" ? "زوج/زوجة" : patientProfile.relationship === "parent" ? "أب/أم" : "فرد من العائلة"}</p></div>{patientProfile.relationship !== "self" && <form action={archivePatientProfile}><input type="hidden" name="patient_profile_id" value={patientProfile.id}/><button className="min-h-11 rounded-full px-3 text-xs font-black text-red-700 ring-1 ring-red-200 transition hover:bg-red-50">أرشفة</button></form>}</div>)}</div>
+          <form action={createPatientProfile} className="mt-5 grid gap-3 border-t border-slate-200/70 pt-5 sm:grid-cols-[1fr_180px_auto]">
+            <input name="display_name" required maxLength={120} className="min-h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold outline-none transition focus:border-[#007AFF] focus:ring-4 focus:ring-blue-500/10" placeholder="اسم الشخص كما تريد أن يظهر"/>
+            <Select name="relationship" defaultValue="child"><option value="child">ابن/ابنة</option><option value="spouse">زوج/زوجة</option><option value="parent">أب/أم</option><option value="other">فرد آخر</option></Select>
+            <Button>إضافة شخص</Button>
+          </form>
+        </Card>
       </section>
 
       <section className="mt-8">

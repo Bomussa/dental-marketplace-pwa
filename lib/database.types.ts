@@ -338,6 +338,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          booked_by_user_id: string
           booking_code: string
           booking_period: unknown
           branch_id: string
@@ -349,6 +350,7 @@ export type Database = {
           offer_id: string
           offer_snapshot: Json
           patient_id: string
+          patient_profile_id: string
           practitioner_id: string | null
           resource_id: string | null
           slot_id: string
@@ -357,6 +359,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          booked_by_user_id: string
           booking_code: string
           booking_period?: unknown
           branch_id: string
@@ -368,6 +371,7 @@ export type Database = {
           offer_id: string
           offer_snapshot: Json
           patient_id: string
+          patient_profile_id: string
           practitioner_id?: string | null
           resource_id?: string | null
           slot_id: string
@@ -376,6 +380,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          booked_by_user_id?: string
           booking_code?: string
           booking_period?: unknown
           branch_id?: string
@@ -387,6 +392,7 @@ export type Database = {
           offer_id?: string
           offer_snapshot?: Json
           patient_id?: string
+          patient_profile_id?: string
           practitioner_id?: string | null
           resource_id?: string | null
           slot_id?: string
@@ -414,6 +420,13 @@ export type Database = {
             columns: ["offer_id"]
             isOneToOne: false
             referencedRelation: "branch_service_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -922,6 +935,51 @@ export type Database = {
           },
         ]
       }
+      device_installations: {
+        Row: {
+          account_id: string | null
+          app_version: string | null
+          browser: string | null
+          created_at: string
+          device_class: string | null
+          device_label: string | null
+          first_seen_at: string
+          id: string
+          installation_id: string
+          last_seen_at: string
+          platform: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          app_version?: string | null
+          browser?: string | null
+          created_at?: string
+          device_class?: string | null
+          device_label?: string | null
+          first_seen_at?: string
+          id?: string
+          installation_id: string
+          last_seen_at?: string
+          platform?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          app_version?: string | null
+          browser?: string | null
+          created_at?: string
+          device_class?: string | null
+          device_label?: string | null
+          first_seen_at?: string
+          id?: string
+          installation_id?: string
+          last_seen_at?: string
+          platform?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           config: Json
@@ -1314,6 +1372,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      patient_profiles: {
+        Row: {
+          account_id: string
+          archived_at: string | null
+          created_at: string
+          date_of_birth: string | null
+          display_name: string
+          gender: string | null
+          id: string
+          relationship: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          archived_at?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name: string
+          gender?: string | null
+          id?: string
+          relationship?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          archived_at?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name?: string
+          gender?: string | null
+          id?: string
+          relationship?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       payment_events: {
         Row: {
@@ -2096,10 +2190,38 @@ export type Database = {
         Args: { p_days?: number }
         Returns: Json
       }
-      book_slot: {
+      book_slot:
+        | {
+            Args: {
+              p_idempotency_key: string
+              p_offer_id: string
+              p_slot_id: string
+            }
+            Returns: {
+              booking_code: string
+              booking_id: string
+              booking_status: string
+            }[]
+          }
+        | {
+            Args: {
+              p_idempotency_key: string
+              p_offer_id: string
+              p_patient_profile_id: string
+              p_slot_id: string
+            }
+            Returns: {
+              booking_code: string
+              booking_id: string
+              booking_status: string
+            }[]
+          }
+      book_slot_server: {
         Args: {
+          p_actor_id: string
           p_idempotency_key: string
           p_offer_id: string
+          p_patient_profile_id: string
           p_slot_id: string
         }
         Returns: {
@@ -2371,3 +2493,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

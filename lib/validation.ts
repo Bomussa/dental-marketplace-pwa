@@ -14,6 +14,7 @@ export const searchSchema = z.object({
 export const bookingSchema = z.object({
   offer_id: uuid,
   slot_id: uuid,
+  patient_profile_id: uuid,
   idempotency_key: z.string().min(8).max(128),
 });
 
@@ -217,4 +218,27 @@ export const notificationTemplateSchema = z.object({
   locale: z.enum(["ar", "en"]),
   subject: z.string().trim().max(200).optional().default(""),
   body: z.string().trim().min(1).max(4000),
+});
+
+const optionalIsoDate = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).transform((value) => value || undefined);
+const optionalGender = z.union([z.literal(""), z.enum(["female", "male", "other", "prefer_not_to_say"])]).transform((value) => value || undefined);
+
+export const patientProfileSchema = z.object({
+  display_name: z.string().trim().min(1).max(120),
+  relationship: z.enum(["self", "child", "spouse", "parent", "other"]),
+  date_of_birth: optionalIsoDate.optional(),
+  gender: optionalGender.optional(),
+});
+
+export const patientProfileArchiveSchema = z.object({
+  patient_profile_id: uuid,
+});
+
+export const deviceInstallationSchema = z.object({
+  installation_id: uuid,
+  device_label: z.string().trim().min(1).max(80).optional(),
+  platform: z.string().trim().max(80).optional(),
+  browser: z.string().trim().max(120).optional(),
+  device_class: z.enum(["mobile", "tablet", "desktop", "unknown"]),
+  app_version: z.string().trim().max(80).optional(),
 });

@@ -4,13 +4,85 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { reviewSchema, uuid } from "@/lib/validation";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { patientProfileArchiveSchema, patientProfileSchema, reviewSchema, uuid } from "@/lib/validation";
 
 async function requireUser() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims?.sub) redirect("/login?next=/account");
   return { supabase, userId: data.claims.sub };
+}
+
+function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "cannot_archive_self"): never {
+  redirect(`/account?patient_profile_error=${code}`);
+}
+
+function requireAdmin() {
+  try {
+    return createAdminClient();
+  } catch {
+    return profileActionError("unavailable");
+  }
+}
+
+export async function createPatientProfile(formData: FormData) {
+  const parsed = patientProfileSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return profileActionError("invalid");
+  const input = parsed.data;
+
+  const { userId } = await requireUser();
+  const admin = requireAdmin();
+
+  if (input.relationship === "self") {
+    const { data: selfProfile, error } = await admin
+      .from("patient_profiles")
+      .select("id")
+      .eq("account_id", userId)
+      .eq("relationship", "self")
+      .is("archived_at", null)
+      .maybeSingle();
+    if (error) return profileActionError("unavailable");
+    if (selfProfile) return profileActionError("self_exists");
+  }
+
+  const { error } = await admin.from("patient_profiles").insert({
+    account_id: userId,
+    display_name: input.display_name,
+    relationship: input.relationship,
+    date_of_birth: input.date_of_birth ?? null,
+    gender: input.gender ?? null,
+  });
+  if (error) return profileActionError("unavailable");
+
+  revalidatePath("/account");
+}
+
+export async function archivePatientProfile(formData: FormData) {
+  const parsed = patientProfileArchiveSchema.safeParse({ patient_profile_id: formData.get("patient_profile_id") });
+  if (!parsed.success) return profileActionError("invalid");
+  const input = parsed.data;
+
+  const { userId } = await requireUser();
+  const admin = requireAdmin();
+  const { data: profile, error: readError } = await admin
+    .from("patient_profiles")
+    .select("id,relationship")
+    .eq("id", input.patient_profile_id)
+    .eq("account_id", userId)
+    .is("archived_at", null)
+    .maybeSingle();
+  if (readError || !profile) return profileActionError("invalid");
+  if (profile.relationship === "self") return profileActionError("cannot_archive_self");
+
+  const { error } = await admin
+    .from("patient_profiles")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", profile.id)
+    .eq("account_id", userId);
+  if (error) return profileActionError("unavailable");
+
+  revalidatePath("/account");
 }
 
 export async function cancelBooking(formData: FormData) {
