@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { serverOperationsConfigured } from "@/lib/supabase/admin";
+import { serverOperationsConfigured } from "@/lib/server-readiness";
 
 const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const originalSecret = process.env.SUPABASE_SECRET_KEY;
