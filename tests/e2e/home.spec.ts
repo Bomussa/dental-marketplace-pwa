@@ -18,3 +18,14 @@ test("clinic workspace redirects unauthenticated visitors to the safe login retu
   await expect(page).toHaveURL(/\/login\?next=%2Fclinic|\/login\?next=\/clinic/);
   await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول إلى بريدك" })).toBeVisible();
 });
+
+
+test("sensitive booking and support endpoints reject unauthenticated requests before any mutation", async ({ request }) => {
+  const [bookingResponse, supportResponse] = await Promise.all([
+    request.post("/api/book", { data: {} }),
+    request.post("/api/support", { data: {} }),
+  ]);
+
+  expect(bookingResponse.status()).toBe(401);
+  expect(supportResponse.status()).toBe(401);
+});

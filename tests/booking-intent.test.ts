@@ -39,6 +39,16 @@ describe("booking intent key", () => {
     expect(crypto.randomUUID).toHaveBeenCalledTimes(2);
   });
 
+  it("uses separate retry keys for different family patient profiles", () => {
+    vi.stubGlobal("crypto", {
+      randomUUID: vi.fn()
+        .mockReturnValueOnce("11111111-1111-4111-8111-111111111111")
+        .mockReturnValueOnce("22222222-2222-4222-8222-222222222222"),
+    });
+    expect(bookingIntentKey("offer-a", "slot-a", "profile-parent")).toBe("11111111-1111-4111-8111-111111111111");
+    expect(bookingIntentKey("offer-a", "slot-a", "profile-child")).toBe("22222222-2222-4222-8222-222222222222");
+  });
+
   it("clears a resolved intent so a later attempt receives a fresh key", () => {
     bookingIntentKey("offer-a", "slot-a");
     clearBookingIntent("offer-a", "slot-a");
