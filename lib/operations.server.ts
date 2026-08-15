@@ -26,6 +26,23 @@ async function callOperationalRpc<T extends keyof import("@/lib/database.types")
   return data;
 }
 
+type ServerRpcResult = {
+  data: unknown;
+  error: { code?: string } | null;
+};
+
+type ServerRpc = (functionName: string, args: Record<string, unknown>) => PromiseLike<ServerRpcResult>;
+
+async function callServerRpc(functionName: string, args: Record<string, unknown>) {
+  const admin = createAdminClient();
+  // Keep newly-added server-only RPCs usable immediately after a migration even
+  // before the checked-in generated Database type file is refreshed.
+  const rpc = admin.rpc.bind(admin) as unknown as ServerRpc;
+  const { data, error } = await rpc(functionName, args);
+  if (error) throw new Error(error.code || "OPERATION_FAILED");
+  return data;
+}
+
 export async function consumeRateLimit(input: {
   scope: "booking" | "device_installation" | "support_message" | "choice_event";
   subject: string;
@@ -114,6 +131,22 @@ export async function createSettlementPeriod(input: {
     p_period_end: input.periodEnd,
     p_period_kind: input.periodKind,
     p_notes: input.notes,
+  });
+}
+
+export async function verifyAndActivateSubject(input: {
+  subjectType: "clinic" | "branch" | "practitioner";
+  subjectId: string;
+  source: string;
+  identifier?: string;
+}) {
+  const actorId = await verifiedActor();
+  return callServerRpc("verify_and_activate_server", {
+    p_actor_id: actorId,
+    p_subject_type: input.subjectType,
+    p_subject_id: input.subjectId,
+    p_source: input.source,
+    p_identifier: input.identifier ?? null,
   });
 }
 

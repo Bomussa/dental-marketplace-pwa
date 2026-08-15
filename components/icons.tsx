@@ -17,6 +17,7 @@ export function ToothIcon(props: IconProps) { return <IconBase {...props}><path 
 export function SparklesIcon(props: IconProps) { return <IconBase {...props}><path d="m12 3 1.1 3.4a4 4 0 0 0 2.5 2.5L19 10l-3.4 1.1a4 4 0 0 0-2.5 2.5L12 17l-1.1-3.4a4 4 0 0 0-2.5-2.5L5 10l3.4-1.1a4 4 0 0 0 2.5-2.5L12 3Z"/><path d="m19 16 .5 1.5A2.2 2.2 0 0 0 21 19l-1.5.5A2.2 2.2 0 0 0 18 21l-.5-1.5A2.2 2.2 0 0 0 16 18l1.5-.5A2.2 2.2 0 0 0 19 16Z"/></IconBase>; }
 export function CheckIcon(props: IconProps) { return <IconBase {...props}><path d="m5 12 4 4L19 6"/></IconBase>; }
 export function ShieldCheckIcon(props: IconProps) { return <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></IconBase>; }
+export function AlertCircleIcon(props: IconProps) { return <IconBase {...props}><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 17h.01"/></IconBase>; }
 export function StarIcon(props: IconProps) { return <IconBase {...props}><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></IconBase>; }
 export function ClockIcon(props: IconProps) { return <IconBase {...props}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></IconBase>; }
 export function UserIcon(props: IconProps) { return <IconBase {...props}><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></IconBase>; }
