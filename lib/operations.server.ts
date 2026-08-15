@@ -65,6 +65,26 @@ export async function consumeRateLimit(input: {
   return allowed === true;
 }
 
+export async function registerDeviceInstallation(input: {
+  accountId: string | null;
+  installationId: string;
+  deviceLabel?: string;
+  platform?: string;
+  browser?: string;
+  deviceClass: "mobile" | "tablet" | "desktop" | "unknown";
+  appVersion?: string;
+}) {
+  return callServerRpc("register_device_installation_server", {
+    p_account_id: input.accountId,
+    p_installation_id: input.installationId,
+    p_device_label: input.deviceLabel ?? null,
+    p_platform: input.platform ?? null,
+    p_browser: input.browser ?? null,
+    p_device_class: input.deviceClass,
+    p_app_version: input.appVersion ?? null,
+  });
+}
+
 export async function requestOfferRevision(input: {
   offerId: string;
   priceType: "fixed" | "from" | "range" | "package" | "consultation_required";
