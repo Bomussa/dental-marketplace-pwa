@@ -15,12 +15,13 @@ export function priceLabel(
 ) {
   const min = formatQarMinor(minMinor, locale);
   const max = formatQarMinor(maxMinor, locale);
+  const english = locale.toLowerCase().startsWith("en");
   switch (priceType) {
     case "fixed": return min ?? "—";
-    case "from": return `يبدأ من ${min ?? "—"}`;
+    case "from": return `${english ? "From" : "يبدأ من"} ${min ?? "—"}`;
     case "range": return min && max ? `${min} – ${max}` : "—";
-    case "package": return `باقة ${min ?? "—"}${max && max !== min ? ` – ${max}` : ""}`;
-    case "consultation_required": return "السعر بعد الاستشارة";
+    case "package": return `${english ? "Package" : "باقة"} ${min ?? "—"}${max && max !== min ? ` – ${max}` : ""}`;
+    case "consultation_required": return english ? "Price after consultation" : "السعر بعد الاستشارة";
     default: return min ?? "—";
   }
 }
