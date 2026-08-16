@@ -4,7 +4,10 @@ const PRIVATE_PREFIX = /^\/(?:account|clinic|admin|auth|api)(?:\/|$)/;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.add(new Request(PUBLIC_FALLBACK, { cache: "reload" }))),
+    caches
+      .open(CACHE)
+      .then((cache) => cache.add(new Request(PUBLIC_FALLBACK, { cache: "reload" })))
+      .then(() => self.skipWaiting()),
   );
 });
 
