@@ -2,7 +2,7 @@
 
 Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`
 
-The following migration ledger was retrieved from the connected Supabase management API on 2026-08-15:
+The following migration ledger was retrieved from the connected Supabase management API and refreshed on 2026-08-16:
 
 1. `20260814162411_core_schema_v1`
 2. `20260814162736_rls_and_atomic_booking_v1`
@@ -48,6 +48,7 @@ The following migration ledger was retrieved from the connected Supabase managem
 42. `20260815194453_offer_verification_trigger_security_context_v1`
 43. `20260815195113_admin_verify_activate_atomic_v1`
 44. `20260815201835_device_installation_server_upsert_v1`
+45. `20260816063608_private_rls_review_integrity_v1`
 
 ## Repository alignment status
 
