@@ -57,6 +57,8 @@ The following migration ledger was retrieved from the connected Supabase managem
 51. `20260816181434_offer_revision_price_invariants_v1`
 52. `20260816182205_booking_completion_attendance_guard_v1`
 53. `20260816182801_clinic_booking_transition_matrix_v1`
+54. `20260816183333_attendance_event_cycle_v1`
+55. `20260816183532_attendance_sequence_order_v1`
 
 ## Repository alignment status
 
