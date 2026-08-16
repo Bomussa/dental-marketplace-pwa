@@ -54,7 +54,7 @@ test("location unavailable degrades safely and keeps search usable", async ({ pa
   expect(hasGeolocation).toBe(false);
 
   await page.getByRole("button", { name: "استخدم موقعي لترتيب الأقرب" }).click();
-  await expect(page.getByText("يمكنك المتابعة بدون موقع؛ لن يظهر ترتيب المسافة.")).toBeVisible();
+  await expect(page.getByText("يمكنك المتابعة بدون الموقع؛ لن يظهر ترتيب المسافة.")).toBeVisible();
   await expect(page.getByRole("button", { name: "عرض النتائج" })).toBeEnabled();
 });
 
