@@ -42,13 +42,16 @@ test("appointment preference survives into the results URL", async ({ page }) =>
 });
 
 test("location unavailable degrades safely and keeps search usable", async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(() => {
-    Object.defineProperty(navigator, "geolocation", {
+  await page.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, "geolocation", {
       configurable: true,
-      value: undefined,
+      get: () => undefined,
     });
   });
+  await page.goto("/");
+
+  const hasGeolocation = await page.evaluate(() => Boolean(navigator.geolocation));
+  expect(hasGeolocation).toBe(false);
 
   await page.getByRole("button", { name: "استخدم موقعي لترتيب الأقرب" }).click();
   await expect(page.getByText("يمكنك المتابعة بدون موقع؛ لن يظهر ترتيب المسافة.")).toBeVisible();
