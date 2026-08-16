@@ -18,15 +18,31 @@ function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "c
   redirect(`/account?patient_profile_error=${code}`);
 }
 
+function profileActionSuccess(code: "created" | "archived"): never {
+  redirect(`/account?patient_profile_success=${code}`);
+}
+
 function bookingActionError(code: "invalid" | "unavailable" | "forbidden" | "not_cancellable"): never {
   redirect(`/account?booking_error=${code}`);
 }
 
-function requireAdmin() {
+function bookingActionSuccess(code: "cancelled"): never {
+  redirect(`/account?booking_success=${code}`);
+}
+
+function reviewActionError(code: "invalid" | "not_eligible" | "duplicate" | "forbidden" | "unavailable"): never {
+  redirect(`/account?review_error=${code}`);
+}
+
+function reviewActionSuccess(): never {
+  redirect("/account?review_success=submitted");
+}
+
+function requireAdmin(onUnavailable: () => never) {
   try {
     return createAdminClient();
   } catch {
-    return profileActionError("unavailable");
+    return onUnavailable();
   }
 }
 
@@ -36,7 +52,7 @@ export async function createPatientProfile(formData: FormData) {
   const input = parsed.data;
 
   const { userId } = await requireUser();
-  const admin = requireAdmin();
+  const admin = requireAdmin(() => profileActionError("unavailable"));
 
   if (input.relationship === "self") {
     const { data: selfProfile, error } = await admin
@@ -60,6 +76,7 @@ export async function createPatientProfile(formData: FormData) {
   if (error) return profileActionError("unavailable");
 
   revalidatePath("/account");
+  return profileActionSuccess("created");
 }
 
 export async function archivePatientProfile(formData: FormData) {
@@ -68,7 +85,7 @@ export async function archivePatientProfile(formData: FormData) {
   const input = parsed.data;
 
   const { userId } = await requireUser();
-  const admin = requireAdmin();
+  const admin = requireAdmin(() => profileActionError("unavailable"));
   const { data: profile, error: readError } = await admin
     .from("patient_profiles")
     .select("id,relationship")
@@ -87,6 +104,7 @@ export async function archivePatientProfile(formData: FormData) {
   if (error) return profileActionError("unavailable");
 
   revalidatePath("/account");
+  return profileActionSuccess("archived");
 }
 
 export async function cancelBooking(formData: FormData) {
@@ -94,7 +112,7 @@ export async function cancelBooking(formData: FormData) {
   if (!parsed.success) return bookingActionError("invalid");
 
   const { userId } = await requireUser();
-  const admin = requireAdmin();
+  const admin = requireAdmin(() => bookingActionError("unavailable"));
   const { error } = await admin.rpc("cancel_booking_server", {
     p_actor_id: userId,
     p_booking_id: parsed.data.booking_id,
@@ -108,15 +126,23 @@ export async function cancelBooking(formData: FormData) {
   }
 
   revalidatePath("/account");
+  return bookingActionSuccess("cancelled");
 }
 
 export async function submitReview(formData: FormData) {
   const parsed = reviewSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return;
+  if (!parsed.success) return reviewActionError("invalid");
+
   const { supabase, userId } = await requireUser();
-  const { data: booking } = await supabase.from("bookings").select("id,clinic_id,practitioner_id,status").eq("id", parsed.data.booking_id).maybeSingle();
-  if (!booking || booking.status !== "completed") return;
-  await supabase.from("reviews").insert({
+  const { data: booking, error: bookingError } = await supabase
+    .from("bookings")
+    .select("id,clinic_id,practitioner_id,status")
+    .eq("id", parsed.data.booking_id)
+    .maybeSingle();
+  if (bookingError) return reviewActionError("unavailable");
+  if (!booking || booking.status !== "completed") return reviewActionError("not_eligible");
+
+  const { error } = await supabase.from("reviews").insert({
     booking_id: booking.id,
     patient_id: userId,
     clinic_id: booking.clinic_id,
@@ -125,5 +151,12 @@ export async function submitReview(formData: FormData) {
     review_text: parsed.data.review_text || null,
     status: "pending",
   });
+  if (error) {
+    if (error.code === "23505") return reviewActionError("duplicate");
+    if (error.code === "42501") return reviewActionError("forbidden");
+    return reviewActionError("unavailable");
+  }
+
   revalidatePath("/account");
+  return reviewActionSuccess();
 }
