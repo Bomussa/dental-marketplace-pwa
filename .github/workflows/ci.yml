@@ -19,14 +19,20 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
       - name: Install
         run: npm ci
+      - name: Runtime High audit report (tracked upstream exception)
+        run: npm audit --omit=dev --audit-level=high || true
+      - name: Runtime Critical dependency gate
+        run: npm audit --omit=dev --audit-level=critical
+      - name: All-dependency Critical gate
+        run: npm audit --audit-level=critical
       - name: TypeScript
         run: npm run typecheck
       - name: ESLint
@@ -39,3 +45,25 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+  public-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://bqvcukxfsnchvkgejolz.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_lFco4uohRGycibvOiZ8D1g_jlmXzgWl
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Public E2E — desktop and mobile
+        run: npm run test:e2e
