@@ -141,3 +141,56 @@ test("PWA manifest remains available with the production brand", async ({ reques
   expect(manifest.name).toContain("أسناني قطر");
   expect(manifest.display).toBe("standalone");
 });
+
+test("security headers include a first-party CSP without opening frames or objects", async ({ request }) => {
+  const response = await request.get("/");
+  expect(response.status()).toBe(200);
+  const headers = response.headers();
+  const csp = headers["content-security-policy"] ?? "";
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("connect-src 'self' https://bqvcukxfsnchvkgejolz.supabase.co wss://bqvcukxfsnchvkgejolz.supabase.co");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["x-frame-options"]).toBe("DENY");
+});
+
+test("production service worker never converts an offline API failure into cached HTML", async ({ page, context }) => {
+  await page.goto("/");
+  const serviceWorkerReady = await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator)) return false;
+    await navigator.serviceWorker.ready;
+    return true;
+  });
+  expect(serviceWorkerReady).toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+
+  await context.setOffline(true);
+  const offlineApiResult = await page.evaluate(async () => {
+    try {
+      const response = await fetch("/api/health");
+      return { resolved: true, status: response.status, contentType: response.headers.get("content-type") };
+    } catch {
+      return { resolved: false, status: 0, contentType: null };
+    }
+  });
+  await context.setOffline(false);
+
+  expect(offlineApiResult.resolved).toBe(false);
+  expect(offlineApiResult.status).toBe(0);
+  expect(offlineApiResult.contentType).toBeNull();
+});
+
+test("production service worker provides only a public document fallback offline", async ({ page, context }) => {
+  await page.goto("/");
+  await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator)) throw new Error("service worker unsupported");
+    await navigator.serviceWorker.ready;
+  });
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+
+  await context.setOffline(true);
+  await page.goto("/offline-public-shell-check");
+  await expect(page.getByRole("heading", { level: 1, name: "علاج الأسنان المناسب، بسعر واضح وموعد حقيقي." })).toBeVisible();
+  await context.setOffline(false);
+});
