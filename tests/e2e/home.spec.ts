@@ -193,7 +193,7 @@ test("production service worker never converts an offline API failure into cache
   expect(offlineApiResult.contentType).toBeNull();
 });
 
-test("production service worker provides only a public document fallback offline", async ({ page, context }) => {
+test("production service worker provides only a static public document fallback offline", async ({ page, context }) => {
   await page.goto("/");
   await page.evaluate(async () => {
     if (!("serviceWorker" in navigator)) throw new Error("service worker unsupported");
@@ -203,6 +203,8 @@ test("production service worker provides only a public document fallback offline
 
   await context.setOffline(true);
   await page.goto("/offline-public-shell-check");
-  await expect(page.getByRole("heading", { level: 1, name: "علاج الأسنان المناسب، بسعر واضح وموعد حقيقي." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "لا يوجد اتصال بالإنترنت" })).toBeVisible();
+  await expect(page.getByText("هذه صفحة ثابتة عامة فقط، ولا تحتوي على بيانات حساب أو حجز أو معلومات تشغيلية.")).toBeVisible();
+  await expect(page.getByText("لوحة الإدارة")).toHaveCount(0);
   await context.setOffline(false);
 });
