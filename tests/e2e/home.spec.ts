@@ -67,6 +67,18 @@ test("language switch persists an English product experience", async ({ page }) 
   await expect(page.getByText("Dental price intelligence · Qatar")).toBeVisible();
 });
 
+test("language switch also localizes the empty results experience", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "عرض النتائج" }).click();
+  await expect(page.getByText("لا توجد عروض مؤهلة الآن")).toBeVisible();
+
+  await page.getByRole("button", { name: "تغيير اللغة إلى الإنجليزية" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("heading", { level: 1, name: "In-Office Whitening" })).toBeVisible();
+  await expect(page.getByText("No eligible offers are available right now")).toBeVisible();
+  await expect(page.getByText("لا توجد عروض مؤهلة الآن")).toHaveCount(0);
+});
+
 test("clinic workspace redirects unauthenticated visitors to the safe login return path", async ({ page }) => {
   await page.goto("/clinic");
   await expect(page).toHaveURL(/\/login\?next=%2Fclinic|\/login\?next=\/clinic/);
