@@ -53,6 +53,8 @@ The following migration ledger was retrieved from the connected Supabase managem
 47. `20260816064530_clinic_booking_status_server_v1`
 48. `20260816065017_support_admin_and_template_privileges_v1`
 49. `20260816180742_support_knowledge_policy_dedup_v1`
+50. `20260816181409_review_pending_edit_guard_v1`
+51. `20260816181434_offer_revision_price_invariants_v1`
 
 ## Repository alignment status
 
