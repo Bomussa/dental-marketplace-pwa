@@ -28,6 +28,7 @@ const statusLabel: Record<string, string> = {
   patient_cancelled: "ملغي من المريض",
   clinic_cancelled: "ملغي من العيادة",
   no_show: "لم يحضر",
+  expired: "انتهت صلاحية الحجز",
   failed: "غير مكتمل",
 };
 
