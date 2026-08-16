@@ -13,7 +13,7 @@ type Offer={id:string;branch_id:string;variant_id:string;price_type:string;min_m
 type Slot={id:string;branch_id:string;variant_id:string;start_at:string;end_at:string;status:string};
 type Variant={id:string;name_ar:string;name_en:string};
 type Booking={id:string;booking_code:string;start_at:string;status:string;branch_id:string;offer_snapshot:unknown};
-type AttendanceEvent={booking_id:string};
+type AttendanceEvent={booking_id:string;event_type:string;sequence_no:number};
 
 export default async function ClinicPage({ searchParams }: { searchParams: Promise<{ clinic?: string }> }) {
   const params = await searchParams;
@@ -46,15 +46,19 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
   const offers=(offerData??[]) as Offer[], slots=(slotData??[]) as Slot[], variants=(variantData??[]) as Variant[], bookings=(bookingData??[]) as Booking[];
   const bookingIds = bookings.map((booking) => booking.id);
   let attendanceStateUnavailable = false;
-  let reversedBookingIds = new Set<string>();
+  const latestAttendanceByBooking = new Map<string, AttendanceEvent>();
   if (bookingIds.length) {
-    const { data: reversedAttendanceData, error: attendanceError } = await supabase
+    const { data: attendanceData, error: attendanceError } = await supabase
       .from("booking_attendance_events")
-      .select("booking_id")
-      .in("booking_id", bookingIds)
-      .eq("event_type", "attendance_reversed");
+      .select("*")
+      .in("booking_id", bookingIds);
     attendanceStateUnavailable = Boolean(attendanceError);
-    if (!attendanceError) reversedBookingIds = new Set(((reversedAttendanceData ?? []) as AttendanceEvent[]).map((event) => event.booking_id));
+    if (!attendanceError) {
+      for (const event of (attendanceData ?? []) as unknown as AttendanceEvent[]) {
+        const current = latestAttendanceByBooking.get(event.booking_id);
+        if (!current || event.sequence_no > current.sequence_no) latestAttendanceByBooking.set(event.booking_id, event);
+      }
+    }
   }
   const publishedOffers=offers.filter(o=>o.status==="active").length;
   const publishedSlots=slots.filter(s=>s.status==="published").length;
@@ -91,7 +95,29 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
         <Card className="p-5"><div className="flex items-center gap-2"><CalendarIcon size={18} className="text-[#007AFF]"/><h2 className="font-black">المواعيد المنشورة والمسودات</h2></div><div className="mt-4 space-y-2 text-sm">{slots.length?slots.slice(0,12).map(s=><div key={s.id} className="flex items-center justify-between gap-3 rounded-[18px] bg-slate-50/80 p-3 ring-1 ring-slate-200/60"><span className="font-bold">{new Intl.DateTimeFormat("ar-QA",{dateStyle:"short",timeStyle:"short",timeZone:"Asia/Qatar"}).format(new Date(s.start_at))}</span><div className="flex items-center gap-2"><Badge tone={s.status==="published"?"green":"slate"}>{s.status}</Badge>{s.status==="draft"&&<form action={publishSlot}><input type="hidden" name="id" value={s.id}/><Button className="min-h-9 px-3 py-1 text-xs">نشر</Button></form>}</div></div>):<span className="text-slate-500">لا توجد مواعيد.</span>}</div></Card>
       </section>
 
-      <Card className="mt-6 p-5 sm:p-6"><div className="flex items-center gap-2"><SlidersIcon size={19} className="text-[#007AFF]"/><h2 className="font-black">الحجوزات التشغيلية</h2></div><p className="mt-2 text-xs text-slate-500">تسجيل الحضور ينشئ أثرًا تشغيليًا ومحاسبيًا غير قابل للتعديل المباشر. إكمال الزيارة متاح فقط بعد تسجيل حضور صالح لم يتم عكسه.</p><div className="mt-4 space-y-3">{bookings.length?bookings.map(b=>{const attendanceReversed=reversedBookingIds.has(b.id);return <div key={b.id} className="grid gap-3 rounded-[20px] bg-slate-50/80 p-4 ring-1 ring-slate-200/60 sm:grid-cols-[1fr_auto]"><div><div className="font-black" dir="ltr">{b.booking_code}</div><div className="mt-1 text-xs font-bold text-slate-500">{new Intl.DateTimeFormat("ar-QA",{dateStyle:"short",timeStyle:"short",timeZone:"Asia/Qatar"}).format(new Date(b.start_at))} · {b.status}</div></div><div className="flex flex-wrap gap-2">{b.status==="confirmed"&&<form action={markBookingCheckedIn}><input type="hidden" name="booking_id" value={b.id}/><input type="hidden" name="reason" value="حضور مؤكد من العيادة"/><Button className="gap-1.5"><CheckIcon size={16}/>تسجيل الحضور</Button></form>}{b.status==="checked_in"&&attendanceStateUnavailable&&<Badge tone="amber">تعذر التحقق من حالة الحضور — أعد تحميل الصفحة</Badge>}{b.status==="checked_in"&&!attendanceStateUnavailable&&attendanceReversed&&<Badge tone="amber">تم عكس الحضور — لا يمكن إكمال الزيارة</Badge>}{b.status==="checked_in"&&!attendanceStateUnavailable&&!attendanceReversed&&<><form action={changeBookingStatus}><input type="hidden" name="booking_id" value={b.id}/><input type="hidden" name="status" value="completed"/><Button className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"><CheckIcon size={16}/>إكمال الزيارة</Button></form><form action={reverseBookingCheckIn} className="flex gap-2"><input type="hidden" name="booking_id" value={b.id}/><Input name="reason" required minLength={3} placeholder="سبب عكس الحضور"/><Button className="bg-amber-600 px-3">عكس</Button></form></>}{!["checked_in","completed"].includes(b.status)&&<form action={changeBookingStatus} className="flex gap-2"><input type="hidden" name="booking_id" value={b.id}/><Select name="status" defaultValue={b.status} className="w-40"><option value="confirmed">confirmed</option><option value="clinic_cancelled">clinic_cancelled</option><option value="no_show">no_show</option><option value="failed">failed</option></Select><Button className="gap-1.5"><CheckIcon size={16}/>تحديث</Button></form>}</div></div>}):<p className="text-sm text-slate-500">لا توجد حجوزات.</p>}</div></Card>
+      <Card className="mt-6 p-5 sm:p-6">
+        <div className="flex items-center gap-2"><SlidersIcon size={19} className="text-[#007AFF]"/><h2 className="font-black">الحجوزات التشغيلية</h2></div>
+        <p className="mt-2 text-xs text-slate-500">الحضور قابل للعكس كتصحيح تشغيلي، وبعد العكس يعود الحجز إلى مؤكد ويمكن تسجيل وصول جديد. الإكمال يتطلب أن يكون آخر حدث حضور هو Check-in صالح.</p>
+        <div className="mt-4 space-y-3">{bookings.length ? bookings.map((b) => {
+          const latestAttendance = latestAttendanceByBooking.get(b.id);
+          const attendanceReversed = latestAttendance?.event_type === "attendance_reversed";
+          const mutableStatus = ["pending_hold", "pending_clinic_confirmation", "confirmed"].includes(b.status);
+          const canMarkNoShow = b.status === "confirmed" && new Date(b.start_at).getTime() <= Date.now();
+          return <div key={b.id} className="grid gap-3 rounded-[20px] bg-slate-50/80 p-4 ring-1 ring-slate-200/60 sm:grid-cols-[1fr_auto]">
+            <div><div className="font-black" dir="ltr">{b.booking_code}</div><div className="mt-1 text-xs font-bold text-slate-500">{new Intl.DateTimeFormat("ar-QA",{dateStyle:"short",timeStyle:"short",timeZone:"Asia/Qatar"}).format(new Date(b.start_at))} · {b.status}</div>{attendanceReversed && b.status === "confirmed" && <div className="mt-2 text-xs font-bold text-amber-700">تم عكس حضور سابق؛ يمكن تسجيل الوصول من جديد عند حضور المريض.</div>}</div>
+            <div className="flex flex-wrap gap-2">
+              {b.status === "confirmed" && <form action={markBookingCheckedIn}><input type="hidden" name="booking_id" value={b.id}/><input type="hidden" name="reason" value="حضور مؤكد من العيادة"/><Button className="gap-1.5"><CheckIcon size={16}/>تسجيل الحضور</Button></form>}
+              {b.status === "checked_in" && attendanceStateUnavailable && <Badge tone="amber">تعذر التحقق من حالة الحضور — أعد تحميل الصفحة</Badge>}
+              {b.status === "checked_in" && !attendanceStateUnavailable && latestAttendance?.event_type !== "checked_in" && <Badge tone="amber">حالة الحضور غير متزامنة — أعد تحميل الصفحة</Badge>}
+              {b.status === "checked_in" && !attendanceStateUnavailable && latestAttendance?.event_type === "checked_in" && <>
+                <form action={changeBookingStatus}><input type="hidden" name="booking_id" value={b.id}/><input type="hidden" name="status" value="completed"/><Button className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"><CheckIcon size={16}/>إكمال الزيارة</Button></form>
+                <form action={reverseBookingCheckIn} className="flex gap-2"><input type="hidden" name="booking_id" value={b.id}/><Input name="reason" required minLength={3} placeholder="سبب عكس الحضور"/><Button className="bg-amber-600 px-3">عكس</Button></form>
+              </>}
+              {mutableStatus && <form action={changeBookingStatus} className="flex gap-2"><input type="hidden" name="booking_id" value={b.id}/><Select name="status" defaultValue="" required className="w-48"><option value="" disabled>اختر إجراءً</option>{["pending_hold","pending_clinic_confirmation"].includes(b.status) && <option value="confirmed">تأكيد الحجز</option>}{["pending_clinic_confirmation","confirmed"].includes(b.status) && <option value="clinic_cancelled">إلغاء من العيادة</option>}{canMarkNoShow && <option value="no_show">تسجيل عدم الحضور</option>}<option value="failed">تعذر إتمام الحجز</option></Select><Button className="gap-1.5"><CheckIcon size={16}/>تنفيذ</Button></form>}
+            </div>
+          </div>;
+        }) : <p className="text-sm text-slate-500">لا توجد حجوزات.</p>}</div>
+      </Card>
     </main>
   );
 }
