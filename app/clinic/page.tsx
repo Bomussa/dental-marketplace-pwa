@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { BuildingIcon, CalendarIcon, CheckIcon, ClockIcon, ShieldCheckIcon, SlidersIcon, UserIcon, WalletIcon } from "@/components/icons";
+import { ClinicBookingStatusForm } from "@/components/clinic-booking-status-form";
 import { applyClinic, changeBookingStatus, createBranch, createOffer, createPractitioner, createSlot, markBookingCheckedIn, publishOffer, publishSlot, requestPriceRevision, reverseBookingCheckIn, setDailyHours } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -101,9 +102,7 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
         <div className="mt-4 space-y-3">{bookings.length ? bookings.map((b) => {
           const latestAttendance = latestAttendanceByBooking.get(b.id);
           const attendanceReversed = latestAttendance?.event_type === "attendance_reversed";
-          const mutableStatus = ["pending_hold", "pending_clinic_confirmation", "confirmed"].includes(b.status);
-          // The server action is authoritative for appointment-time validation; rendering remains deterministic.
-          const canMarkNoShow = b.status === "confirmed";
+          const mutableStatus = b.status === "pending_hold" || b.status === "pending_clinic_confirmation" || b.status === "confirmed" ? b.status : null;
           return <div key={b.id} className="grid gap-3 rounded-[20px] bg-slate-50/80 p-4 ring-1 ring-slate-200/60 sm:grid-cols-[1fr_auto]">
             <div><div className="font-black" dir="ltr">{b.booking_code}</div><div className="mt-1 text-xs font-bold text-slate-500">{new Intl.DateTimeFormat("ar-QA",{dateStyle:"short",timeStyle:"short",timeZone:"Asia/Qatar"}).format(new Date(b.start_at))} · {b.status}</div>{attendanceReversed && b.status === "confirmed" && <div className="mt-2 text-xs font-bold text-amber-700">تم عكس حضور سابق؛ يمكن تسجيل الوصول من جديد عند حضور المريض.</div>}</div>
             <div className="flex flex-wrap gap-2">
@@ -114,7 +113,7 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
                 <form action={changeBookingStatus}><input type="hidden" name="booking_id" value={b.id}/><input type="hidden" name="status" value="completed"/><Button className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"><CheckIcon size={16}/>إكمال الزيارة</Button></form>
                 <form action={reverseBookingCheckIn} className="flex gap-2"><input type="hidden" name="booking_id" value={b.id}/><Input name="reason" required minLength={3} placeholder="سبب عكس الحضور"/><Button className="bg-amber-600 px-3">عكس</Button></form>
               </>}
-              {mutableStatus && <form action={changeBookingStatus} className="flex gap-2"><input type="hidden" name="booking_id" value={b.id}/><Select name="status" defaultValue="" required className="w-48"><option value="" disabled>اختر إجراءً</option>{["pending_hold","pending_clinic_confirmation"].includes(b.status) && <option value="confirmed">تأكيد الحجز</option>}{["pending_clinic_confirmation","confirmed"].includes(b.status) && <option value="clinic_cancelled">إلغاء من العيادة</option>}{canMarkNoShow && <option value="no_show">تسجيل عدم الحضور</option>}<option value="failed">تعذر إتمام الحجز</option></Select><Button className="gap-1.5"><CheckIcon size={16}/>تنفيذ</Button></form>}
+              {mutableStatus && <ClinicBookingStatusForm bookingId={b.id} status={mutableStatus} startAt={b.start_at}/>} 
             </div>
           </div>;
         }) : <p className="text-sm text-slate-500">لا توجد حجوزات.</p>}</div>
