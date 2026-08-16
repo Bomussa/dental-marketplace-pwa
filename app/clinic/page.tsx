@@ -102,7 +102,8 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
           const latestAttendance = latestAttendanceByBooking.get(b.id);
           const attendanceReversed = latestAttendance?.event_type === "attendance_reversed";
           const mutableStatus = ["pending_hold", "pending_clinic_confirmation", "confirmed"].includes(b.status);
-          const canMarkNoShow = b.status === "confirmed" && new Date(b.start_at).getTime() <= Date.now();
+          // The server action is authoritative for appointment-time validation; rendering remains deterministic.
+          const canMarkNoShow = b.status === "confirmed";
           return <div key={b.id} className="grid gap-3 rounded-[20px] bg-slate-50/80 p-4 ring-1 ring-slate-200/60 sm:grid-cols-[1fr_auto]">
             <div><div className="font-black" dir="ltr">{b.booking_code}</div><div className="mt-1 text-xs font-bold text-slate-500">{new Intl.DateTimeFormat("ar-QA",{dateStyle:"short",timeStyle:"short",timeZone:"Asia/Qatar"}).format(new Date(b.start_at))} · {b.status}</div>{attendanceReversed && b.status === "confirmed" && <div className="mt-2 text-xs font-bold text-amber-700">تم عكس حضور سابق؛ يمكن تسجيل الوصول من جديد عند حضور المريض.</div>}</div>
             <div className="flex flex-wrap gap-2">
