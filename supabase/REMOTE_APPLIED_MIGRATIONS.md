@@ -50,6 +50,8 @@ The following migration ledger was retrieved from the connected Supabase managem
 44. `20260815201835_device_installation_server_upsert_v1`
 45. `20260816063608_private_rls_review_integrity_v1`
 46. `20260816063824_clinic_application_wrapper_invoker_v1`
+47. `20260816064530_clinic_booking_status_server_v1`
+48. `20260816065017_support_admin_and_template_privileges_v1`
 
 ## Repository alignment status
 
