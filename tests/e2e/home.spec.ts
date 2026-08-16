@@ -67,6 +67,18 @@ test("language switch persists an English product experience", async ({ page }) 
   await expect(page.getByText("Dental price intelligence · Qatar")).toBeVisible();
 });
 
+test("language switch also localizes the empty results experience", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "عرض النتائج" }).click();
+  await expect(page.getByText("لا توجد عروض مؤهلة الآن")).toBeVisible();
+
+  await page.getByRole("button", { name: "تغيير اللغة إلى الإنجليزية" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("heading", { level: 1, name: "In-Office Whitening" })).toBeVisible();
+  await expect(page.getByText("No eligible offers are available right now")).toBeVisible();
+  await expect(page.getByText("لا توجد عروض مؤهلة الآن")).toHaveCount(0);
+});
+
 test("clinic workspace redirects unauthenticated visitors to the safe login return path", async ({ page }) => {
   await page.goto("/clinic");
   await expect(page).toHaveURL(/\/login\?next=%2Fclinic|\/login\?next=\/clinic/);
@@ -140,4 +152,59 @@ test("PWA manifest remains available with the production brand", async ({ reques
   const manifest = await response.json();
   expect(manifest.name).toContain("أسناني قطر");
   expect(manifest.display).toBe("standalone");
+});
+
+test("security headers include a first-party CSP without opening frames or objects", async ({ request }) => {
+  const response = await request.get("/");
+  expect(response.status()).toBe(200);
+  const headers = response.headers();
+  const csp = headers["content-security-policy"] ?? "";
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("connect-src 'self' https://bqvcukxfsnchvkgejolz.supabase.co wss://bqvcukxfsnchvkgejolz.supabase.co");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["x-frame-options"]).toBe("DENY");
+});
+
+test("production service worker never converts an offline API failure into cached HTML", async ({ page, context }) => {
+  await page.goto("/");
+  const serviceWorkerReady = await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator)) return false;
+    await navigator.serviceWorker.ready;
+    return true;
+  });
+  expect(serviceWorkerReady).toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+
+  await context.setOffline(true);
+  const offlineApiResult = await page.evaluate(async () => {
+    try {
+      const response = await fetch("/api/health");
+      return { resolved: true, status: response.status, contentType: response.headers.get("content-type") };
+    } catch {
+      return { resolved: false, status: 0, contentType: null };
+    }
+  });
+  await context.setOffline(false);
+
+  expect(offlineApiResult.resolved).toBe(false);
+  expect(offlineApiResult.status).toBe(0);
+  expect(offlineApiResult.contentType).toBeNull();
+});
+
+test("production service worker provides only a static public document fallback offline", async ({ page, context }) => {
+  await page.goto("/");
+  await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator)) throw new Error("service worker unsupported");
+    await navigator.serviceWorker.ready;
+  });
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+
+  await context.setOffline(true);
+  await page.goto("/offline-public-shell-check");
+  await expect(page.getByRole("heading", { level: 1, name: "لا يوجد اتصال بالإنترنت" })).toBeVisible();
+  await expect(page.getByText("هذه صفحة ثابتة عامة فقط، ولا تحتوي على بيانات حساب أو حجز أو معلومات تشغيلية.")).toBeVisible();
+  await expect(page.getByText("لوحة الإدارة")).toHaveCount(0);
+  await context.setOffline(false);
 });

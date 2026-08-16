@@ -2,7 +2,7 @@
 
 Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`
 
-The following migration ledger was retrieved from the connected Supabase management API on 2026-08-15:
+The following migration ledger was retrieved from the connected Supabase management API and refreshed on 2026-08-16:
 
 1. `20260814162411_core_schema_v1`
 2. `20260814162736_rls_and_atomic_booking_v1`
@@ -48,6 +48,17 @@ The following migration ledger was retrieved from the connected Supabase managem
 42. `20260815194453_offer_verification_trigger_security_context_v1`
 43. `20260815195113_admin_verify_activate_atomic_v1`
 44. `20260815201835_device_installation_server_upsert_v1`
+45. `20260816063608_private_rls_review_integrity_v1`
+46. `20260816063824_clinic_application_wrapper_invoker_v1`
+47. `20260816064530_clinic_booking_status_server_v1`
+48. `20260816065017_support_admin_and_template_privileges_v1`
+49. `20260816180742_support_knowledge_policy_dedup_v1`
+50. `20260816181409_review_pending_edit_guard_v1`
+51. `20260816181434_offer_revision_price_invariants_v1`
+52. `20260816182205_booking_completion_attendance_guard_v1`
+53. `20260816182801_clinic_booking_transition_matrix_v1`
+54. `20260816183333_attendance_event_cycle_v1`
+55. `20260816183532_attendance_sequence_order_v1`
 
 ## Repository alignment status
 

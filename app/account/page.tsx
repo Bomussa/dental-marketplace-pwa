@@ -10,6 +10,15 @@ type BookingRow = { id:string; booking_code:string; start_at:string; end_at:stri
 type ReviewRow = { booking_id:string; status:string; rating:number };
 type PatientProfileRow = { id:string; display_name:string; relationship:string; date_of_birth:string | null; gender:string | null; created_at:string };
 
+type AccountSearchParams = {
+  booking_error?: string;
+  booking_success?: string;
+  patient_profile_error?: string;
+  patient_profile_success?: string;
+  review_error?: string;
+  review_success?: string;
+};
+
 const statusLabel: Record<string, string> = {
   pending_hold: "قيد تأمين الموعد",
   pending_clinic_confirmation: "بانتظار تأكيد العيادة",
@@ -19,10 +28,11 @@ const statusLabel: Record<string, string> = {
   patient_cancelled: "ملغي من المريض",
   clinic_cancelled: "ملغي من العيادة",
   no_show: "لم يحضر",
+  expired: "انتهت صلاحية الحجز",
   failed: "غير مكتمل",
 };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ booking_error?: string; patient_profile_error?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<AccountSearchParams> }) {
   const params = await searchParams;
   const bookingErrorMessage = params.booking_error === "forbidden"
     ? "لا تملك صلاحية إلغاء هذا الحجز."
@@ -33,6 +43,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         : params.booking_error === "unavailable"
           ? "خدمة إلغاء الحجز غير متاحة مؤقتًا. حاول مرة أخرى لاحقًا."
           : null;
+  const bookingSuccessMessage = params.booking_success === "cancelled" ? "تم إلغاء الحجز وتحديث حالته بنجاح." : null;
+
   const patientProfileErrorMessage = params.patient_profile_error === "self_exists"
     ? "ملف «أنا» موجود بالفعل في حسابك."
     : params.patient_profile_error === "cannot_archive_self"
@@ -42,6 +54,24 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         : params.patient_profile_error === "unavailable"
           ? "تعذر حفظ بيانات الشخص الآن. لم نعلن نجاح العملية؛ حاول مرة أخرى لاحقًا."
           : null;
+  const patientProfileSuccessMessage = params.patient_profile_success === "created"
+    ? "تمت إضافة الشخص إلى حسابك وحفظه."
+    : params.patient_profile_success === "archived"
+      ? "تمت أرشفة الشخص ولم يعد يظهر ضمن خيارات الحجز."
+      : null;
+
+  const reviewErrorMessage = params.review_error === "invalid"
+    ? "بيانات التقييم غير صالحة."
+    : params.review_error === "not_eligible"
+      ? "لا يمكن تقييم هذه الزيارة إلا بعد اكتمالها ومن الحساب صاحب الحجز."
+      : params.review_error === "duplicate"
+        ? "تم إرسال تقييم لهذه الزيارة مسبقًا."
+        : params.review_error === "forbidden"
+          ? "لا تملك صلاحية تقييم هذه الزيارة."
+          : params.review_error === "unavailable"
+            ? "تعذر حفظ التقييم الآن. لم نعلن نجاح العملية؛ حاول مرة أخرى لاحقًا."
+            : null;
+  const reviewSuccessMessage = params.review_success === "submitted" ? "تم حفظ تقييمك وإرساله للمراجعة." : null;
 
   const supabase = await createClient();
   const { data: claimsData, error } = await supabase.auth.getClaims();
@@ -82,6 +112,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.14em] text-[#0066CC]">Family profiles</p><h2 className="mt-1 text-2xl font-black">لمن تحجز المواعيد؟</h2><p className="mt-1 text-sm font-medium text-slate-500">أضف أفراد العائلة بالحد الأدنى من البيانات. لا نخزن أي ملف طبي هنا.</p></div><UserIcon className="text-[#007AFF]" size={24}/></div>
         {patientProfileErrorMessage && <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{patientProfileErrorMessage}</div>}
+        {patientProfileSuccessMessage && <div role="status" className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{patientProfileSuccessMessage}</div>}
         <Card className="p-5 sm:p-6">
           <div className="grid gap-3 sm:grid-cols-2">{patientProfiles.map((patientProfile) => <div key={patientProfile.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70"><div><p className="font-black">{patientProfile.display_name}</p><p className="mt-1 text-xs font-bold text-slate-500">{patientProfile.relationship === "self" ? "أنا" : patientProfile.relationship === "child" ? "ابن/ابنة" : patientProfile.relationship === "spouse" ? "زوج/زوجة" : patientProfile.relationship === "parent" ? "أب/أم" : "فرد من العائلة"}</p></div>{patientProfile.relationship !== "self" && <form action={archivePatientProfile}><input type="hidden" name="patient_profile_id" value={patientProfile.id}/><button className="min-h-11 rounded-full px-3 text-xs font-black text-red-700 ring-1 ring-red-200 transition hover:bg-red-50">أرشفة</button></form>}</div>)}</div>
           <form action={createPatientProfile} className="mt-5 grid gap-3 border-t border-slate-200/70 pt-5 sm:grid-cols-[1fr_180px_auto]">
@@ -95,6 +126,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.14em] text-[#0066CC]">Bookings</p><h2 className="mt-1 text-2xl font-black">حجوزاتي</h2></div><CalendarIcon className="text-[#007AFF]" size={24}/></div>
         {bookingErrorMessage && <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{bookingErrorMessage}</div>}
+        {bookingSuccessMessage && <div role="status" className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{bookingSuccessMessage}</div>}
+        {reviewErrorMessage && <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{reviewErrorMessage}</div>}
+        {reviewSuccessMessage && <div role="status" className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{reviewSuccessMessage}</div>}
         {bookings.length === 0 ? <Card className="p-10 text-center"><CalendarIcon className="mx-auto text-slate-300" size={34}/><h3 className="mt-4 font-black">لا توجد حجوزات بعد</h3><p className="mt-2 text-sm text-slate-500">ابدأ من البحث، واختر عرضًا لديه موعد صالح للحجز.</p></Card> : <div className="space-y-4">{bookings.map((b) => {
           const snap = (b.offer_snapshot ?? {}) as Record<string, unknown>;
           const canCancel = ["pending_clinic_confirmation", "confirmed"].includes(b.status);

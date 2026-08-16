@@ -51,17 +51,13 @@ export async function consumeRateLimit(input: {
 }) {
   const subject = input.subject.trim();
   if (!subject) throw new Error("RATE_LIMIT_SUBJECT_INVALID");
-
-  const subjectKey = createHash("sha256")
-    .update(`${input.scope}:${subject}`)
-    .digest("hex");
+  const subjectKey = createHash("sha256").update(`${input.scope}:${subject}`).digest("hex");
   const allowed = await callOperationalRpc("consume_rate_limit_server", {
     p_scope: input.scope,
     p_subject_key: subjectKey,
     p_limit: input.maxRequests,
     p_window_seconds: input.windowSeconds,
   });
-
   return allowed === true;
 }
 
@@ -94,8 +90,6 @@ export async function requestOfferRevision(input: {
   reason: string;
 }) {
   const actorId = await verifiedActor();
-  // The generated Supabase type marks nullable PostgreSQL function parameters as required numbers.
-  // Keep the runtime contract faithful to the RPC: null is meaningful for consultation, fixed, from, and package prices.
   const args = {
     p_actor_id: actorId,
     p_offer_id: input.offerId,
@@ -133,6 +127,18 @@ export async function reverseAttendance(input: { bookingId: string; reason: stri
     p_actor_id: actorId,
     p_booking_id: input.bookingId,
     p_reason: input.reason,
+  });
+}
+
+export async function changeClinicBookingStatus(input: {
+  bookingId: string;
+  status: "confirmed" | "completed" | "clinic_cancelled" | "no_show" | "failed";
+}) {
+  const actorId = await verifiedActor();
+  return callServerRpc("change_booking_status_server", {
+    p_actor_id: actorId,
+    p_booking_id: input.bookingId,
+    p_status: input.status,
   });
 }
 

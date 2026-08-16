@@ -27,17 +27,18 @@ function adminActionFailure(action: string, error: unknown): never {
   redirect(operationFailureUrl("admin", action, operationFailureCode(error)));
 }
 
+function requireReturnedRow<T>(data: T | null, error: { code?: string } | null): T {
+  if (error) throw new Error(error.code || "OPERATION_FAILED");
+  if (!data) throw new Error("FORBIDDEN");
+  return data;
+}
+
 export async function verifyAndActivate(formData: FormData): Promise<void> {
   const parsed = verificationSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) validationFailure("verifyAndActivate");
   await requireAdmin();
   try {
-    await verifyAndActivateSubject({
-      subjectType: parsed.data.subject_type,
-      subjectId: parsed.data.subject_id,
-      source: parsed.data.source,
-      identifier: parsed.data.identifier || undefined,
-    });
+    await verifyAndActivateSubject({ subjectType: parsed.data.subject_type, subjectId: parsed.data.subject_id, source: parsed.data.source, identifier: parsed.data.identifier || undefined });
     revalidatePath("/admin");
     revalidatePath("/clinic");
   } catch (error) {
@@ -50,8 +51,8 @@ export async function updateFeatureFlag(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("updateFeatureFlag");
   const supabase = await requireAdmin();
   try {
-    const { error } = await supabase.from("feature_flags").update({ enabled: parsed.data.enabled, updated_at: new Date().toISOString() }).eq("key", parsed.data.key);
-    if (error) throw new Error(error.code);
+    const result = await supabase.from("feature_flags").update({ enabled: parsed.data.enabled, updated_at: new Date().toISOString() }).eq("key", parsed.data.key).select("key").maybeSingle();
+    requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
     adminActionFailure("updateFeatureFlag", error);
@@ -63,8 +64,8 @@ export async function moderateReview(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("moderateReview");
   const supabase = await requireAdmin();
   try {
-    const { error } = await supabase.from("reviews").update({ status: parsed.data.status }).eq("id", parsed.data.id);
-    if (error) throw new Error(error.code);
+    const result = await supabase.from("reviews").update({ status: parsed.data.status }).eq("id", parsed.data.id).select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
     adminActionFailure("moderateReview", error);
@@ -95,8 +96,8 @@ export async function createSupportKnowledgeArticle(formData: FormData): Promise
     const { data: claims } = await supabase.auth.getClaims();
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
-    const { error } = await supabase.from("support_knowledge_articles").insert({ ...parsed.data, status: "draft", created_by: actorId });
-    if (error) throw new Error(error.code);
+    const result = await supabase.from("support_knowledge_articles").insert({ ...parsed.data, status: "draft", created_by: actorId }).select("id").single();
+    requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
     adminActionFailure("createSupportKnowledgeArticle", error);
@@ -111,11 +112,24 @@ export async function approveSupportKnowledgeArticle(formData: FormData): Promis
     const { data: claims } = await supabase.auth.getClaims();
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
-    const { error } = await supabase.from("support_knowledge_articles").update({ status: "approved", approved_by: actorId, approved_at: new Date().toISOString() }).eq("id", parsed.data.id);
-    if (error) throw new Error(error.code);
+    const result = await supabase.from("support_knowledge_articles").update({ status: "approved", approved_by: actorId, approved_at: new Date().toISOString() }).eq("id", parsed.data.id).eq("status", "draft").select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
     adminActionFailure("approveSupportKnowledgeArticle", error);
+  }
+}
+
+export async function archiveSupportKnowledgeArticle(formData: FormData): Promise<void> {
+  const parsed = z.object({ id: uuid }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("archiveSupportKnowledgeArticle");
+  const supabase = await requireAdmin();
+  try {
+    const result = await supabase.from("support_knowledge_articles").update({ status: "archived" }).eq("id", parsed.data.id).neq("status", "archived").select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
+    revalidatePath("/admin");
+  } catch (error) {
+    adminActionFailure("archiveSupportKnowledgeArticle", error);
   }
 }
 
@@ -127,8 +141,8 @@ export async function createNotificationTemplate(formData: FormData): Promise<vo
     const { data: claims } = await supabase.auth.getClaims();
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
-    const { error } = await supabase.from("notification_templates").insert({ ...parsed.data, subject: parsed.data.subject || null, status: "draft", created_by: actorId });
-    if (error) throw new Error(error.code);
+    const result = await supabase.from("notification_templates").insert({ ...parsed.data, subject: parsed.data.subject || null, status: "draft", created_by: actorId }).select("id").single();
+    requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
     adminActionFailure("createNotificationTemplate", error);
@@ -140,8 +154,8 @@ export async function activateNotificationTemplate(formData: FormData): Promise<
   if (!parsed.success) validationFailure("activateNotificationTemplate");
   const supabase = await requireAdmin();
   try {
-    const { error } = await supabase.from("notification_templates").update({ status: "active" }).eq("id", parsed.data.id);
-    if (error) throw new Error(error.code);
+    const result = await supabase.from("notification_templates").update({ status: "active" }).eq("id", parsed.data.id).eq("status", "draft").select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
     adminActionFailure("activateNotificationTemplate", error);
@@ -153,13 +167,7 @@ export async function createSettlement(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("createSettlement");
   await requireAdmin();
   try {
-    await createSettlementPeriod({
-      clinicId: parsed.data.clinic_id,
-      periodStart: parsed.data.period_start,
-      periodEnd: parsed.data.period_end,
-      periodKind: parsed.data.period_kind,
-      notes: parsed.data.notes || undefined,
-    });
+    await createSettlementPeriod({ clinicId: parsed.data.clinic_id, periodStart: parsed.data.period_start, periodEnd: parsed.data.period_end, periodKind: parsed.data.period_kind, notes: parsed.data.notes || undefined });
     revalidatePath("/admin");
   } catch (error) {
     adminActionFailure("createSettlement", error);
