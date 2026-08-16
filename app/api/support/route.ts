@@ -8,6 +8,7 @@ import { consumeRateLimit } from "@/lib/operations.server";
 const MEDICAL_OR_EMERGENCY = /(?:ألم شديد|نزيف|تورم|عدوى|طارئ|emergency|severe pain|bleeding|swelling|infection)/i;
 
 type SafetyCategory = "standard" | "medical" | "emergency" | "privacy" | "billing" | "abuse";
+type KnowledgeArticle = { slug: string; title: string; body_markdown: string; category: string };
 
 function safetyReply(locale: "ar" | "en", category: SafetyCategory) {
   if (category === "emergency") {
@@ -36,13 +37,6 @@ export async function POST(request: Request) {
   const category: SafetyCategory = MEDICAL_OR_EMERGENCY.test(parsed.data.message)
     ? (/طارئ|emergency|نزيف شديد|severe bleeding|صعوبة.*تنفس|difficulty breathing/i.test(parsed.data.message) ? "emergency" : "medical")
     : "standard";
-  const baseUrl = process.env.OPENAI_API_BASE;
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (category === "standard" && (!baseUrl || !apiKey)) {
-    return NextResponse.json({ error: "SUPPORT_NOT_CONFIGURED" }, { status: 503 });
-  }
-  const configuredBaseUrl = baseUrl ?? "";
-  const configuredApiKey = apiKey ?? "";
 
   let supportRateAllowed;
   try {
@@ -69,6 +63,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "SUPPORT_UNAVAILABLE" }, { status: 503 });
   }
 
+  let approvedArticles: KnowledgeArticle[] = [];
+  let configuredBaseUrl = "";
+  let configuredApiKey = "";
+
+  if (category === "standard") {
+    const { data: articles, error: articleError } = await admin
+      .from("support_knowledge_articles")
+      .select("slug,title,body_markdown,category")
+      .eq("locale", parsed.data.locale)
+      .eq("audience", "public")
+      .eq("status", "approved")
+      .order("updated_at", { ascending: false })
+      .limit(8);
+    if (articleError) return NextResponse.json({ error: "KNOWLEDGE_UNAVAILABLE" }, { status: 503 });
+
+    approvedArticles = (articles ?? []) as KnowledgeArticle[];
+    if (approvedArticles.length === 0) {
+      // No approved source means no model invocation. This prevents the model
+      // from turning general knowledge or prompt text into an invented platform policy.
+      return NextResponse.json({ error: "SUPPORT_KNOWLEDGE_NOT_CONFIGURED" }, { status: 503 });
+    }
+
+    const baseUrl = process.env.OPENAI_API_BASE;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!baseUrl || !apiKey) return NextResponse.json({ error: "SUPPORT_NOT_CONFIGURED" }, { status: 503 });
+    configuredBaseUrl = baseUrl;
+    configuredApiKey = apiKey;
+  }
+
   let conversationId = parsed.data.conversation_id;
   if (conversationId) {
     const { data: existingConversation, error } = await admin.from("support_conversations").select("id,status").eq("id", conversationId).eq("user_id", userId).maybeSingle();
@@ -89,18 +112,8 @@ export async function POST(request: Request) {
     answer = safetyReply(parsed.data.locale, category);
     await admin.from("support_conversations").update({ safety_category: category, escalation_reason: category === "emergency" ? "medical_emergency_keyword" : "medical_question" }).eq("id", conversationId);
   } else {
-    const { data: articles, error: articleError } = await admin
-      .from("support_knowledge_articles")
-      .select("slug,title,body_markdown,category")
-      .eq("locale", parsed.data.locale)
-      .eq("audience", "public")
-      .eq("status", "approved")
-      .order("updated_at", { ascending: false })
-      .limit(8);
-    if (articleError) return NextResponse.json({ error: "KNOWLEDGE_UNAVAILABLE" }, { status: 503 });
-
-    const knowledge = (articles ?? []).map((article) => `# ${article.title}\n${article.body_markdown.slice(0, 1800)}`).join("\n\n");
-    sourceTitles = (articles ?? []).map((article) => article.title);
+    const knowledge = approvedArticles.map((article) => `# ${article.title}\n${article.body_markdown.slice(0, 1800)}`).join("\n\n");
+    sourceTitles = approvedArticles.map((article) => article.title);
 
     const system = parsed.data.locale === "ar"
       ? "أنت مساعد خدمة عملاء لمنصة أسناني قطر. أجب بالعربية فقط. استخدم قاعدة المعرفة أدناه فقط لحقائق المنصة. ساعد في الحجز والأسعار والتوفر والحساب والخصوصية فقط. لا تقدّم تشخيصًا أو علاجًا طبيًا، ولا تخترع سعرًا أو موعدًا أو سياسة. إذا لم تجد الإجابة في قاعدة المعرفة فاذكر ذلك بوضوح واقترح التواصل مع فريق الدعم. اجعل الإجابة موجزة وعملية."
@@ -114,7 +127,7 @@ export async function POST(request: Request) {
           model: "gpt-5-mini",
           max_completion_tokens: 500,
           messages: [
-            { role: "system", content: `${system}\n\nقاعدة المعرفة / Knowledge base:\n${knowledge || "No approved articles are available."}` },
+            { role: "system", content: `${system}\n\nقاعدة المعرفة / Knowledge base:\n${knowledge}` },
             { role: "user", content: parsed.data.message },
           ],
         }),
