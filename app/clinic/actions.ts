@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
 import { changeClinicBookingStatus, checkInBooking, requestOfferRevision, reverseAttendance } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
@@ -110,14 +111,28 @@ export async function createPractitioner(formData: FormData): Promise<void> {
 }
 
 export async function createOffer(formData: FormData): Promise<void> {
-  const parsed = offerSchema.safeParse(Object.fromEntries(formData));
+  const parsed = offerSchema.safeParse(normalizedOfferFormData(formData));
   if (!parsed.success) validationFailure("createOffer");
+
+  let money: { minMinor: number | null; maxMinor: number | null };
+  try {
+    money = priceInputsToMinor(parsed.data.price_type, formData.get("min_qar"), formData.get("max_qar"));
+  } catch {
+    validationFailure("createOffer");
+  }
+
   const supabase = await requireUser();
   try {
     const p = parsed.data;
-    const minMinor = p.price_type === "consultation_required" ? null : Math.round((p.min_qar ?? 0) * 100);
-    const maxMinor = p.price_type === "fixed" ? minMinor : p.price_type === "range" ? Math.round((p.max_qar ?? 0) * 100) : null;
-    const result = await supabase.from("branch_service_offers").insert({ branch_id: p.branch_id, variant_id: p.variant_id, price_type: p.price_type, min_minor: minMinor, max_minor: maxMinor, duration_minutes: p.duration_minutes, status: "draft" }).select("id").single();
+    const result = await supabase.from("branch_service_offers").insert({
+      branch_id: p.branch_id,
+      variant_id: p.variant_id,
+      price_type: p.price_type,
+      min_minor: money.minMinor,
+      max_minor: money.maxMinor,
+      duration_minutes: p.duration_minutes,
+      status: "draft",
+    }).select("id").single();
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {
@@ -126,14 +141,27 @@ export async function createOffer(formData: FormData): Promise<void> {
 }
 
 export async function requestPriceRevision(formData: FormData): Promise<void> {
-  const parsed = offerRevisionSchema.safeParse(Object.fromEntries(formData));
+  const parsed = offerRevisionSchema.safeParse(normalizedOfferFormData(formData));
   if (!parsed.success) validationFailure("requestPriceRevision");
+
+  let money: { minMinor: number | null; maxMinor: number | null };
+  try {
+    money = priceInputsToMinor(parsed.data.price_type, formData.get("min_qar"), formData.get("max_qar"));
+  } catch {
+    validationFailure("requestPriceRevision");
+  }
+
   await requireUser();
   try {
     const p = parsed.data;
-    const minMinor = p.price_type === "consultation_required" ? null : Math.round((p.min_qar ?? 0) * 100);
-    const maxMinor = p.price_type === "range" ? Math.round((p.max_qar ?? 0) * 100) : null;
-    await requestOfferRevision({ offerId: p.offer_id, priceType: p.price_type, minMinor, maxMinor, durationMinutes: p.duration_minutes, reason: p.reason });
+    await requestOfferRevision({
+      offerId: p.offer_id,
+      priceType: p.price_type,
+      minMinor: money.minMinor,
+      maxMinor: money.maxMinor,
+      durationMinutes: p.duration_minutes,
+      reason: p.reason,
+    });
     revalidatePath("/clinic");
     revalidatePath("/admin");
   } catch (error) {
