@@ -49,6 +49,7 @@ The following migration ledger was retrieved from the connected Supabase managem
 43. `20260815195113_admin_verify_activate_atomic_v1`
 44. `20260815201835_device_installation_server_upsert_v1`
 45. `20260816063608_private_rls_review_integrity_v1`
+46. `20260816063824_clinic_application_wrapper_invoker_v1`
 
 ## Repository alignment status
 
