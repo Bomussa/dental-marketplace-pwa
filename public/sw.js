@@ -1,12 +1,15 @@
-const CACHE = "qatar-dental-shell-v2";
-const PUBLIC_FALLBACK = "/";
+const CACHE = "qatar-dental-shell-v3";
+const PUBLIC_FALLBACK = "/offline.html";
 const PRIVATE_PREFIX = /^\/(?:account|clinic|admin|auth|api)(?:\/|$)/;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.add(new Request(PUBLIC_FALLBACK, { cache: "reload" })))
+      .then((cache) => cache.add(new Request(PUBLIC_FALLBACK, {
+        cache: "reload",
+        credentials: "omit",
+      })))
       .then(() => self.skipWaiting()),
   );
 });
@@ -24,10 +27,9 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // The service worker is only an offline shell fallback for public document
-  // navigations. APIs, assets and authenticated/operator pages must always use
-  // their real network/cache semantics and must never receive HTML as an API
-  // fallback or persist sensitive page responses in this cache.
+  // Only public document navigations may receive the static offline shell.
+  // APIs, assets and authenticated/operator pages always retain real network
+  // semantics and are never replaced with cached HTML.
   if (request.method !== "GET" || url.origin !== self.location.origin || request.mode !== "navigate") return;
   if (PRIVATE_PREFIX.test(url.pathname)) return;
 
