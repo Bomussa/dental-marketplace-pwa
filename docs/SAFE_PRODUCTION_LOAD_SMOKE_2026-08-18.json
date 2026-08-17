@@ -1,0 +1,27 @@
+{
+  "target": "https://www.mmc-mms.com/manifest.webmanifest",
+  "startedAt": "2026-08-17T21:05:53.554Z",
+  "mutationFree": true,
+  "rounds": [
+    {
+      "concurrency": 50,
+      "totalRequests": 50,
+      "successful": 50,
+      "failed": 0,
+      "successRate": 100,
+      "durationMs": 2692.15,
+      "throughputPerSecond": 18.57,
+      "latencyMs": {
+        "min": 1897.02,
+        "p50": 2201.93,
+        "p95": 2616.05,
+        "p99": 2635.38,
+        "max": 2635.38
+      },
+      "statusCounts": {
+        "200": 50
+      },
+      "errorSamples": []
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "target": "http://127.0.0.1:3000/manifest.webmanifest",
+  "startedAt": "2026-08-17T21:05:32.389Z",
+  "mutationFree": true,
+  "rounds": [
+    {
+      "concurrency": 50,
+      "totalRequests": 50,
+      "successful": 50,
+      "failed": 0,
+      "successRate": 100,
+      "durationMs": 183.71,
+      "throughputPerSecond": 272.17,
+      "latencyMs": {
+        "min": 155.17,
+        "p50": 156.01,
+        "p95": 169.49,
+        "p99": 175.39,
+        "max": 175.39
+      },
+      "statusCounts": {
+        "200": 50
+      },
+      "errorSamples": []
+    },
+    {
+      "concurrency": 1000,
+      "totalRequests": 1000,
+      "successful": 1000,
+      "failed": 0,
+      "successRate": 100,
+      "durationMs": 1335.91,
+      "throughputPerSecond": 748.55,
+      "latencyMs": {
+        "min": 138.47,
+        "p50": 705.6,
+        "p95": 1226.87,
+        "p99": 1271.01,
+        "max": 1281.78
+      },
+      "statusCounts": {
+        "200": 1000
+      },
+      "errorSamples": []
+    },
+    {
+      "concurrency": 5000,
+      "totalRequests": 5000,
+      "successful": 5000,
+      "failed": 0,
+      "successRate": 100,
+      "durationMs": 4724.93,
+      "throughputPerSecond": 1058.22,
+      "latencyMs": {
+        "min": 423.09,
+        "p50": 2554.98,
+        "p95": 4357.02,
+        "p99": 4516.49,
+        "max": 4556.63
+      },
+      "statusCounts": {
+        "200": 5000
+      },
+      "errorSamples": []
+    },
+    {
+      "concurrency": 10000,
+      "totalRequests": 10000,
+      "successful": 10000,
+      "failed": 0,
+      "successRate": 100,
+      "durationMs": 6769.68,
+      "throughputPerSecond": 1477.18,
+      "latencyMs": {
+        "min": 794.37,
+        "p50": 3680.74,
+        "p95": 6224.39,
+        "p99": 6450.51,
+        "max": 6505.3
+      },
+      "statusCounts": {
+        "200": 10000
+      },
+      "errorSamples": []
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "target": "https://www.mmc-mms.com/api/health",
+  "startedAt": "2026-08-17T21:10:18.627Z",
+  "mutationFree": true,
+  "rounds": [
+    {
+      "concurrency": 50,
+      "totalRequests": 50,
+      "successful": 50,
+      "failed": 0,
+      "successRate": 100,
+      "durationMs": 4619.47,
+      "throughputPerSecond": 10.82,
+      "latencyMs": {
+        "min": 4094.97,
+        "p50": 4160.49,
+        "p95": 4402.29,
+        "p99": 4577.2,
+        "max": 4577.2
+      },
+      "statusCounts": {
+        "200": 50
+      },
+      "errorSamples": []
+    }
+  ]
+}
