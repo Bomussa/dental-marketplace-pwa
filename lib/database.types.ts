@@ -263,6 +263,7 @@ export type Database = {
           occurred_at: string
           reason: string | null
           recorded_by: string
+          sequence_no: number
           source_id: string | null
           source_type: string
         }
@@ -274,6 +275,7 @@ export type Database = {
           occurred_at?: string
           reason?: string | null
           recorded_by: string
+          sequence_no: number
           source_id?: string | null
           source_type?: string
         }
@@ -285,6 +287,7 @@ export type Database = {
           occurred_at?: string
           reason?: string | null
           recorded_by?: string
+          sequence_no?: number
           source_id?: string | null
           source_type?: string
         }
@@ -1373,6 +1376,56 @@ export type Database = {
           },
         ]
       }
+      patient_phone_verification_challenges: {
+        Row: {
+          account_id: string
+          attempt_count: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          patient_profile_id: string
+          phone: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          attempt_count?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          patient_profile_id: string
+          phone: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          attempt_count?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          patient_profile_id?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_phone_verification_challenges_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_profiles: {
         Row: {
           account_id: string
@@ -1382,6 +1435,10 @@ export type Database = {
           display_name: string
           gender: string | null
           id: string
+          national_id: string | null
+          nationality: string | null
+          phone: string | null
+          phone_verified_at: string | null
           relationship: string
           updated_at: string
         }
@@ -1393,6 +1450,10 @@ export type Database = {
           display_name: string
           gender?: string | null
           id?: string
+          national_id?: string | null
+          nationality?: string | null
+          phone?: string | null
+          phone_verified_at?: string | null
           relationship?: string
           updated_at?: string
         }
@@ -1404,6 +1465,10 @@ export type Database = {
           display_name?: string
           gender?: string | null
           id?: string
+          national_id?: string | null
+          nationality?: string | null
+          phone?: string | null
+          phone_verified_at?: string | null
           relationship?: string
           updated_at?: string
         }
@@ -2261,11 +2326,24 @@ export type Database = {
         }[]
       }
       cancel_booking_server: {
-        Args: {
-          p_actor_id: string
-          p_booking_id: string
-        }
+        Args: { p_actor_id: string; p_booking_id: string }
         Returns: string
+      }
+      change_booking_status_server: {
+        Args: { p_actor_id: string; p_booking_id: string; p_status: string }
+        Returns: string
+      }
+      clinic_booking_patient_details: {
+        Args: { p_booking_ids?: string[] }
+        Returns: {
+          booking_id: string
+          patient_date_of_birth: string
+          patient_display_name: string
+          patient_national_id: string
+          patient_nationality: string
+          patient_phone: string
+          patient_relationship: string
+        }[]
       }
       consume_rate_limit_server: {
         Args: {
@@ -2331,6 +2409,18 @@ export type Database = {
       }
       record_booking_check_in_server: {
         Args: { p_actor_id: string; p_booking_id: string; p_reason?: string }
+        Returns: string
+      }
+      register_device_installation_server: {
+        Args: {
+          p_account_id: string
+          p_app_version: string
+          p_browser: string
+          p_device_class: string
+          p_device_label: string
+          p_installation_id: string
+          p_platform: string
+        }
         Returns: string
       }
       request_offer_revision: {
@@ -2406,6 +2496,16 @@ export type Database = {
           review_count: number
           variant_id: string
         }[]
+      }
+      verify_and_activate_server: {
+        Args: {
+          p_actor_id: string
+          p_identifier?: string
+          p_source: string
+          p_subject_id: string
+          p_subject_type: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

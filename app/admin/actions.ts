@@ -5,8 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
 import { createSettlementPeriod, reviewOfferRevision, verifyAndActivateSubject } from "@/lib/operations.server";
+import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { createClient } from "@/lib/supabase/server";
-import { featureFlagSchema, notificationTemplateSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, uuid, verificationSchema } from "@/lib/validation";
+import type { Json } from "@/lib/database.types";
+import { adminOfferUpdateSchema, adminSlotUpdateSchema, featureFlagUpdateSchema, normalizeQatarDateTime, notificationTemplateSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, treatmentCatalogSchema, treatmentCatalogUpdateSchema, treatmentVariantSchema, treatmentVariantUpdateSchema, uuid, verificationSchema } from "@/lib/validation";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -46,16 +48,143 @@ export async function verifyAndActivate(formData: FormData): Promise<void> {
   }
 }
 
+function parseJsonObject(value: string): Json {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("INVALID_JSON_OBJECT");
+    return parsed as Json;
+  } catch {
+    throw new Error("INVALID_JSON_OBJECT");
+  }
+}
+
+function revalidateDisplaySurfaces() {
+  revalidatePath("/");
+  revalidatePath("/results");
+  revalidatePath("/account");
+  revalidatePath("/clinic");
+  revalidatePath("/admin");
+}
+
 export async function updateFeatureFlag(formData: FormData): Promise<void> {
-  const parsed = featureFlagSchema.safeParse(Object.fromEntries(formData));
+  const parsed = featureFlagUpdateSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) validationFailure("updateFeatureFlag");
   const supabase = await requireAdmin();
   try {
-    const result = await supabase.from("feature_flags").update({ enabled: parsed.data.enabled, updated_at: new Date().toISOString() }).eq("key", parsed.data.key).select("key").maybeSingle();
+    const config = parseJsonObject(parsed.data.config_json);
+    const result = await supabase.from("feature_flags").update({ enabled: parsed.data.enabled, config, updated_at: new Date().toISOString() }).eq("key", parsed.data.key).select("key").maybeSingle();
     requireReturnedRow(result.data, result.error);
-    revalidatePath("/admin");
+    revalidateDisplaySurfaces();
   } catch (error) {
     adminActionFailure("updateFeatureFlag", error);
+  }
+}
+
+export async function createTreatmentCatalog(formData: FormData): Promise<void> {
+  const parsed = treatmentCatalogSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("createTreatmentCatalog");
+  const supabase = await requireAdmin();
+  try {
+    const result = await supabase.from("treatment_catalog").insert(parsed.data).select("id").single();
+    requireReturnedRow(result.data, result.error);
+    revalidateDisplaySurfaces();
+  } catch (error) {
+    adminActionFailure("createTreatmentCatalog", error);
+  }
+}
+
+export async function updateTreatmentCatalog(formData: FormData): Promise<void> {
+  const parsed = treatmentCatalogUpdateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("updateTreatmentCatalog");
+  const supabase = await requireAdmin();
+  try {
+    const { id, ...changes } = parsed.data;
+    const result = await supabase.from("treatment_catalog").update(changes).eq("id", id).select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
+    revalidateDisplaySurfaces();
+  } catch (error) {
+    adminActionFailure("updateTreatmentCatalog", error);
+  }
+}
+
+export async function createTreatmentVariant(formData: FormData): Promise<void> {
+  const parsed = treatmentVariantSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("createTreatmentVariant");
+  const supabase = await requireAdmin();
+  try {
+    const { attributes_json: attributesJson, ...values } = parsed.data;
+    const attributes = parseJsonObject(attributesJson);
+    const result = await supabase.from("treatment_variants").insert({ ...values, attributes }).select("id").single();
+    requireReturnedRow(result.data, result.error);
+    revalidateDisplaySurfaces();
+  } catch (error) {
+    adminActionFailure("createTreatmentVariant", error);
+  }
+}
+
+export async function updateTreatmentVariant(formData: FormData): Promise<void> {
+  const parsed = treatmentVariantUpdateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("updateTreatmentVariant");
+  const supabase = await requireAdmin();
+  try {
+    const attributes = parseJsonObject(parsed.data.attributes_json);
+    const { id } = parsed.data;
+    const changes = {
+      catalog_id: parsed.data.catalog_id,
+      variant_key: parsed.data.variant_key,
+      name_ar: parsed.data.name_ar,
+      name_en: parsed.data.name_en,
+      active: parsed.data.active,
+      attributes,
+    };
+    const result = await supabase.from("treatment_variants").update(changes).eq("id", id).select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
+    revalidateDisplaySurfaces();
+  } catch (error) {
+    adminActionFailure("updateTreatmentVariant", error);
+  }
+}
+
+export async function updateAdminOffer(formData: FormData): Promise<void> {
+  const parsed = adminOfferUpdateSchema.safeParse(normalizedOfferFormData(formData));
+  if (!parsed.success) validationFailure("updateAdminOffer");
+  const supabase = await requireAdmin();
+  try {
+    const money = priceInputsToMinor(parsed.data.price_type, formData.get("min_qar"), formData.get("max_qar"));
+    const { data: claims } = await supabase.auth.getClaims();
+    const actorId = claims?.claims?.sub;
+    if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
+    const result = await supabase.from("branch_service_offers").update({
+      price_type: parsed.data.price_type,
+      min_minor: money.minMinor,
+      max_minor: money.maxMinor,
+      duration_minutes: parsed.data.duration_minutes,
+      status: parsed.data.status,
+      last_verified_at: new Date().toISOString(),
+      verified_by: actorId,
+    }).eq("id", parsed.data.id).select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
+    revalidateDisplaySurfaces();
+  } catch (error) {
+    adminActionFailure("updateAdminOffer", error);
+  }
+}
+
+export async function updateAdminSlot(formData: FormData): Promise<void> {
+  const parsed = adminSlotUpdateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("updateAdminSlot");
+  const supabase = await requireAdmin();
+  try {
+    const result = await supabase.from("availability_slots").update({
+      start_at: normalizeQatarDateTime(parsed.data.start_at),
+      end_at: normalizeQatarDateTime(parsed.data.end_at),
+      status: parsed.data.status,
+      freshness_at: new Date().toISOString(),
+    }).eq("id", parsed.data.id).select("id").maybeSingle();
+    requireReturnedRow(result.data, result.error);
+    revalidateDisplaySurfaces();
+  } catch (error) {
+    adminActionFailure("updateAdminSlot", error);
   }
 }
 

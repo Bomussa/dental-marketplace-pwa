@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingSchema, choiceEventSchema, deviceInstallationSchema, notificationTemplateSchema, offerSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema } from "@/lib/validation";
+import { adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, deviceInstallationSchema, featureFlagUpdateSchema, notificationTemplateSchema, offerSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -32,10 +32,19 @@ describe("validation", () => {
     expect(bookingSchema.safeParse({ ...request, idempotency_key:"abc" }).success).toBe(false);
   });
 
-  it("validates a minimal patient profile and rejects unsupported relationship or device class", () => {
-    expect(patientProfileSchema.safeParse({ display_name: "ريتال", relationship: "child", date_of_birth: "2018-04-15" }).success).toBe(true);
-    expect(patientProfileSchema.safeParse({ display_name: "", relationship: "child" }).success).toBe(false);
-    expect(patientProfileSchema.safeParse({ display_name: "شخص", relationship: "unknown" }).success).toBe(false);
+  it("requires a complete patient profile and normalizes national ID and phone before persistence", () => {
+    const parsed = patientProfileSchema.safeParse({ display_name: "ريتال", relationship: "child", national_id: "٢٨٤ ١٢٣٤-٥٦٧٨", nationality: "qa", date_of_birth: "2018-04-15", phone: "00974 5512 3456" });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.national_id).toBe("28412345678");
+      expect(parsed.data.nationality).toBe("QA");
+      expect(parsed.data.phone).toBe("+97455123456");
+    }
+    expect(patientProfileSchema.safeParse({ display_name: "", relationship: "child", national_id: "28412345678", nationality: "QA", date_of_birth: "2018-04-15", phone: "+97455123456" }).success).toBe(false);
+    expect(patientProfileSchema.safeParse({ display_name: "شخص", relationship: "unknown", national_id: "28412345678", nationality: "QA", date_of_birth: "2018-04-15", phone: "+97455123456" }).success).toBe(false);
+    expect(patientProfileSchema.safeParse({ display_name: "شخص", relationship: "self", national_id: "2841234567", nationality: "QAT", date_of_birth: "2999-01-01", phone: "55123456" }).success).toBe(false);
+    expect(patientPhoneVerificationConfirmSchema.safeParse({ patient_profile_id: "77777777-7777-4777-8777-777777777777", code: "123456" }).success).toBe(true);
+    expect(patientPhoneVerificationConfirmSchema.safeParse({ patient_profile_id: "77777777-7777-4777-8777-777777777777", code: "12ab56" }).success).toBe(false);
     expect(deviceInstallationSchema.safeParse({ installation_id: "77777777-7777-4777-8777-777777777777", device_class: "mobile", platform: "iOS" }).success).toBe(true);
     expect(deviceInstallationSchema.safeParse({ installation_id: "77777777-7777-4777-8777-777777777777", device_class: "watch" }).success).toBe(false);
   });
@@ -85,5 +94,18 @@ describe("validation", () => {
     expect(supportKnowledgeArticleSchema.safeParse({ slug: "عنوان عربي", locale: "ar", title: "الحجز", body_markdown: "نص كافٍ للمقال", category: "booking", audience: "public" }).success).toBe(false);
     expect(notificationTemplateSchema.safeParse({ template_key: "booking_confirmed", channel: "push", locale: "ar", body: "تم تأكيد حجزك" }).success).toBe(true);
     expect(notificationTemplateSchema.safeParse({ template_key: "حجز", channel: "push", locale: "ar", body: "تم تأكيد حجزك" }).success).toBe(false);
+  });
+
+  it("accepts governed catalog, variant, and feature-flag inputs while rejecting unsafe identifiers", () => {
+    expect(treatmentCatalogSchema.safeParse({ code: "dental_consultation", name_ar: "استشارة أسنان", name_en: "Dental consultation", category: "diagnostics", comparison_version: "1", active: "true" }).success).toBe(true);
+    expect(treatmentCatalogSchema.safeParse({ code: "Dental Consultation", name_ar: "استشارة", name_en: "Consultation", category: "diagnostics", comparison_version: "0", active: "true" }).success).toBe(false);
+    expect(treatmentVariantSchema.safeParse({ catalog_id: treatmentId, variant_key: "initial_consultation", name_ar: "استشارة أولية", name_en: "Initial consultation", attributes_json: "{}", active: "true" }).success).toBe(true);
+    expect(treatmentVariantSchema.safeParse({ catalog_id: "not-a-uuid", variant_key: "استشارة", name_ar: "استشارة", name_en: "Consultation", attributes_json: "{}", active: "yes" }).success).toBe(false);
+    expect(featureFlagUpdateSchema.safeParse({ key: "assistant.enabled", enabled: "false", config_json: "{\"locale\":\"ar\"}" }).success).toBe(true);
+    expect(featureFlagUpdateSchema.safeParse({ key: "مفتاح", enabled: "true", config_json: "{}" }).success).toBe(false);
+    expect(adminOfferUpdateSchema.safeParse({ id: offerId, price_type: "fixed", duration_minutes: "30", status: "active" }).success).toBe(true);
+    expect(adminOfferUpdateSchema.safeParse({ id: offerId, price_type: "free", duration_minutes: "0", status: "published" }).success).toBe(false);
+    expect(adminSlotUpdateSchema.safeParse({ id: slotId, start_at: "2026-08-17T09:00", end_at: "2026-08-17T09:30", status: "published" }).success).toBe(true);
+    expect(adminSlotUpdateSchema.safeParse({ id: slotId, start_at: "2026-08-17T09:30", end_at: "2026-08-17T09:00", status: "active" }).success).toBe(false);
   });
 });

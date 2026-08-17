@@ -49,9 +49,10 @@ export async function POST(request: Request) {
   if (error) {
     const conflict = error.code === "P0001" || error.code === "23505" || /already|bookable|eligible|shorter/i.test(error.message);
     const forbidden = error.code === "42501" || /profile.*account|not available/i.test(error.message);
+    const incompleteProfile = error.code === "22023" && /complete and phone verified/i.test(error.message);
     const invalid = error.code === "22023" || /patient profile is required/i.test(error.message);
     const status = forbidden ? 403 : conflict ? 409 : invalid ? 400 : 500;
-    const message = forbidden ? "لا يمكنك الحجز بهذا الملف." : conflict ? "الموعد لم يعد متاحًا. حدّث النتائج." : invalid ? "اختر الشخص الذي تريد الحجز له." : "تعذر إنشاء الحجز";
+    const message = forbidden ? "لا يمكنك الحجز بهذا الملف." : conflict ? "الموعد لم يعد متاحًا. حدّث النتائج." : incompleteProfile ? "أكمل بيانات المريض وتحقق من رقم الهاتف قبل الحجز." : invalid ? "اختر الشخص الذي تريد الحجز له." : "تعذر إنشاء الحجز";
     return NextResponse.json({ error: message }, { status });
   }
 

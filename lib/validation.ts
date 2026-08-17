@@ -220,14 +220,50 @@ export const notificationTemplateSchema = z.object({
   body: z.string().trim().min(1).max(4000),
 });
 
-const optionalIsoDate = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).transform((value) => value || undefined);
 const optionalGender = z.union([z.literal(""), z.enum(["female", "male", "other", "prefer_not_to_say"])]).transform((value) => value || undefined);
+
+function normalizeArabicDigits(value: string) {
+  return value
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
+}
+
+export function normalizeNationalId(value: string) {
+  return normalizeArabicDigits(value).replace(/[\s-]/g, "");
+}
+
+export function normalizePhone(value: string) {
+  const normalized = normalizeArabicDigits(value).trim().replace(/[\s().-]/g, "");
+  return normalized.startsWith("00") ? `+${normalized.slice(2)}` : normalized;
+}
+
+const nationalIdSchema = z.string().trim().transform(normalizeNationalId).refine((value) => /^\d{11}$/.test(value));
+const nationalitySchema = z.string().trim().transform((value) => value.toUpperCase()).refine((value) => /^[A-Z]{2}$/.test(value));
+const phoneSchema = z.string().trim().transform(normalizePhone).refine((value) => /^\+[1-9]\d{7,14}$/.test(value));
+const dateOfBirthSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value && value <= new Date().toISOString().slice(0, 10);
+}, { message: "تاريخ الميلاد غير صالح" });
 
 export const patientProfileSchema = z.object({
   display_name: z.string().trim().min(1).max(120),
   relationship: z.enum(["self", "child", "spouse", "parent", "other"]),
-  date_of_birth: optionalIsoDate.optional(),
+  national_id: nationalIdSchema,
+  nationality: nationalitySchema,
+  date_of_birth: dateOfBirthSchema,
+  phone: phoneSchema,
   gender: optionalGender.optional(),
+});
+
+export const patientProfileUpsertSchema = patientProfileSchema.extend({
+  patient_profile_id: uuid.optional(),
+});
+
+export const patientPhoneVerificationStartSchema = patientProfileUpsertSchema;
+
+export const patientPhoneVerificationConfirmSchema = z.object({
+  patient_profile_id: uuid,
+  code: z.string().trim().regex(/^\d{4,10}$/),
 });
 
 export const patientProfileArchiveSchema = z.object({
@@ -242,3 +278,49 @@ export const deviceInstallationSchema = z.object({
   device_class: z.enum(["mobile", "tablet", "desktop", "unknown"]),
   app_version: z.string().trim().max(80).optional(),
 });
+
+export const treatmentCatalogSchema = z.object({
+  code: z.string().trim().regex(/^[a-z0-9_]{2,80}$/),
+  name_ar: z.string().trim().min(2).max(160),
+  name_en: z.string().trim().min(2).max(160),
+  category: z.string().trim().regex(/^[a-z0-9_-]{2,80}$/),
+  comparison_version: z.coerce.number().int().min(1).max(999),
+  active: z.enum(["true", "false"]).transform((value) => value === "true"),
+});
+
+export const treatmentCatalogUpdateSchema = treatmentCatalogSchema.extend({
+  id: uuid,
+});
+
+export const treatmentVariantSchema = z.object({
+  catalog_id: uuid,
+  variant_key: z.string().trim().regex(/^[a-z0-9_]{2,100}$/),
+  name_ar: z.string().trim().min(2).max(160),
+  name_en: z.string().trim().min(2).max(160),
+  attributes_json: z.string().trim().max(5000).optional().default("{}"),
+  active: z.enum(["true", "false"]).transform((value) => value === "true"),
+});
+
+export const treatmentVariantUpdateSchema = treatmentVariantSchema.extend({
+  id: uuid,
+});
+
+export const featureFlagUpdateSchema = z.object({
+  key: z.string().trim().regex(/^[a-z0-9_.-]{2,120}$/),
+  enabled: z.enum(["true", "false"]).transform((value) => value === "true"),
+  config_json: z.string().trim().max(5000).optional().default("{}"),
+});
+
+export const adminOfferUpdateSchema = z.object({
+  id: uuid,
+  price_type: z.enum(["fixed", "from", "range", "package", "consultation_required"]),
+  duration_minutes: z.coerce.number().int().min(5).max(480),
+  status: z.enum(["draft", "active", "needs_review", "stale", "suspended", "archived"]),
+});
+
+export const adminSlotUpdateSchema = z.object({
+  id: uuid,
+  start_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+  end_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+  status: z.enum(["draft", "published", "held", "consumed", "expired", "cancelled"]),
+}).refine((value) => value.end_at > value.start_at, { path: ["end_at"], message: "وقت النهاية يجب أن يكون بعد البداية" });

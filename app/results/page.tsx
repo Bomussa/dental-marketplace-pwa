@@ -8,6 +8,7 @@ import { BookButton } from "@/components/book-button";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { ArrowUpLeftIcon, ClockIcon, LocationIcon, ShieldCheckIcon, SlidersIcon, StarIcon } from "@/components/icons";
+import { ResultsLiveRefresh } from "@/components/results-live-refresh";
 
 export const dynamic = "force-dynamic";
 type Params = Record<string, string | string[] | undefined>;
@@ -29,7 +30,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         <Card className="p-8">
           <h1 className="text-2xl font-black">{t["results.invalidTitle"]}</h1>
           <p className="mt-3 text-slate-500">{t["results.invalidCopy"]}</p>
-          <Link className="mt-6 inline-flex items-center gap-2 font-extrabold text-[#0066CC]" href="/">
+          <Link className="mt-6 inline-flex items-center gap-2 font-extrabold text-[#084884]" href="/">
             {t["results.backToSearch"]}<ArrowUpLeftIcon size={16} />
           </Link>
         </Card>
@@ -48,7 +49,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   ]);
   const userId = claimsData?.claims?.sub;
   const { data: patientProfileData } = userId
-    ? await supabase.from("patient_profiles").select("id,display_name,relationship").is("archived_at", null).order("created_at", { ascending: true })
+    ? await supabase.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender").is("archived_at", null).order("created_at", { ascending: true })
     : { data: [] };
   const patientProfiles = patientProfileData ?? [];
   const whenLabel = when === "today" ? t["search.today"] : when === "tomorrow" ? t["search.tomorrow"] : t["search.earliest"];
@@ -58,7 +59,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
     <main className="mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-12">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-black uppercase tracking-[.16em] text-[#0066CC]">{t["results.kicker"]}</p>
+          <p className="text-xs font-black uppercase tracking-[.16em] text-[#084884]">{t["results.kicker"]}</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{variantName ?? t["results.fallbackTitle"]}</h1>
           <p className="mt-2 text-sm font-medium text-slate-500">{t["results.intro"]}</p>
         </div>
@@ -68,10 +69,11 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div className="glass-shell mb-6 flex flex-wrap items-center gap-2 rounded-[22px] px-4 py-3 text-xs font-extrabold text-slate-600">
-        <SlidersIcon size={17} className="text-[#007AFF]" />
+        <SlidersIcon size={17} className="text-[#0B5CAD]" />
         <span>{whenLabel}</span><span className="text-slate-300">•</span>
         <span>{replaceTokens(t["results.radius"], { radius: parsed.data.radius })}</span><span className="text-slate-300">•</span>
-        <span>{replaceTokens(t["results.count"], { count: offers.length })}</span>
+        <span>{replaceTokens(t["results.count"], { count: offers.length })}</span><span className="text-slate-300">•</span>
+        <ResultsLiveRefresh variantId={parsed.data.variant} />
       </div>
 
       {error ? <Card className="p-7 text-red-700">{t["results.loadError"]}: {error}</Card> : offers.length === 0 ? (
@@ -108,7 +110,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                 <aside className="border-t border-slate-200/70 bg-slate-50/55 p-5 sm:p-6 lg:border-s lg:border-t-0">
                   <div className="text-xs font-extrabold text-slate-500">{t["results.advertisedPrice"]}</div><div className="mt-1 text-2xl font-black tracking-tight text-slate-950">{priceLabel(offer.price_type, offer.min_minor, offer.max_minor, locale)}</div>
                   <div className="mt-5 text-xs font-extrabold text-slate-500">{t["results.nearestAppointment"]}</div><div className="mt-1 min-h-10 text-sm font-black leading-6">{offer.earliest_slot_at ? new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" }).format(new Date(offer.earliest_slot_at)) : t["results.noAppointment"]}</div>
-                  <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} patientProfiles={patientProfiles} /> : <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">{t["results.comparisonOnly"]}</div>}</div>
+                  <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} patientProfiles={patientProfiles} isAuthenticated={Boolean(userId)} /> : <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">{t["results.comparisonOnly"]}</div>}</div>
                 </aside>
               </div>
             </Card>

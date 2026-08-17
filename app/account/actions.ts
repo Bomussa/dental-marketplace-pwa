@@ -14,7 +14,7 @@ async function requireUser() {
   return { supabase, userId: data.claims.sub };
 }
 
-function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "cannot_archive_self"): never {
+function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "duplicate_identity" | "cannot_archive_self"): never {
   redirect(`/account?patient_profile_error=${code}`);
 }
 
@@ -70,9 +70,14 @@ export async function createPatientProfile(formData: FormData) {
     account_id: userId,
     display_name: input.display_name,
     relationship: input.relationship,
-    date_of_birth: input.date_of_birth ?? null,
+    national_id: input.national_id,
+    nationality: input.nationality,
+    date_of_birth: input.date_of_birth,
+    phone: input.phone,
+    phone_verified_at: null,
     gender: input.gender ?? null,
   });
+  if (error?.code === "23505") return profileActionError("duplicate_identity");
   if (error) return profileActionError("unavailable");
 
   revalidatePath("/account");

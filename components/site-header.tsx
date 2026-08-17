@@ -19,7 +19,7 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4">
       <div className="glass-shell mx-auto flex min-h-14 max-w-7xl items-center justify-between rounded-[22px] px-2.5 py-2 sm:px-3">
         <Link href="/" className="flex min-w-0 items-center gap-2.5 rounded-2xl px-2 py-1.5 text-slate-950 transition hover:bg-white/70" aria-label={`${t["nav.home"]} — ${t["brand.name"]}`}>
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[13px] bg-[#007AFF] text-white shadow-[0_8px_20px_-12px_rgba(0,122,255,.9)]"><ToothIcon size={19}/></span>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[13px] bg-[#0B5CAD] text-white shadow-[0_8px_20px_-12px_rgba(0,122,255,.9)]"><ToothIcon size={19}/></span>
           <span className="truncate text-sm font-black tracking-tight sm:text-base">{t["brand.name"]}</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm font-extrabold text-slate-600" aria-label={t["nav.home"]}>

@@ -55,7 +55,7 @@ export default async function OperationErrorPage({
         <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-7 text-slate-500">{message.body}</p>
         <Link
           href={backHref}
-          className="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-[#007AFF] px-6 text-sm font-extrabold text-white shadow-[0_10px_24px_-14px_rgba(0,122,255,.9)] transition hover:bg-[#0066CC]"
+          className="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-[#0B5CAD] px-6 text-sm font-extrabold text-white shadow-[0_10px_24px_-14px_rgba(0,122,255,.9)] transition hover:bg-[#084884]"
         >
           {backLabel}
         </Link>

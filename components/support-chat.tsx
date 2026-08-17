@@ -52,7 +52,7 @@ export function SupportChat() {
 
   return (
     <Card className="mx-auto max-w-3xl p-5 sm:p-6">
-      <div className="flex items-start gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-[#007AFF]"><SparklesIcon size={21}/></span><div><h2 className="font-black">{t("support.title")}</h2><p className="mt-1 text-sm leading-6 text-slate-500">{t("support.description")}</p></div></div>
+      <div className="flex items-start gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-[#0B5CAD]"><SparklesIcon size={21}/></span><div><h2 className="font-black">{t("support.title")}</h2><p className="mt-1 text-sm leading-6 text-slate-500">{t("support.description")}</p></div></div>
       <div className="mt-5 max-h-80 space-y-3 overflow-y-auto" aria-live="polite">
         {messages.map((entry, index) => <div key={`${entry.role}-${index}`} className={`rounded-2xl p-3 text-sm leading-6 ${entry.role === "user" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-700 ring-1 ring-slate-200"}`}><span className="mb-1 block text-[10px] font-black uppercase tracking-wide opacity-70">{entry.role === "user" ? "You" : t("support.title")}</span>{entry.content}</div>)}
       </div>

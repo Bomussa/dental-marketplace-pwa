@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "مقارنة أسعار خدمات الأسنان والتوفر والحجز لدى العيادات المشاركة في قطر.",
   applicationName: "أسناني قطر",
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#007AFF" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0B5CAD" };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
