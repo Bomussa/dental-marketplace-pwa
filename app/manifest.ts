@@ -5,5 +5,5 @@ export default function manifest(): MetadataRoute.Manifest {
     { src: `/pwa/icon/${size}`, sizes: `${size}x${size}`, type: "image/png", purpose: "any" as const },
     { src: `/pwa/icon/${size}`, sizes: `${size}x${size}`, type: "image/png", purpose: "maskable" as const },
   ]);
-  return { id: "/", name: "أسناني قطر", short_name: "أسناني", description: "مقارنة أسعار الأسنان والتوفر والحجز في قطر", start_url: "/", scope: "/", display: "standalone", background_color: "#f5f7fb", theme_color: "#0B5CAD", lang: "ar", dir: "rtl", icons };
+  return { id: "/", name: "أسناني قطر", short_name: "أسناني", description: "مقارنة أسعار الأسنان والتوفر والحجز في قطر", start_url: "/", scope: "/", display: "standalone", background_color: "#F4F8F8", theme_color: "#0B5CAD", lang: "ar", dir: "rtl", icons };
 }
