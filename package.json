@@ -11,9 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "predeploy:check": "node scripts/predeploy-check.mjs",
+    "verify": "npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:e2e": "npm run test:e2e",
-    "vercel-build": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "vercel-build": "npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
