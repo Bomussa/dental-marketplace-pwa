@@ -73,7 +73,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         <span>{whenLabel}</span><span className="text-slate-300">•</span>
         <span>{replaceTokens(t["results.radius"], { radius: parsed.data.radius })}</span><span className="text-slate-300">•</span>
         <span>{replaceTokens(t["results.count"], { count: offers.length })}</span><span className="text-slate-300">•</span>
-        <ResultsLiveRefresh variantId={parsed.data.variant} />
+        <ResultsLiveRefresh variantId={parsed.data.variant} locale={locale} />
       </div>
 
       {error ? <Card className="p-7 text-red-700">{t["results.loadError"]}: {error}</Card> : offers.length === 0 ? (
