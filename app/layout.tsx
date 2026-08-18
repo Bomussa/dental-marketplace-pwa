@@ -21,7 +21,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang={locale} dir={getDirection(locale)}>
       <body>
-        <Script src="/pwa-register.js" strategy="afterInteractive" />
+        <Script src="/pwa-register.js" strategy="beforeInteractive" />
         <DeviceInstallationRegistrar />
         <LocaleProvider locale={locale}>
           <SiteHeader />
