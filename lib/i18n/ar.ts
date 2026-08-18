@@ -1,5 +1,7 @@
 const ar = {
   "brand.name": "أسناني قطر",
+  "brand.systemName": "MMC-MMS",
+  "brand.systemDescription": "MMC-MMS هي اختصار لـ Medical Marketplace Comparison - Medical Matching Service، وتعني منظومة مقارنة السوق الطبي وخدمة المطابقة الطبية لمنصة أسناني قطر.",
   "nav.home": "الرئيسية",
   "nav.clinics": "للعيادات",
   "nav.admin": "الإدارة",
@@ -8,6 +10,7 @@ const ar = {
   "nav.language": "English",
   "nav.languageLabel": "تغيير اللغة إلى الإنجليزية",
   "footer.disclaimer": "أسناني قطر أداة مقارنة وحجز وليست جهة تشخيص أو علاج. الأسعار والتوفر تخص العيادات المشاركة وتخضع لوقت آخر تحقق.",
+  "footer.systemName": "MMC-MMS: Medical Marketplace Comparison - Medical Matching Service",
   "common.save": "حفظ",
   "common.cancel": "إلغاء",
   "common.submit": "إرسال",

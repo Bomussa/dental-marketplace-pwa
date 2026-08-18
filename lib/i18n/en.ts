@@ -2,6 +2,8 @@ import type { Translation } from "./ar";
 
 const en: Translation = {
   "brand.name": "Asnani Qatar",
+  "brand.systemName": "MMC-MMS",
+  "brand.systemDescription": "Medical Marketplace Comparison - Medical Matching Service. A smart dental platform for comparing prices and matching patients with clinics and appointments.",
   "nav.home": "Home",
   "nav.clinics": "For clinics",
   "nav.admin": "Administration",
@@ -10,6 +12,7 @@ const en: Translation = {
   "nav.language": "العربية",
   "nav.languageLabel": "Switch language to Arabic",
   "footer.disclaimer": "Asnani Qatar is a comparison and booking service, not a diagnostic or treatment provider. Prices and availability are supplied by participating clinics and are subject to their last verification time.",
+  "footer.systemName": "MMC-MMS: Medical Marketplace Comparison - Medical Matching Service",
   "common.save": "Save",
   "common.cancel": "Cancel",
   "common.submit": "Submit",

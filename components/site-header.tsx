@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
+import Image from "next/image";
 import Link from "next/link";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
-import { BuildingIcon, ToothIcon, UserIcon } from "@/components/icons";
+import { BuildingIcon, UserIcon } from "@/components/icons";
 
 export async function SiteHeader() {
   const cookieStore = await cookies();
@@ -18,9 +19,10 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4">
       <div className="glass-shell mx-auto flex min-h-15 max-w-7xl items-center justify-between rounded-[24px] px-2.5 py-2 sm:px-3">
-        <Link href="/" className="group flex min-w-0 items-center gap-2.5 rounded-2xl px-2 py-1.5 text-white transition hover:bg-white/10" aria-label={`${t["nav.home"]} — ${t["brand.name"]}`}>
-          <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-[15px] bg-[linear-gradient(135deg,#62e7d6,#2789ef_56%,#8d68ed)] text-white shadow-[0_10px_22px_-9px_rgba(82,225,218,.74)] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_25%_16%,rgba(255,255,255,.65),transparent_30%)]"><ToothIcon size={20} className="relative" /></span>
-          <span className="truncate text-sm font-black tracking-tight sm:text-base">{t["brand.name"]}</span>
+        <Link href="/" className="group flex min-w-0 items-center rounded-2xl px-1.5 py-1.5 text-white transition hover:bg-white/10" aria-label={`${t["nav.home"]} — ${t["brand.name"]} — ${t["brand.systemName"]}`}>
+          <span className="relative block h-10 w-32 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#082c4c] shadow-[0_10px_22px_-11px_rgba(82,225,218,.78)] sm:h-11 sm:w-44">
+            <Image src="/brand/mmc-mms-asnani-qatar-official-logo.png" alt={`${t["brand.name"]} — ${t["brand.systemName"]}`} fill priority sizes="(min-width: 640px) 176px, 128px" className="object-cover object-[center_24%] transition duration-300 group-hover:scale-[1.025]" />
+          </span>
         </Link>
         <nav className="flex items-center gap-1 text-sm font-extrabold text-blue-50" aria-label={t["nav.home"]}>
           <Link href="/clinic" className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 transition hover:bg-white/12 hover:text-white">
