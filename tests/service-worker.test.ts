@@ -9,7 +9,8 @@ describe("service worker activation hardening", () => {
   it("activates the hardened worker immediately after the static fallback is cached", () => {
     expect(serviceWorker).toContain('qatar-dental-shell-v3');
     expect(serviceWorker).toContain('const PUBLIC_FALLBACK = "/offline.html"');
-    expect(serviceWorker).toContain('credentials: "omit"');
+    expect(serviceWorker).toContain('cache: "reload"');
+    expect(serviceWorker).not.toContain('credentials: "omit"');
     expect(serviceWorker).toContain(".then(() => self.skipWaiting())");
     expect(serviceWorker).toContain("self.clients.claim()");
   });

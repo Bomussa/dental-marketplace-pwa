@@ -8,7 +8,6 @@ self.addEventListener("install", (event) => {
       .open(CACHE)
       .then((cache) => cache.add(new Request(PUBLIC_FALLBACK, {
         cache: "reload",
-        credentials: "omit",
       })))
       .then(() => self.skipWaiting()),
   );
