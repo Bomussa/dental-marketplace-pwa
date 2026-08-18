@@ -41,7 +41,9 @@ export type CustomerChoiceAnalytics = {
     event_name: string;
     created_at: string;
     treatment_name_ar: string | null;
+    treatment_name_en: string | null;
     variant_name_ar: string | null;
+    variant_name_en: string | null;
   }>;
 };
 
@@ -158,7 +160,9 @@ export function parseCustomerChoiceAnalytics(value: Json | null): CustomerChoice
         event_name: asString(row.event_name),
         created_at: asString(row.created_at),
         treatment_name_ar: asNullableString(row.treatment_name_ar),
+        treatment_name_en: asNullableString(row.treatment_name_en),
         variant_name_ar: asNullableString(row.variant_name_ar),
+        variant_name_en: asNullableString(row.variant_name_en),
       };
     }).filter((row) => row.event_name && row.created_at),
   };

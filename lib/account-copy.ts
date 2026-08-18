@@ -6,7 +6,7 @@ type AccountCopy = {
   phoneVerified: string; phonePending: string; archive: string; fullName: string; namePlaceholder: string; relationship: string; nationalId: string; nationalIdPlaceholder: string;
   nationality: string; chooseNationality: string; birthDate: string; phone: string; saveProfile: string; verificationNote: string;
   bookingsKicker: string; bookingsTitle: string; noBookings: string; noBookingsCopy: string; defaultBooking: string; cancelBooking: string; visitStatus: string; reviewAvailable: string; reviewTitle: string; reviewPlaceholder: string; submitReview: string;
-  bookingErrors: Record<string, string>; bookingSuccess: string; profileErrors: Record<string, string>; profileSuccess: Record<string, string>; reviewErrors: Record<string, string>; reviewSuccess: string;
+  bookingErrors: Record<string, string>; bookingSuccess: string; profileErrors: Record<string, string>; profileSuccess: Record<string, string>; reviewErrors: Record<string, string>; reviewSuccess: string; liveConnected: string; liveDisconnected: string; liveConnecting: string; liveTooltip: string;
 };
 
 const nationalities = {
@@ -42,7 +42,7 @@ const copy: Record<Locale, AccountCopy> = {
     profileErrors: { self_exists: "ملف «أنا» موجود بالفعل في حسابك.", duplicate_identity: "الرقم الشخصي مسجل مسبقًا في ملف آخر.", cannot_archive_self: "لا يمكن أرشفة ملفك الأساسي.", invalid: "بيانات الشخص غير صالحة أو لم يعد السجل متاحًا.", unavailable: "تعذر حفظ بيانات الشخص الآن. لم نعلن نجاح العملية؛ حاول مرة أخرى لاحقًا." },
     profileSuccess: { created: "تمت إضافة الشخص إلى حسابك وحفظه.", archived: "تمت أرشفة الشخص ولم يعد يظهر ضمن خيارات الحجز." },
     reviewErrors: { invalid: "بيانات التقييم غير صالحة.", not_eligible: "لا يمكن تقييم هذه الزيارة إلا بعد اكتمالها ومن الحساب صاحب الحجز.", duplicate: "تم إرسال تقييم لهذه الزيارة مسبقًا.", forbidden: "لا تملك صلاحية تقييم هذه الزيارة.", unavailable: "تعذر حفظ التقييم الآن. لم نعلن نجاح العملية؛ حاول مرة أخرى لاحقًا." },
-    reviewSuccess: "تم حفظ تقييمك وإرساله للمراجعة.",
+    reviewSuccess: "تم حفظ تقييمك وإرساله للمراجعة.", liveConnected: "تحديثات مباشرة", liveDisconnected: "التحديث المباشر غير متصل", liveConnecting: "جارٍ الاتصال…", liveTooltip: "تتحدث الحجوزات وحالة الملف تلقائيًا عند تغيرها",
   },
   en: {
     accountKicker: "Patient account", defaultName: "My account", privacy: "A minimal personal profile with no diagnoses, X-rays, or prescriptions.", signOut: "Sign out",
@@ -56,7 +56,7 @@ const copy: Record<Locale, AccountCopy> = {
     profileErrors: { self_exists: "Your primary profile already exists.", duplicate_identity: "This national ID is already registered to another profile.", cannot_archive_self: "Your primary profile cannot be archived.", invalid: "The person's details are invalid or the record is no longer available.", unavailable: "The person's details could not be saved. We did not mark the operation as successful; please try again later." },
     profileSuccess: { created: "The person was added to your account and saved.", archived: "The person was archived and no longer appears in booking choices." },
     reviewErrors: { invalid: "The review details are invalid.", not_eligible: "Only the account that owns a completed booking can review that visit.", duplicate: "A review for this visit has already been submitted.", forbidden: "You do not have permission to review this visit.", unavailable: "The review could not be saved. We did not mark the operation as successful; please try again later." },
-    reviewSuccess: "Your review was saved and sent for moderation.",
+    reviewSuccess: "Your review was saved and sent for moderation.", liveConnected: "Live updates", liveDisconnected: "Live updates disconnected", liveConnecting: "Connecting…", liveTooltip: "Bookings and profile status refresh automatically when they change",
   },
 };
 
