@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_usernames: {
+        Row: {
+          created_at: string
+          disabled_at: string | null
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_at?: string | null
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          disabled_at?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       accounting_journal_lines: {
         Row: {
           account_code: string
@@ -809,6 +833,99 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_operator_account_events: {
+        Row: {
+          actor_user_id: string
+          clinic_id: string
+          created_at: string
+          event_type: string
+          id: string
+          operator_account_id: string | null
+          operator_user_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          clinic_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          operator_account_id?: string | null
+          operator_user_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          clinic_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          operator_account_id?: string | null
+          operator_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_operator_account_events_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_operator_account_events_operator_account_id_fkey"
+            columns: ["operator_account_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_operator_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_operator_accounts: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          created_by: string
+          id: string
+          membership_id: string
+          revoked_at: string | null
+          slot_no: number
+          user_id: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          membership_id: string
+          revoked_at?: string | null
+          slot_no: number
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          membership_id?: string
+          revoked_at?: string | null
+          slot_no?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_operator_accounts_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_operator_accounts_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_memberships"
             referencedColumns: ["id"]
           },
         ]
@@ -2291,6 +2408,10 @@ export type Database = {
         Args: { p_days?: number }
         Returns: Json
       }
+      audit_clinic_operator_password_reset: {
+        Args: { p_operator_account_id: string }
+        Returns: undefined
+      }
       book_slot:
         | {
             Args: {
@@ -2409,6 +2530,24 @@ export type Database = {
         }
         Returns: Json
       }
+      is_price_scope_publishable: { Args: { p_scope: Json }; Returns: boolean }
+      is_valid_price_scope: { Args: { p_scope: Json }; Returns: boolean }
+      list_clinic_operator_accounts: {
+        Args: { p_clinic_id: string }
+        Returns: {
+          created_at: string
+          operator_account_id: string
+          revoked_at: string
+          slot_no: number
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
+      provision_clinic_operator_account: {
+        Args: { p_clinic_id: string; p_user_id: string; p_username: string }
+        Returns: string
+      }
       record_booking_check_in: {
         Args: { p_booking_id: string; p_reason?: string }
         Returns: string
@@ -2473,6 +2612,10 @@ export type Database = {
         }
         Returns: string
       }
+      revoke_clinic_operator_account: {
+        Args: { p_operator_account_id: string }
+        Returns: undefined
+      }
       search_dental_offers: {
         Args: {
           p_lat?: number
@@ -2492,15 +2635,22 @@ export type Database = {
           duration_minutes: number
           earliest_slot_at: string
           earliest_slot_id: string
+          excluded_items: Json
+          follow_up_terms: string
+          included_items: Json
           last_verified_at: string
+          materials: Json
           max_minor: number
           min_minor: number
           offer_id: string
           open_now: boolean
+          price_scope: Json
           price_type: string
           rating_avg: number
           review_count: number
+          scope_confirmed_at: string
           variant_id: string
+          visit_count: number
         }[]
       }
       verify_and_activate_server: {

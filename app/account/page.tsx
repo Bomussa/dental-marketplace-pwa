@@ -1,18 +1,19 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n";
 import { accountNationality, accountNationalityOptions, accountRelationship, accountStatus, getAccountCopy } from "@/lib/account-copy";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { CalendarIcon, ClockIcon, StarIcon, UserIcon } from "@/components/icons";
-import { archivePatientProfile, cancelBooking, createPatientProfile, submitReview } from "./actions";
+import { activateLoginCredentials, archivePatientProfile, cancelBooking, createPatientProfile, submitReview } from "./actions";
 import { AccountLiveRefresh } from "@/components/account-live-refresh";
 
 export const dynamic = "force-dynamic";
 type BookingRow = { id:string; booking_code:string; start_at:string; end_at:string; status:string; offer_snapshot:unknown; created_at:string };
 type ReviewRow = { booking_id:string; status:string; rating:number };
 type PatientProfileRow = { id:string; display_name:string; relationship:string; national_id:string | null; nationality:string | null; date_of_birth:string | null; phone:string | null; phone_verified_at:string | null; gender:string | null; created_at:string };
-type AccountSearchParams = { booking_error?: string; booking_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string };
+type AccountSearchParams = { booking_error?: string; booking_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string; credentials_error?: string; credentials_success?: string };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<AccountSearchParams> }) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
@@ -25,11 +26,22 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const patientProfileSuccessMessage = params.patient_profile_success ? copy.profileSuccess[params.patient_profile_success] ?? null : null;
   const reviewErrorMessage = params.review_error ? copy.reviewErrors[params.review_error] ?? null : null;
   const reviewSuccessMessage = params.review_success === "submitted" ? copy.reviewSuccess : null;
+  const credentialsErrorMessage = params.credentials_error ? copy.credentialsErrors[params.credentials_error] ?? null : null;
+  const credentialsSuccessMessage = params.credentials_success === "activated" ? copy.credentialsSuccess : null;
 
   const supabase = await createClient();
   const { data: claimsData, error } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
   if (error || !userId) redirect("/login?next=/account");
+
+  let hasLoginCredentials = false;
+  try {
+    const admin = createAdminClient();
+    const { data: usernameRow } = await admin.from("account_usernames").select("user_id").eq("user_id", userId).is("disabled_at", null).maybeSingle();
+    hasLoginCredentials = Boolean(usernameRow);
+  } catch {
+    hasLoginCredentials = true;
+  }
 
   const [{ data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }] = await Promise.all([
     supabase.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle(),
@@ -61,6 +73,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <div className="rounded-2xl bg-[linear-gradient(135deg,rgba(230,252,244,.95),rgba(228,247,255,.9))] p-4 ring-1 ring-emerald-100"><div className="text-2xl font-black text-emerald-700">{completed}</div><div className="mt-1 text-xs font-bold text-slate-500">{copy.completedVisits}</div></div>
         </div>
       </section>
+
+      {!hasLoginCredentials && <section className="mt-8"><Card className="p-5 sm:p-6"><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.credentialsKicker}</p><h2 className="mt-2 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.credentialsTitle}</h2><p className="mt-2 max-w-3xl text-sm font-medium leading-7 text-slate-500">{copy.credentialsCopy}</p>{credentialsErrorMessage && <div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{credentialsErrorMessage}</div>}{credentialsSuccessMessage && <div role="status" className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{credentialsSuccessMessage}</div>}<form action={activateLoginCredentials} className="mt-5 grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.username}<Input name="username" autoComplete="username" dir="ltr" minLength={3} maxLength={32} required /></label><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.password}<Input name="password" type="password" autoComplete="new-password" dir="ltr" minLength={12} maxLength={128} required /></label><div className="sm:col-span-2"><Button>{copy.activateCredentials}</Button></div></form></Card></section>}
 
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.familyKicker}</p><h2 className="mt-1 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.familyTitle}</h2><p className="mt-1 text-sm font-medium text-slate-500">{copy.familyCopy}</p></div><UserIcon className="text-[#0B5CAD]" size={24} /></div>

@@ -84,13 +84,13 @@ test("language switch also localizes the empty results experience", async ({ pag
 test("clinic workspace redirects unauthenticated visitors to the safe login return path", async ({ page }) => {
   await page.goto("/clinic");
   await expect(page).toHaveURL(/\/login\?next=%2Fclinic|\/login\?next=\/clinic/);
-  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول الآمن إلى بريدك" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "سجّل الدخول إلى حسابك" })).toBeVisible();
 });
 
 test("account redirects unauthenticated visitors to login", async ({ page }) => {
   await page.goto("/account");
   await expect(page).toHaveURL(/\/login\?next=%2Faccount|\/login\?next=\/account/);
-  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول الآمن إلى بريدك" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "سجّل الدخول إلى حسابك" })).toBeVisible();
 });
 
 test("admin never exposes an admin surface to an unauthenticated visitor", async ({ page }) => {
@@ -100,33 +100,37 @@ test("admin never exposes an admin surface to an unauthenticated visitor", async
   await expect(page.getByText("لوحة الإدارة")).toHaveCount(0);
 });
 
-test("passwordless login page clearly frames Magic Link authentication", async ({ page }) => {
+test("password login page clearly requires a username and password", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول الآمن إلى بريدك" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "إرسال رابط الدخول" })).toBeVisible();
-  await expect(page.locator('input[type="password"]')).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1, name: "سجّل الدخول إلى حسابك" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "تسجيل الدخول" })).toBeVisible();
+  await expect(page.locator('input[name="username"]')).toBeVisible();
+  await expect(page.locator('input[type="password"]')).toHaveCount(1);
 });
 
-test("language selection localizes the passwordless login experience", async ({ page }) => {
+test("language selection localizes the password login experience", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "تغيير اللغة إلى الإنجليزية" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.goto("/login");
 
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
-  await expect(page.getByRole("heading", { level: 1, name: "Send a secure sign-in link to your email" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send sign-in link" })).toBeVisible();
-  await expect(page.getByText("أرسل رابط الدخول الآمن إلى بريدك")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1, name: "Sign in to your account" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page.locator('input[name="username"]')).toBeVisible();
+  await expect(page.getByText("سجّل الدخول إلى حسابك")).toHaveCount(0);
 });
 
 test("sensitive booking and support endpoints reject unauthenticated requests before any mutation", async ({ request }) => {
-  const [bookingResponse, supportResponse] = await Promise.all([
+  const [bookingResponse, supportResponse, registrationResponse] = await Promise.all([
     request.post("/api/book", { data: {} }),
     request.post("/api/support", { data: {} }),
+    request.post("/api/patient-booking-registration", { data: {} }),
   ]);
 
   expect(bookingResponse.status()).toBe(401);
   expect(supportResponse.status()).toBe(401);
+  expect(registrationResponse.status()).toBe(400);
 });
 
 test("operation failures render a safe public message without database internals", async ({ page }) => {

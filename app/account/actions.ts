@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { patientProfileArchiveSchema, patientProfileSchema, reviewSchema, uuid } from "@/lib/validation";
+import { passwordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, usernameSchema, uuid } from "@/lib/validation";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -38,12 +38,47 @@ function reviewActionSuccess(): never {
   redirect("/account?review_success=submitted");
 }
 
+function credentialsActionError(code: "invalid" | "username_taken" | "unavailable"): never {
+  redirect(`/account?credentials_error=${code}`);
+}
+
+function credentialsActionSuccess(): never {
+  redirect("/account?credentials_success=activated");
+}
+
 function requireAdmin(onUnavailable: () => never) {
   try {
     return createAdminClient();
   } catch {
     return onUnavailable();
   }
+}
+
+export async function activateLoginCredentials(formData: FormData) {
+  const parsed = z.object({ username: usernameSchema, password: passwordSchema }).safeParse({
+    username: formData.get("username"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) return credentialsActionError("invalid");
+
+  const { userId } = await requireUser();
+  const admin = requireAdmin(() => credentialsActionError("unavailable"));
+  const { data: existing, error: existingError } = await admin.from("account_usernames").select("user_id").eq("user_id", userId).maybeSingle();
+  if (existingError) return credentialsActionError("unavailable");
+  if (existing) return credentialsActionError("invalid");
+
+  const { error: usernameError } = await admin.from("account_usernames").insert({ user_id: userId, username: parsed.data.username });
+  if (usernameError?.code === "23505") return credentialsActionError("username_taken");
+  if (usernameError) return credentialsActionError("unavailable");
+
+  const { error: passwordError } = await admin.auth.admin.updateUserById(userId, { password: parsed.data.password });
+  if (passwordError) {
+    await admin.from("account_usernames").delete().eq("user_id", userId);
+    return credentialsActionError("unavailable");
+  }
+
+  revalidatePath("/account");
+  return credentialsActionSuccess();
 }
 
 export async function createPatientProfile(formData: FormData) {

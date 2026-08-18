@@ -2,6 +2,7 @@ import type { Locale } from "@/lib/i18n";
 
 type AccountCopy = {
   accountKicker: string; defaultName: string; privacy: string; signOut: string; allBookings: string; upcoming: string; completedVisits: string;
+  credentialsKicker: string; credentialsTitle: string; credentialsCopy: string; username: string; password: string; activateCredentials: string; credentialsSuccess: string; credentialsErrors: Record<string, string>;
   familyKicker: string; familyTitle: string; familyCopy: string; self: string; child: string; spouse: string; parent: string; other: string;
   phoneVerified: string; phonePending: string; archive: string; fullName: string; namePlaceholder: string; relationship: string; nationalId: string; nationalIdPlaceholder: string;
   nationality: string; chooseNationality: string; birthDate: string; phone: string; saveProfile: string; verificationNote: string;
@@ -32,6 +33,7 @@ const statusCopy = {
 const copy: Record<Locale, AccountCopy> = {
   ar: {
     accountKicker: "حساب المريض", defaultName: "حسابي", privacy: "ملف شخصي مُقلّل البيانات، بدون تشخيصات أو صور أشعة أو وصفات.", signOut: "تسجيل الخروج",
+    credentialsKicker: "تأمين الدخول", credentialsTitle: "فعّل اسم المستخدم وكلمة المرور", credentialsCopy: "لأن حسابك أنشئ قبل اعتماد نظام الدخول الجديد، فعّل بيانات دخولك هنا مرة واحدة. لا تُخزن كلمة المرور ضمن ملفك الشخصي.", username: "اسم المستخدم", password: "كلمة المرور الجديدة", activateCredentials: "تفعيل بيانات الدخول", credentialsSuccess: "تم تفعيل اسم المستخدم وكلمة المرور لحسابك.", credentialsErrors: { invalid: "تحقق من اسم المستخدم وكلمة المرور.", username_taken: "اسم المستخدم مستخدم بالفعل. اختر اسمًا آخر.", unavailable: "تعذر تفعيل بيانات الدخول الآن. حاول لاحقًا." },
     allBookings: "كل الحجوزات", upcoming: "قادمة أو قيد التأكيد", completedVisits: "زيارات مكتملة", familyKicker: "ملفات العائلة", familyTitle: "لمن تحجز المواعيد؟",
     familyCopy: "أضف بيانات الحجز الأساسية لكل شخص. لا نخزن تشخيصات أو صور أشعة أو وصفات هنا.", self: "أنا", child: "ابن/ابنة", spouse: "زوج/زوجة", parent: "أب/أم", other: "فرد من العائلة",
     phoneVerified: "هاتف متحقق", phonePending: "يتطلب تحققًا عند الحجز", archive: "أرشفة", fullName: "الاسم الكامل", namePlaceholder: "اسم الشخص كما سيظهر", relationship: "صلة القرابة", nationalId: "الرقم الشخصي", nationalIdPlaceholder: "11 رقمًا",
@@ -46,6 +48,7 @@ const copy: Record<Locale, AccountCopy> = {
   },
   en: {
     accountKicker: "Patient account", defaultName: "My account", privacy: "A minimal personal profile with no diagnoses, X-rays, or prescriptions.", signOut: "Sign out",
+    credentialsKicker: "Secure sign-in", credentialsTitle: "Activate a username and password", credentialsCopy: "Because your account was created before the new sign-in system, activate your credentials here once. Your password is not stored in your personal profile.", username: "Username", password: "New password", activateCredentials: "Activate sign-in credentials", credentialsSuccess: "Your username and password are now active.", credentialsErrors: { invalid: "Check the username and password.", username_taken: "That username is already in use. Choose another one.", unavailable: "Your sign-in credentials could not be activated now. Please try again later." },
     allBookings: "All bookings", upcoming: "Upcoming or awaiting confirmation", completedVisits: "Completed visits", familyKicker: "Family profiles", familyTitle: "Who are you booking for?",
     familyCopy: "Add the essential booking details for each person. We do not store diagnoses, X-rays, or prescriptions here.", self: "Me", child: "Child", spouse: "Spouse", parent: "Parent", other: "Family member",
     phoneVerified: "Phone verified", phonePending: "Verification required when booking", archive: "Archive", fullName: "Full name", namePlaceholder: "Name as it should appear", relationship: "Relationship", nationalId: "National ID", nationalIdPlaceholder: "11 digits",

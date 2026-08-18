@@ -7,12 +7,15 @@ import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
 import { changeClinicBookingStatus, checkInBooking, requestOfferRevision, reverseAttendance } from "@/lib/operations.server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   attendanceReversalSchema,
   attendanceSchema,
   branchSchema,
   clinicApplicationSchema,
+  clinicOperatorAccountIdSchema,
+  clinicOperatorAccountSchema,
   dailyHoursSchema,
   normalizeQatarDateTime,
   offerRevisionSchema,
@@ -57,6 +60,57 @@ export async function applyClinic(formData: FormData): Promise<void> {
     revalidatePath("/clinic");
   } catch (error) {
     actionFailure("applyClinic", error);
+  }
+}
+
+export async function createClinicOperatorAccount(formData: FormData): Promise<void> {
+  const parsed = clinicOperatorAccountSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("createClinicOperatorAccount");
+
+  const supabase = await requireUser();
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    actionFailure("createClinicOperatorAccount", new Error("SERVICE_UNAVAILABLE"));
+  }
+
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    email_confirm: true,
+    user_metadata: { account_kind: "clinic_operator" },
+  });
+
+  if (createError || !created.user) {
+    const code = `${createError?.code ?? ""} ${createError?.message ?? ""}`.toLowerCase();
+    actionFailure("createClinicOperatorAccount", new Error(code.includes("already") ? "ACCOUNT_EXISTS" : "OPERATION_FAILED"));
+  }
+
+  try {
+    const { error } = await supabase.rpc("provision_clinic_operator_account", {
+      p_clinic_id: parsed.data.clinic_id,
+      p_user_id: created.user.id,
+      p_username: parsed.data.username,
+    });
+    if (error) throw new Error(error.code || "OPERATION_FAILED");
+    revalidatePath("/clinic");
+  } catch (error) {
+    await admin.auth.admin.deleteUser(created.user.id);
+    actionFailure("createClinicOperatorAccount", error);
+  }
+}
+
+export async function revokeClinicOperatorAccount(formData: FormData): Promise<void> {
+  const parsed = clinicOperatorAccountIdSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("revokeClinicOperatorAccount");
+  const supabase = await requireUser();
+  try {
+    const { error } = await supabase.rpc("revoke_clinic_operator_account", { p_operator_account_id: parsed.data.operator_account_id });
+    if (error) throw new Error(error.code || "OPERATION_FAILED");
+    revalidatePath("/clinic");
+  } catch (error) {
+    actionFailure("revokeClinicOperatorAccount", error);
   }
 }
 

@@ -259,6 +259,33 @@ export const patientProfileUpsertSchema = patientProfileSchema.extend({
   patient_profile_id: uuid.optional(),
 });
 
+export const usernameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/, "اسم المستخدم يجب أن يتكون من 3 إلى 32 حرفًا أو رقمًا، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
+export const passwordSchema = z.string().min(12, "كلمة المرور يجب ألا تقل عن 12 حرفًا").max(128).refine((value) => /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value), "كلمة المرور تحتاج حرفًا صغيرًا وكبيرًا ورقمًا واحدًا على الأقل");
+
+export const passwordLoginSchema = z.object({
+  username: usernameSchema,
+  password: z.string().min(1).max(128),
+  next: z.string().startsWith("/").max(300).default("/account"),
+});
+
+export const patientBookingRegistrationSchema = patientProfileSchema.extend({
+  relationship: z.literal("self"),
+  username: usernameSchema,
+  email: z.string().trim().toLowerCase().email().max(254),
+  password: passwordSchema,
+});
+
+export const clinicOperatorAccountSchema = z.object({
+  clinic_id: uuid,
+  username: usernameSchema,
+  email: z.string().trim().toLowerCase().email().max(254),
+  password: passwordSchema,
+});
+
+export const clinicOperatorAccountIdSchema = z.object({
+  operator_account_id: uuid,
+});
+
 export const patientPhoneVerificationStartSchema = patientProfileUpsertSchema;
 
 export const patientPhoneVerificationConfirmSchema = z.object({
