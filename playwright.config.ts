@@ -9,7 +9,11 @@ const executablePath =
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  // The PWA suite mutates network state and service-worker ownership on one local
+  // origin. Running every scenario serially prevents cross-test state races while
+  // retaining complete desktop and mobile coverage.
+  fullyParallel: false,
+  workers: 1,
   use: {
     baseURL: "http://127.0.0.1:3000",
     trace: "retain-on-failure",

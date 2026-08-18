@@ -8,5 +8,8 @@ export function PwaRegister() {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
   }, []);
-  return null;
+
+  // A tangible client boundary is required so this registration effect is
+  // hydrated and executed by the browser. The marker remains non-visual.
+  return <span aria-hidden="true" className="hidden" />;
 }
