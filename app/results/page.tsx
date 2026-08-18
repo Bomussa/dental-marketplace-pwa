@@ -26,7 +26,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const parsed = searchSchema.safeParse({ variant: scalar(raw.variant), lat: scalar(raw.lat) ?? "", lng: scalar(raw.lng) ?? "", radius: scalar(raw.radius) ?? "10" });
   if (!parsed.success) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-16">
+      <main className="workspace-shell mx-auto max-w-4xl px-4 py-16">
         <Card className="p-8">
           <h1 className="text-2xl font-black">{t["results.invalidTitle"]}</h1>
           <p className="mt-3 text-slate-500">{t["results.invalidCopy"]}</p>
@@ -56,7 +56,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const variantName = locale === "ar" ? variant?.name_ar : variant?.name_en;
 
   return (
-    <main className="relative mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-12">
+    <main className="workspace-shell relative mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-12">
       <div className="surface-aurora mb-7 flex flex-wrap items-end justify-between gap-4 rounded-[32px] p-6 text-white sm:p-8">
         <div>
           <p className="relative text-xs font-black uppercase tracking-[.18em] text-cyan-100">{t["results.kicker"]}</p>

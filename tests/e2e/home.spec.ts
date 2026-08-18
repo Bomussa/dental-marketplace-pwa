@@ -84,13 +84,13 @@ test("language switch also localizes the empty results experience", async ({ pag
 test("clinic workspace redirects unauthenticated visitors to the safe login return path", async ({ page }) => {
   await page.goto("/clinic");
   await expect(page).toHaveURL(/\/login\?next=%2Fclinic|\/login\?next=\/clinic/);
-  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول إلى بريدك" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول الآمن إلى بريدك" })).toBeVisible();
 });
 
 test("account redirects unauthenticated visitors to login", async ({ page }) => {
   await page.goto("/account");
   await expect(page).toHaveURL(/\/login\?next=%2Faccount|\/login\?next=\/account/);
-  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول إلى بريدك" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول الآمن إلى بريدك" })).toBeVisible();
 });
 
 test("admin never exposes an admin surface to an unauthenticated visitor", async ({ page }) => {
@@ -102,7 +102,7 @@ test("admin never exposes an admin surface to an unauthenticated visitor", async
 
 test("passwordless login page clearly frames Magic Link authentication", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول إلى بريدك" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "أرسل رابط الدخول الآمن إلى بريدك" })).toBeVisible();
   await expect(page.getByRole("button", { name: "إرسال رابط الدخول" })).toBeVisible();
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
 });
@@ -114,9 +114,9 @@ test("language selection localizes the passwordless login experience", async ({ 
   await page.goto("/login");
 
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
-  await expect(page.getByRole("heading", { level: 1, name: "Send a sign-in link to your email" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Send a secure sign-in link to your email" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send sign-in link" })).toBeVisible();
-  await expect(page.getByText("أرسل رابط الدخول إلى بريدك")).toHaveCount(0);
+  await expect(page.getByText("أرسل رابط الدخول الآمن إلى بريدك")).toHaveCount(0);
 });
 
 test("sensitive booking and support endpoints reject unauthenticated requests before any mutation", async ({ request }) => {

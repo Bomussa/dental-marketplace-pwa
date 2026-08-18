@@ -46,7 +46,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const completed = bookings.filter((booking) => booking.status === "completed").length;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-12">
+    <main className="workspace-shell mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-12">
       <section className="glass-panel rounded-[30px] p-5 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-5">
           <div className="flex min-w-0 items-center gap-4">
