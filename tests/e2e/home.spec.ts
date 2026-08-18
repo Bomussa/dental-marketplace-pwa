@@ -107,6 +107,18 @@ test("passwordless login page clearly frames Magic Link authentication", async (
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
 });
 
+test("language selection localizes the passwordless login experience", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "تغيير اللغة إلى الإنجليزية" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.goto("/login");
+
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("heading", { level: 1, name: "Send a sign-in link to your email" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send sign-in link" })).toBeVisible();
+  await expect(page.getByText("أرسل رابط الدخول إلى بريدك")).toHaveCount(0);
+});
+
 test("sensitive booking and support endpoints reject unauthenticated requests before any mutation", async ({ request }) => {
   const [bookingResponse, supportResponse] = await Promise.all([
     request.post("/api/book", { data: {} }),
