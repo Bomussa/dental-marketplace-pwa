@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { LocaleProvider } from "@/components/locale-provider";
@@ -21,7 +20,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang={locale} dir={getDirection(locale)}>
       <body>
-        <Script src="/pwa-register.js" strategy="beforeInteractive" />
         <DeviceInstallationRegistrar />
         <LocaleProvider locale={locale}>
           <SiteHeader />

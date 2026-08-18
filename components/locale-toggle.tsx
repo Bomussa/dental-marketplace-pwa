@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setLocale } from "@/app/actions/locale";
 import type { Locale } from "@/lib/i18n";
@@ -9,6 +9,12 @@ export function LocaleToggle({ locale, label, ariaLabel }: { locale: Locale; lab
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const nextLocale: Locale = locale === "ar" ? "en" : "ar";
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    }
+  }, []);
 
   return (
     <button
