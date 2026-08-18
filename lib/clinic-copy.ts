@@ -1,0 +1,52 @@
+import type { Locale } from "@/lib/i18n";
+
+type ClinicCopy = {
+  joinKicker: string; joinTitle: string; joinCopy: string; joinNotice: string; legalName: string; displayName: string; submitApplication: string;
+  dashboardKicker: string; defaultClinicName: string; dashboardCopy: string; pendingNotice: string;
+  branches: string; publishedOffers: string; publishedSlots: string; visibleBookings: string;
+  addBranch: string; branchName: string; area: string; address: string; latitude: string; longitude: string; saveBranch: string; restrictedAction: string;
+  addPractitioner: string; practitionerName: string; licenseReference: string; saveAsPending: string; workingHours: string; save: string; noBranches: string;
+  newPriceOffer: string; fixedPrice: string; fromPrice: string; rangePrice: string; packagePrice: string; consultationRequired: string; minimumPrice: string; maximumPrice: string; saveDraft: string;
+  newAppointment: string; start: string; end: string; priceOffers: string; minutesUnit: string; publish: string; revisionMinPrice: string; revisionMaxPrice: string; revisionReason: string; requestRevision: string; noOffers: string; appointments: string; noAppointments: string;
+  operationalBookings: string; attendanceCopy: string; newBooking: string; selectedTreatment: string; patient: string; nationality: string; patientDataRestricted: string; attendanceReversed: string; checkIn: string; attendanceUnknown: string; attendanceOutOfSync: string; completeVisit: string; reverseReason: string; reverse: string; viewOnly: string; noBookings: string;
+  liveConnected: string; liveDisconnected: string; liveConnecting: string; liveTooltip: string;
+  actionChoose: string; actionConfirm: string; actionCancel: string; actionNoShow: string; actionFail: string; actionApply: string;
+};
+
+const copy: Record<Locale, ClinicCopy> = {
+  ar: {
+    joinKicker: "انضمام العيادات", joinTitle: "قدّم طلب عيادتك", joinCopy: "يُنشأ الطلب بحالة قيد المراجعة. لا يمكن تفعيل العيادة أو الفرع أو الطبيب قبل تسجيل تحقق صالح من الإدارة.", joinNotice: "بياناتك التشغيلية تبقى خلف صلاحيات العيادة وRLS؛ الظهور العام لا يبدأ قبل التحقق والتفعيل.", legalName: "الاسم القانوني", displayName: "الاسم الظاهر", submitApplication: "إرسال الطلب",
+    dashboardKicker: "لوحة العيادة", defaultClinicName: "عيادتي", dashboardCopy: "إدارة الفروع والأطباء والأسعار والمواعيد والحجوزات من مساحة تشغيل واحدة. لا تظهر أو تعمل أدوات التعديل إلا ضمن دورك وفرعك المخول.", pendingNotice: "هذه العيادة قيد التحقق. ستتاح إضافة الفروع والأطباء والعروض والمواعيد بعد تفعيل الإدارة لها؛ لا تُنشر أي بيانات قبل ذلك.",
+    branches: "فروع", publishedOffers: "عروض منشورة", publishedSlots: "مواعيد منشورة", visibleBookings: "حجوزات ظاهرة لك",
+    addBranch: "إضافة فرع", branchName: "اسم الفرع", area: "المنطقة", address: "العنوان", latitude: "خط العرض", longitude: "خط الطول", saveBranch: "حفظ الفرع", restrictedAction: "يتطلب هذا الإجراء دور المالك أو المدير وعيادة مفعلة",
+    addPractitioner: "إضافة طبيب", practitionerName: "اسم مقدم الخدمة", licenseReference: "مرجع الترخيص", saveAsPending: "حفظ كقيد مراجعة", workingHours: "الفروع وساعات العمل", save: "حفظ", noBranches: "لا توجد فروع بعد.",
+    newPriceOffer: "عرض سعر جديد", fixedPrice: "سعر ثابت", fromPrice: "يبدأ من", rangePrice: "نطاق", packagePrice: "باقة", consultationRequired: "بعد الاستشارة", minimumPrice: "الأدنى ر.ق", maximumPrice: "الأعلى ر.ق", saveDraft: "حفظ كمسودة",
+    newAppointment: "موعد جديد", start: "البداية", end: "النهاية", priceOffers: "عروض الأسعار", minutesUnit: "د", publish: "نشر", revisionMinPrice: "السعر الأدنى الجديد", revisionMaxPrice: "السعر الأعلى الجديد", revisionReason: "سبب التعديل", requestRevision: "طلب تعديل", noOffers: "لا توجد عروض.", appointments: "المواعيد المنشورة والمسودات", noAppointments: "لا توجد مواعيد.",
+    operationalBookings: "الحجوزات التشغيلية", attendanceCopy: "الحضور قابل للعكس كتصحيح تشغيلي، وبعد العكس يعود الحجز إلى مؤكد ويمكن تسجيل وصول جديد. الإكمال يتطلب أن يكون آخر حدث حضور هو تسجيل حضور صالح.", newBooking: "حجز جديد ينتظر التأكيد", selectedTreatment: "العلاج المختار", patient: "المريض", nationality: "الجنسية", patientDataRestricted: "بيانات المريض محجوبة وفق دورك.", attendanceReversed: "تم عكس حضور سابق؛ يمكن تسجيل الوصول من جديد عند حضور المريض.", checkIn: "تسجيل الحضور", attendanceUnknown: "تعذر التحقق من حالة الحضور — أعد تحميل الصفحة", attendanceOutOfSync: "حالة الحضور غير متزامنة — أعد تحميل الصفحة", completeVisit: "إكمال الزيارة", reverseReason: "سبب عكس الحضور", reverse: "عكس", viewOnly: "عرض فقط", noBookings: "لا توجد حجوزات.",
+    liveConnected: "التحديث اللحظي متصل", liveDisconnected: "التحديث اللحظي غير متصل", liveConnecting: "جارٍ اتصال التحديث اللحظي…", liveTooltip: "حالة اتصال التحديث اللحظي", actionChoose: "اختر إجراءً", actionConfirm: "تأكيد الحجز", actionCancel: "إلغاء من العيادة", actionNoShow: "تسجيل عدم الحضور", actionFail: "تعذر إتمام الحجز", actionApply: "تنفيذ",
+  },
+  en: {
+    joinKicker: "Clinic onboarding", joinTitle: "Apply for your clinic", joinCopy: "Your application is created as pending. A clinic, branch, or practitioner cannot be activated until the platform records a valid verification.", joinNotice: "Your operational data remains behind clinic permissions and RLS. It cannot become public until verification and activation are complete.", legalName: "Legal name", displayName: "Display name", submitApplication: "Submit application",
+    dashboardKicker: "Clinic dashboard", defaultClinicName: "My clinic", dashboardCopy: "Manage branches, practitioners, prices, appointments, and bookings from one operations workspace. Editing tools appear and work only for your authorized role and branch.", pendingNotice: "This clinic is pending verification. Branch, practitioner, offer, and appointment tools will be available after platform activation; no data is published before then.",
+    branches: "Branches", publishedOffers: "Published offers", publishedSlots: "Published appointments", visibleBookings: "Bookings visible to you",
+    addBranch: "Add branch", branchName: "Branch name", area: "Area", address: "Address", latitude: "Latitude", longitude: "Longitude", saveBranch: "Save branch", restrictedAction: "This action requires an owner or manager role and an active clinic",
+    addPractitioner: "Add practitioner", practitionerName: "Provider name", licenseReference: "Licence reference", saveAsPending: "Save as pending", workingHours: "Branches and working hours", save: "Save", noBranches: "No branches yet.",
+    newPriceOffer: "New price offer", fixedPrice: "Fixed price", fromPrice: "From price", rangePrice: "Range", packagePrice: "Package", consultationRequired: "After consultation", minimumPrice: "Minimum QAR", maximumPrice: "Maximum QAR", saveDraft: "Save as draft",
+    newAppointment: "New appointment", start: "Start", end: "End", priceOffers: "Price offers", minutesUnit: "min", publish: "Publish", revisionMinPrice: "New minimum price", revisionMaxPrice: "New maximum price", revisionReason: "Reason for change", requestRevision: "Request change", noOffers: "No offers.", appointments: "Published appointments and drafts", noAppointments: "No appointments.",
+    operationalBookings: "Operational bookings", attendanceCopy: "Attendance can be reversed as an operational correction. After reversal, the booking returns to confirmed and a new check-in can be recorded. Completion requires the latest attendance event to be a valid check-in.", newBooking: "New booking awaiting confirmation", selectedTreatment: "Selected treatment", patient: "Patient", nationality: "Nationality", patientDataRestricted: "Patient details are restricted for your role.", attendanceReversed: "A previous check-in was reversed; you can check in the patient again when they arrive.", checkIn: "Check in", attendanceUnknown: "Attendance status could not be verified — reload the page", attendanceOutOfSync: "Attendance status is out of sync — reload the page", completeVisit: "Complete visit", reverseReason: "Reason for reversing check-in", reverse: "Reverse", viewOnly: "View only", noBookings: "No bookings.",
+    liveConnected: "Live updates connected", liveDisconnected: "Live updates disconnected", liveConnecting: "Connecting live updates…", liveTooltip: "Live update connection state", actionChoose: "Choose an action", actionConfirm: "Confirm booking", actionCancel: "Cancel from clinic", actionNoShow: "Mark no-show", actionFail: "Booking could not be completed", actionApply: "Apply",
+  },
+};
+
+const statuses: Record<string, [string, string]> = {
+  active: ["نشط", "Active"], pending: ["قيد المراجعة", "Pending"], draft: ["مسودة", "Draft"], published: ["منشور", "Published"],
+  pending_hold: ["قيد تأمين الموعد", "Holding appointment"], pending_clinic_confirmation: ["بانتظار تأكيد العيادة", "Awaiting clinic confirmation"], confirmed: ["مؤكد", "Confirmed"], checked_in: ["تم الوصول", "Checked in"], completed: ["مكتمل", "Completed"], clinic_cancelled: ["ملغي من العيادة", "Cancelled by clinic"], patient_cancelled: ["ملغي من المريض", "Cancelled by patient"], no_show: ["لم يحضر", "No show"], failed: ["غير مكتمل", "Incomplete"],
+};
+
+const roles: Record<string, [string, string]> = { owner: ["مالك", "Owner"], manager: ["مدير", "Manager"], receptionist: ["استقبال", "Reception"], pricing_manager: ["مدير التسعير", "Pricing manager"] };
+const priceTypes: Record<string, [string, string]> = { fixed: ["سعر ثابت", "Fixed price"], from: ["يبدأ من", "From price"], range: ["نطاق", "Range"], package: ["باقة", "Package"], consultation_required: ["بعد الاستشارة", "After consultation"] };
+
+export function getClinicCopy(locale: Locale): ClinicCopy { return copy[locale]; }
+export function clinicStatus(locale: Locale, status: string): string { const value = statuses[status]; return value ? value[locale === "ar" ? 0 : 1] : status; }
+export function clinicRole(locale: Locale, role: string): string { const value = roles[role]; return value ? value[locale === "ar" ? 0 : 1] : role; }
+export function clinicPriceType(locale: Locale, priceType: string): string { const value = priceTypes[priceType]; return value ? value[locale === "ar" ? 0 : 1] : priceType; }
