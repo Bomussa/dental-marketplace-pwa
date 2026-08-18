@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { getDictionary, type Locale, type TranslationKey } from "@/lib/i18n";
 
 type LocaleContextValue = {
@@ -12,6 +12,13 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   const dictionary = getDictionary(locale);
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    }
+  }, []);
+
   return (
     <LocaleContext.Provider value={{ locale, t: (key) => dictionary[key] }}>
       {children}

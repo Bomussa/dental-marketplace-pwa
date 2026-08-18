@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { LocaleProvider } from "@/components/locale-provider";
 import { SiteHeader } from "@/components/site-header";
-import { PwaRegister } from "@/components/pwa-register";
 import { DeviceInstallationRegistrar } from "@/components/device-installation-registrar";
 import { getDictionary, getDirection, getLocale } from "@/lib/i18n";
 
@@ -21,7 +20,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang={locale} dir={getDirection(locale)}>
       <body>
-        <PwaRegister />
         <DeviceInstallationRegistrar />
         <LocaleProvider locale={locale}>
           <SiteHeader />
