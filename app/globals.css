@@ -282,11 +282,11 @@ a { text-decoration: none; }
 }
 .comparison-field:hover { border-color: rgba(14, 128, 170, .34); background: #fff; box-shadow: 0 14px 24px -22px rgba(10,70,132,.52); }
 .comparison-field:focus-within { border-color: rgba(12, 129, 179, .65); background: #fff; box-shadow: 0 0 0 4px rgba(23, 129, 196, .10); }
-.comparison-field__label { display: inline-flex; align-items: center; gap: .45rem; color: #5d7691; font-size: .68rem; font-weight: 800; line-height: 1; }
+.comparison-field__label { display: inline-flex; align-items: center; gap: .45rem; color: #52718f; font-size: .74rem; font-weight: 700; line-height: 1.25; }
 .comparison-field__icon { display: grid; width: 1.45rem; height: 1.45rem; flex: 0 0 auto; place-items: center; border-radius: .5rem; color: #087b8a; background: linear-gradient(145deg, #e0faf6, #e8f0ff); }
-.comparison-field__select { width: 100%; min-width: 0; height: 1.7rem; appearance: auto; border: 0; background: transparent; color: #0a2e5d; font-size: .92rem; font-weight: 900; outline: 0; }
+.comparison-field__select { width: 100%; min-width: 0; height: 1.8rem; appearance: auto; border: 0; background: transparent; color: #082f5e; font-size: .98rem; font-weight: 700; letter-spacing: -.012em; outline: 0; }
 .comparison-submit { min-height: 100%; border-radius: 1.15rem !important; }
-.location-control { display: inline-flex; min-height: 2.3rem; align-items: center; gap: .5rem; border: 1px solid rgba(8, 94, 140, .12); border-radius: 999px; background: rgba(255,255,255,.72); padding: .35rem .85rem; color: #365d7c; font-size: .74rem; font-weight: 800; transition: background-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+.location-control { display: inline-flex; min-height: 2.45rem; align-items: center; gap: .5rem; border: 1px solid rgba(8, 94, 140, .12); border-radius: 999px; background: rgba(255,255,255,.72); padding: .35rem .9rem; color: #365d7c; font-size: .78rem; font-weight: 700; transition: background-color .2s ease, transform .2s ease, box-shadow .2s ease; }
 .location-control:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 10px 18px -15px rgba(7,63,119,.48); }
 
 @media (min-width: 1024px) {
@@ -364,3 +364,26 @@ a { text-decoration: none; }
 .price-scope-summary__details span { color: #587086; font-weight: 800; }
 .price-scope-summary__details p { color: #183c5f; font-weight: 700; }
 @media (min-width: 640px) { .price-scope-summary__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+
+/* Editorial typography system: legible clinical confidence in Arabic and English. */
+html { font-size: 16px; }
+body { font-family: var(--font-arabic), "Noto Sans Arabic", "Tajawal", system-ui, sans-serif; font-feature-settings: "kern" 1, "liga" 1, "calt" 1; }
+html[lang="en"] body { font-family: var(--font-latin), "Manrope", Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -.012em; }
+html[lang="ar"] body { letter-spacing: 0; }
+h1, h2, h3, h4, h5, h6 { font-weight: 800; text-wrap: balance; }
+h1, h2 { letter-spacing: -.045em; }
+html[dir="rtl"] h1, html[dir="rtl"] h2 { letter-spacing: -.026em; }
+p { text-wrap: pretty; }
+button, input, select, textarea { font-kerning: normal; }
+::placeholder { font-weight: 500; opacity: 1; }
+.home-hero__title { font-weight: 800 !important; letter-spacing: -.055em !important; }
+html[dir="rtl"] .home-hero__title { letter-spacing: -.035em !important; line-height: 1.2 !important; }
+.home-hero__accent { font-weight: 800; text-shadow: 0 0 30px rgba(114, 239, 222, .23); }
+.home-hero p, .decision-section p, .feature-card p { font-weight: 500; }
+.comparison-field__label, .price-scope-fields__title, .price-scope-summary__title { letter-spacing: .01em; }
+@media (max-width: 640px) {
+  html { font-size: 15px; }
+  .home-hero__title { font-size: clamp(2.35rem, 11.2vw, 3.1rem) !important; line-height: 1.18 !important; }
+  .home-hero p { line-height: 1.95 !important; }
+}

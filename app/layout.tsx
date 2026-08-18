@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Manrope, Noto_Sans_Arabic } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { BrandLockup } from "@/components/brand-lockup";
@@ -6,6 +7,9 @@ import { LocaleProvider } from "@/components/locale-provider";
 import { SiteHeader } from "@/components/site-header";
 import { DeviceInstallationRegistrar } from "@/components/device-installation-registrar";
 import { getDictionary, getDirection, getLocale } from "@/lib/i18n";
+
+const arabicFont = Noto_Sans_Arabic({ variable: "--font-arabic", subsets: ["arabic"], weight: ["400", "500", "600", "700", "800"] });
+const latinFont = Manrope({ variable: "--font-latin", subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 export const metadata: Metadata = {
   title: { default: "أسناني قطر", template: "%s | أسناني قطر" },
@@ -19,7 +23,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const locale = getLocale(cookieStore.get("asnani_locale")?.value);
   const t = getDictionary(locale);
   return (
-    <html lang={locale} dir={getDirection(locale)}>
+    <html lang={locale} dir={getDirection(locale)} className={`${arabicFont.variable} ${latinFont.variable}`}>
       <body>
         <DeviceInstallationRegistrar />
         <LocaleProvider locale={locale}>

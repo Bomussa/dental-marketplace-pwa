@@ -51,10 +51,10 @@ export function SupportChat() {
   }
 
   return (
-    <Card className="mx-auto max-w-3xl p-5 sm:p-6">
-      <div className="flex items-start gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-[#0B5CAD]"><SparklesIcon size={21}/></span><div><h2 className="font-black">{t("support.title")}</h2><p className="mt-1 text-sm leading-6 text-slate-500">{t("support.description")}</p></div></div>
+    <Card className="mx-auto max-w-3xl p-5 sm:p-7">
+      <div className="flex items-start gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-[#0B5CAD]"><SparklesIcon size={21}/></span><div><h2 className="text-xl font-extrabold tracking-[-.025em]">{t("support.title")}</h2><p className="mt-1 max-w-2xl text-[.94rem] font-medium leading-7 text-slate-500">{t("support.description")}</p></div></div>
       <div className="mt-5 max-h-80 space-y-3 overflow-y-auto" aria-live="polite">
-        {messages.map((entry, index) => <div key={`${entry.role}-${index}`} className={`rounded-2xl p-3 text-sm leading-6 ${entry.role === "user" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-700 ring-1 ring-slate-200"}`}><span className="mb-1 block text-[10px] font-black uppercase tracking-wide opacity-70">{entry.role === "user" ? "You" : t("support.title")}</span>{entry.content}</div>)}
+        {messages.map((entry, index) => <div key={`${entry.role}-${index}`} className={`rounded-2xl p-3.5 text-[.94rem] font-medium leading-7 ${entry.role === "user" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-700 ring-1 ring-slate-200"}`}><span className="mb-1 block text-[10px] font-extrabold uppercase tracking-wide opacity-70">{entry.role === "user" ? (locale === "ar" ? "أنت" : "You") : t("support.title")}</span>{entry.content}</div>)}
       </div>
       {error && <p className="mt-4 rounded-2xl bg-amber-50 p-3 text-sm font-bold text-amber-800">{error}</p>}
       <form onSubmit={send} className="mt-5 flex gap-2"><Input value={message} onChange={(event) => setMessage(event.target.value)} maxLength={2000} required placeholder={t("support.placeholder")} aria-label={t("support.placeholder")}/><Button type="submit" disabled={isPending}>{isPending ? t("support.sending") : t("support.send")}</Button></form>

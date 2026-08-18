@@ -5,19 +5,19 @@ const rootCanalMolarVariant = "d172470d-b8ec-43af-b668-e39ebf108956";
 test("home loads the Arabic comparison search and reaches a valid empty-result state", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { level: 1, name: "علاج الأسنان المناسب، بسعر واضح وموعد حقيقي." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "عرض النتائج" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "اختر علاجك بثقة ووضوح، من أول مقارنة إلى الموعد." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "قارن الخيارات الآن" })).toBeVisible();
   await expect(page.getByRole("button", { name: "استخدم موقعي لترتيب الأقرب" })).toBeVisible();
 
-  await page.getByRole("button", { name: "عرض النتائج" }).click();
+  await page.getByRole("button", { name: "قارن الخيارات الآن" }).click();
   await expect(page).toHaveURL(/\/results\?/);
   await expect(page.getByRole("heading", { level: 1, name: "تبييض داخل العيادة" })).toBeVisible();
-  await expect(page.getByText("لا توجد عروض مؤهلة الآن")).toBeVisible();
+  await expect(page.getByText("لا توجد خيارات مطابقة الآن")).toBeVisible();
 });
 
 test("treatment selection refreshes exact variants instead of keeping a stale variant", async ({ page }) => {
   await page.goto("/");
-  const form = page.getByRole("form", { name: "البحث عن علاج أسنان" });
+  const form = page.getByRole("form", { name: "ابدأ مقارنة علاج الأسنان" });
   const treatment = form.locator('select[name="treatment"]');
   const variant = form.locator('select[name="variant"]');
 
@@ -30,11 +30,11 @@ test("treatment selection refreshes exact variants instead of keeping a stale va
 
 test("appointment preference survives into the results URL", async ({ page }) => {
   await page.goto("/");
-  const form = page.getByRole("form", { name: "البحث عن علاج أسنان" });
+  const form = page.getByRole("form", { name: "ابدأ مقارنة علاج الأسنان" });
   await form.locator('select[name="treatment"]').selectOption({ label: "علاج عصب" });
   await form.locator('select[name="variant"]').selectOption(rootCanalMolarVariant);
   await form.locator('select[name="when"]').selectOption("tomorrow");
-  await page.getByRole("button", { name: "عرض النتائج" }).click();
+  await page.getByRole("button", { name: "قارن الخيارات الآن" }).click();
 
   await expect(page).toHaveURL(new RegExp(`variant=${rootCanalMolarVariant}`));
   await expect(page).toHaveURL(/when=tomorrow/);
@@ -55,7 +55,7 @@ test("location unavailable degrades safely and keeps search usable", async ({ pa
 
   await page.getByRole("button", { name: "استخدم موقعي لترتيب الأقرب" }).click();
   await expect(page.getByText("يمكنك المتابعة بدون الموقع؛ لن يظهر ترتيب المسافة.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "عرض النتائج" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "قارن الخيارات الآن" })).toBeEnabled();
 });
 
 test("language switch persists an English product experience", async ({ page }) => {
@@ -63,20 +63,20 @@ test("language switch persists an English product experience", async ({ page }) 
   await page.getByRole("button", { name: "تغيير اللغة إلى الإنجليزية" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
-  await expect(page.getByRole("button", { name: "View results" })).toBeVisible();
-  await expect(page.getByText("Dental price intelligence · Qatar")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Compare options now" })).toBeVisible();
+  await expect(page.getByText("Smarter dental decisions · Qatar")).toBeVisible();
 });
 
 test("language switch also localizes the empty results experience", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "عرض النتائج" }).click();
-  await expect(page.getByText("لا توجد عروض مؤهلة الآن")).toBeVisible();
+  await page.getByRole("button", { name: "قارن الخيارات الآن" }).click();
+  await expect(page.getByText("لا توجد خيارات مطابقة الآن")).toBeVisible();
 
   await page.getByRole("button", { name: "تغيير اللغة إلى الإنجليزية" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("heading", { level: 1, name: "In-Office Whitening" })).toBeVisible();
-  await expect(page.getByText("No eligible offers are available right now")).toBeVisible();
-  await expect(page.getByText("لا توجد عروض مؤهلة الآن")).toHaveCount(0);
+  await expect(page.getByText("No matching options are available right now")).toBeVisible();
+  await expect(page.getByText("لا توجد خيارات مطابقة الآن")).toHaveCount(0);
   await expect(page.getByText("تحديثات مباشرة")).toHaveCount(0);
   await expect(page.getByText("جارٍ الاتصال…")).toHaveCount(0);
 });
@@ -96,7 +96,7 @@ test("account redirects unauthenticated visitors to login", async ({ page }) => 
 test("admin never exposes an admin surface to an unauthenticated visitor", async ({ page }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { level: 1, name: "علاج الأسنان المناسب، بسعر واضح وموعد حقيقي." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "اختر علاجك بثقة ووضوح، من أول مقارنة إلى الموعد." })).toBeVisible();
   await expect(page.getByText("لوحة الإدارة")).toHaveCount(0);
 });
 
