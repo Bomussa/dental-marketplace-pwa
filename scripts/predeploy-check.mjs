@@ -35,11 +35,28 @@ const secretPattern = [
   "-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY-----",
 ].join("|");
 
+let isGitWorkTree = false;
 try {
-  const secrets = execFileSync("git", ["grep", "-nE", secretPattern, "--", "."], { encoding: "utf8" });
+  execFileSync("git", ["rev-parse", "--is-inside-work-tree"], { stdio: "ignore" });
+  isGitWorkTree = true;
+} catch {
+  // Direct Vercel source deployments are intentionally unpacked without .git.
+}
+
+try {
+  const secrets = isGitWorkTree
+    ? execFileSync("git", ["grep", "-nE", secretPattern, "--", "."], { encoding: "utf8" })
+    : execFileSync("grep", [
+        "-R", "-n", "-E",
+        "--exclude-dir=node_modules",
+        "--exclude-dir=.next",
+        "--exclude-dir=.git",
+        "-e", secretPattern,
+        ".",
+      ], { encoding: "utf8" });
   if (secrets.trim()) failures.push(`Potential secret material detected:\n${secrets.trim()}`);
 } catch (error) {
-  // git grep exits 1 when it has no match, which is the expected secure state.
+  // Both git grep and grep exit 1 when they find no match, which is the expected secure state.
   if (error?.status !== 1) failures.push(`Secret scan failed unexpectedly: ${error.message}`);
 }
 
