@@ -6,6 +6,7 @@ import { z } from "zod";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
 import { createSettlementPeriod, reviewOfferRevision, verifyAndActivateSubject } from "@/lib/operations.server";
 import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
+import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/database.types";
 import { adminOfferUpdateSchema, adminSlotUpdateSchema, featureFlagUpdateSchema, normalizeQatarDateTime, notificationTemplateSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, treatmentCatalogSchema, treatmentCatalogUpdateSchema, treatmentVariantSchema, treatmentVariantUpdateSchema, uuid, verificationSchema } from "@/lib/validation";
@@ -148,6 +149,22 @@ export async function updateTreatmentVariant(formData: FormData): Promise<void> 
 export async function updateAdminOffer(formData: FormData): Promise<void> {
   const parsed = adminOfferUpdateSchema.safeParse(normalizedOfferFormData(formData));
   if (!parsed.success) validationFailure("updateAdminOffer");
+  let scope: PriceScope;
+  let includedItems: string[];
+  let excludedItems: string[];
+  let visitCount: number | null;
+  let followUpTerms: string | null;
+  let notes: string | null;
+  try {
+    scope = priceScopeFromFormData(formData);
+    includedItems = priceScopeItemsFromFormData(formData, "included_items");
+    excludedItems = priceScopeItemsFromFormData(formData, "excluded_items");
+    visitCount = priceScopeVisitCountFromFormData(formData);
+    followUpTerms = priceScopeNotesFromFormData(formData, "follow_up_terms");
+    notes = priceScopeNotesFromFormData(formData, "notes");
+  } catch {
+    validationFailure("updateAdminOffer");
+  }
   const supabase = await requireAdmin();
   try {
     const money = priceInputsToMinor(parsed.data.price_type, formData.get("min_qar"), formData.get("max_qar"));
@@ -160,6 +177,12 @@ export async function updateAdminOffer(formData: FormData): Promise<void> {
       max_minor: money.maxMinor,
       duration_minutes: parsed.data.duration_minutes,
       status: parsed.data.status,
+      price_scope: scope,
+      included_items: includedItems,
+      excluded_items: excludedItems,
+      visit_count: visitCount,
+      follow_up_terms: followUpTerms,
+      notes,
       last_verified_at: new Date().toISOString(),
       verified_by: actorId,
     }).eq("id", parsed.data.id).select("id").maybeSingle();

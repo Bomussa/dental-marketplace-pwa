@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { ArrowUpLeftIcon, ClockIcon, LocationIcon, ShieldCheckIcon, SlidersIcon, StarIcon } from "@/components/icons";
 import { ResultsLiveRefresh } from "@/components/results-live-refresh";
+import { PriceScopeSummary } from "@/components/price-scope-summary";
 
 export const dynamic = "force-dynamic";
 type Params = Record<string, string | string[] | undefined>;
@@ -105,6 +106,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                     <div className="rounded-2xl border border-[#0e699e]/[.08] bg-[linear-gradient(135deg,rgba(239,251,250,.96),rgba(239,246,255,.94))] p-3.5"><div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><LocationIcon size={14} />{t["results.distance"]}</div><div className="mt-1 text-sm font-black">{offer.distance_km == null ? t["results.distanceUnavailable"] : replaceTokens(t["results.distanceValue"], { distance: offer.distance_km.toFixed(1) })}</div></div>
                     <div className="rounded-2xl bg-slate-50/90 p-3.5 sm:col-span-2 lg:col-span-1"><div className="text-[11px] font-bold text-slate-500">{t["results.lastVerified"]}</div><div className="mt-1 text-sm font-black">{offer.last_verified_at ? new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeZone: "Asia/Qatar" }).format(new Date(offer.last_verified_at)) : t["results.notRecorded"]}</div></div>
                   </div>
+                  <PriceScopeSummary offer={offer} locale={locale} />
                 </div>
 
                 <aside className="border-t border-[#0d6f99]/10 bg-[linear-gradient(150deg,rgba(230,250,247,.95),rgba(233,240,255,.94))] p-5 sm:p-6 lg:border-s lg:border-t-0">

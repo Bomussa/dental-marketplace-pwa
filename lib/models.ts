@@ -1,3 +1,5 @@
+import type { PriceScope } from "@/lib/price-scope";
+
 export type Treatment = {
   id: string;
   code: string;
@@ -26,6 +28,13 @@ export type SearchOffer = {
   min_minor: number | null;
   max_minor: number | null;
   currency: string;
+  price_scope: PriceScope | null;
+  included_items: unknown;
+  excluded_items: unknown;
+  materials: unknown;
+  visit_count: number | null;
+  follow_up_terms: string | null;
+  scope_confirmed_at: string | null;
   duration_minutes: number;
   clinic_attested_at: string | null;
   last_verified_at: string | null;

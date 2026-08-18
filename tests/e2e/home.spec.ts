@@ -142,7 +142,7 @@ test("health endpoint reports the public database catalogue", async ({ request }
   const payload = await response.json();
   expect(payload.ok).toBe(true);
   expect(payload.database).toBe(true);
-  expect(payload.treatments).toBe(25);
+  expect(payload.treatments).toBe(48);
 });
 
 test("public search API never leaks synthetic DEV offers", async ({ request }) => {

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
+import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
 import { changeClinicBookingStatus, checkInBooking, requestOfferRevision, reverseAttendance } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
@@ -121,6 +122,23 @@ export async function createOffer(formData: FormData): Promise<void> {
     validationFailure("createOffer");
   }
 
+  let scope: PriceScope;
+  let includedItems: string[];
+  let excludedItems: string[];
+  let visitCount: number | null;
+  let followUpTerms: string | null;
+  let notes: string | null;
+  try {
+    scope = priceScopeFromFormData(formData);
+    includedItems = priceScopeItemsFromFormData(formData, "included_items");
+    excludedItems = priceScopeItemsFromFormData(formData, "excluded_items");
+    visitCount = priceScopeVisitCountFromFormData(formData);
+    followUpTerms = priceScopeNotesFromFormData(formData, "follow_up_terms");
+    notes = priceScopeNotesFromFormData(formData, "notes");
+  } catch {
+    validationFailure("createOffer");
+  }
+
   const supabase = await requireUser();
   try {
     const p = parsed.data;
@@ -131,6 +149,12 @@ export async function createOffer(formData: FormData): Promise<void> {
       min_minor: money.minMinor,
       max_minor: money.maxMinor,
       duration_minutes: p.duration_minutes,
+      price_scope: scope,
+      included_items: includedItems,
+      excluded_items: excludedItems,
+      visit_count: visitCount,
+      follow_up_terms: followUpTerms,
+      notes,
       status: "draft",
     }).select("id").single();
     requireReturnedRow(result.data, result.error);

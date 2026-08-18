@@ -561,7 +561,9 @@ export type Database = {
           max_minor: number | null
           min_minor: number | null
           notes: string | null
+          price_scope: Json
           price_type: string
+          scope_confirmed_at: string | null
           status: string
           updated_at: string
           variant_id: string
@@ -589,7 +591,9 @@ export type Database = {
           max_minor?: number | null
           min_minor?: number | null
           notes?: string | null
+          price_scope?: Json
           price_type: string
+          scope_confirmed_at?: string | null
           status?: string
           updated_at?: string
           variant_id: string
@@ -617,7 +621,9 @@ export type Database = {
           max_minor?: number | null
           min_minor?: number | null
           notes?: string | null
+          price_scope?: Json
           price_type?: string
+          scope_confirmed_at?: string | null
           status?: string
           updated_at?: string
           variant_id?: string
