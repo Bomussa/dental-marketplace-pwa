@@ -394,6 +394,7 @@ npm run dev
 | [`supabase/REMOTE_APPLIED_MIGRATIONS.md`](supabase/REMOTE_APPLIED_MIGRATIONS.md) | سجل الترحيلات الذي ظهر في قاعدة البيانات البعيدة. |
 | [`docs/README.md`](docs/README.md) | فهرس الوثائق: يميز المرجع الحالي عن تقارير التدقيق والاختبار التاريخية. |
 | [`docs/SOURCE_MANIFEST.md`](docs/SOURCE_MANIFEST.md) | فهرس مولّد من `git ls-files` لكل الملفات المتتبعة، بما فيها الأصول المرئية ولقطات الإثبات. |
+| [`docs/operations-manual/OPERATIONS_MANUAL_AR.md`](docs/operations-manual/OPERATIONS_MANUAL_AR.md) | كتيب تشغيل ذاتي بالصور الحقيقية للمريض والعيادة والإدارة. |
 
 ---
 

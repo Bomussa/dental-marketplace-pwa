@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 245
+**عدد الملفات المفهرسة تفصيليًا:** 253
 
 ## .github
 
@@ -82,6 +82,7 @@
 | الملف |
 |---|
 | [`docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md`](../docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md) |
+| [`docs/CLIENT_OPERATIONS_MANUAL_ASSET_LOG.md`](../docs/CLIENT_OPERATIONS_MANUAL_ASSET_LOG.md) |
 | [`docs/COMPLETION_VERIFICATION_2026-08-17.md`](../docs/COMPLETION_VERIFICATION_2026-08-17.md) |
 | [`docs/DELIVERY_VERIFICATION_2026-08-17.md`](../docs/DELIVERY_VERIFICATION_2026-08-17.md) |
 | [`docs/DEPLOYMENT_RUNBOOK.md`](../docs/DEPLOYMENT_RUNBOOK.md) |
@@ -97,6 +98,13 @@
 | [`docs/LOCAL_UI_VERIFICATION_2026-08-17.md`](../docs/LOCAL_UI_VERIFICATION_2026-08-17.md) |
 | [`docs/MMC_MMS_LOGO_BRIEF_2026-08-18.md`](../docs/MMC_MMS_LOGO_BRIEF_2026-08-18.md) |
 | [`docs/OPERATIONAL_SOURCE_OF_TRUTH_DESIGN.md`](../docs/OPERATIONAL_SOURCE_OF_TRUTH_DESIGN.md) |
+| [`docs/operations-manual/OPERATIONS_MANUAL_AR.md`](../docs/operations-manual/OPERATIONS_MANUAL_AR.md) |
+| [`docs/operations-manual/assets/01-home-en-live.webp`](../docs/operations-manual/assets/01-home-en-live.webp) |
+| [`docs/operations-manual/assets/02-home-ar-live.webp`](../docs/operations-manual/assets/02-home-ar-live.webp) |
+| [`docs/operations-manual/assets/03-login-ar-live.webp`](../docs/operations-manual/assets/03-login-ar-live.webp) |
+| [`docs/operations-manual/assets/04-results-empty-safe.webp`](../docs/operations-manual/assets/04-results-empty-safe.webp) |
+| [`docs/operations-manual/assets/05-clinic-access-guard.webp`](../docs/operations-manual/assets/05-clinic-access-guard.webp) |
+| [`docs/operations-manual/assets/06-admin-access-guard.webp`](../docs/operations-manual/assets/06-admin-access-guard.webp) |
 | [`docs/PHONE_VERIFICATION_EXTERNAL_SOURCES_2026-08-17.md`](../docs/PHONE_VERIFICATION_EXTERNAL_SOURCES_2026-08-17.md) |
 | [`docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md`](../docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md) |
 | [`docs/PRODUCTION_READINESS_AUDIT_2026-08-15.md`](../docs/PRODUCTION_READINESS_AUDIT_2026-08-15.md) |
