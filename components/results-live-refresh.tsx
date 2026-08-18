@@ -54,10 +54,10 @@ export function ResultsLiveRefresh({ variantId, locale }: ResultsLiveRefreshProp
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 text-[11px] font-black ${status === "live" ? "text-emerald-700" : status === "error" ? "text-red-700" : "text-slate-500"}`}
+      className={`inline-flex items-center gap-1.5 text-[11px] font-black ${status === "live" ? "text-emerald-200" : status === "error" ? "text-rose-200" : "text-blue-100"}`}
       title={labels.title}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${status === "live" ? "bg-emerald-500" : status === "error" ? "bg-red-500" : "bg-slate-400"}`} />
+      <span className={`h-1.5 w-1.5 rounded-full ${status === "live" ? "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,.8)]" : status === "error" ? "bg-rose-300" : "bg-blue-200"}`} />
       {statusLabel}
     </span>
   );
