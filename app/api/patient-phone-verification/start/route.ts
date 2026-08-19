@@ -82,8 +82,10 @@ export async function POST(request: Request) {
       .eq("id", profileId)
       .eq("account_id", userId);
     if (updateError) {
-      const duplicateIdentity = updateError.code === "23505";
-      return NextResponse.json({ error: duplicateIdentity ? "الرقم الشخصي مسجل مسبقًا." : "تعذر حفظ بيانات المريض." }, { status: duplicateIdentity ? 409 : 503 });
+      if (updateError.code === "23505") {
+        return NextResponse.json({ error: "تحقق من بيانات المريض ورقم الهاتف." }, { status: 400, headers: { "cache-control": "no-store" } });
+      }
+      return NextResponse.json({ error: "تعذر حفظ بيانات المريض." }, { status: 503 });
     }
   } else {
     const { data: created, error } = await admin
@@ -92,8 +94,10 @@ export async function POST(request: Request) {
       .select("id")
       .single();
     if (error || !created) {
-      const duplicateIdentity = error?.code === "23505";
-      return NextResponse.json({ error: duplicateIdentity ? "الرقم الشخصي مسجل مسبقًا." : "تعذر إنشاء ملف المريض." }, { status: duplicateIdentity ? 409 : 503 });
+      if (error?.code === "23505") {
+        return NextResponse.json({ error: "تحقق من بيانات المريض ورقم الهاتف." }, { status: 400, headers: { "cache-control": "no-store" } });
+      }
+      return NextResponse.json({ error: "تعذر إنشاء ملف المريض." }, { status: 503 });
     }
     profileId = created.id;
   }
