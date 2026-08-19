@@ -192,22 +192,33 @@ test("public search API never leaks synthetic DEV offers", async ({ request }) =
   expect(payload.count).toBe(0);
 });
 
-test("direct public data reads never expose synthetic DEV offers or slots", async ({ request }) => {
+test("direct public data reads never expose synthetic DEV clinic entities", async ({ request }) => {
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   expect(baseUrl).toBeTruthy();
   expect(key).toBeTruthy();
 
   const headers = { apikey: key!, Authorization: `Bearer ${key!}` };
-  const [offerResponse, slotResponse] = await Promise.all([
-    request.get(`${baseUrl}/rest/v1/branch_service_offers?id=eq.73000000-0000-4000-8000-000000000001&select=id`, { headers }),
-    request.get(`${baseUrl}/rest/v1/availability_slots?id=eq.74000000-0000-4000-8000-000000000001&select=id`, { headers }),
+  const syntheticClinicId = "71000000-0000-4000-8000-000000000001";
+  const syntheticBranchId = "72000000-0000-4000-8000-000000000001";
+  const syntheticOfferId = "73000000-0000-4000-8000-000000000001";
+  const syntheticSlotId = "74000000-0000-4000-8000-000000000001";
+  const responses = await Promise.all([
+    request.get(`${baseUrl}/rest/v1/clinics?id=eq.${syntheticClinicId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/branches?id=eq.${syntheticBranchId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/practitioners?clinic_id=eq.${syntheticClinicId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/branch_hours?branch_id=eq.${syntheticBranchId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/branch_hour_exceptions?branch_id=eq.${syntheticBranchId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/branch_service_offers?id=eq.${syntheticOfferId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/availability_slots?id=eq.${syntheticSlotId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/instant_slots?offer_id=eq.${syntheticOfferId}&select=id`, { headers }),
+    request.get(`${baseUrl}/rest/v1/reviews?clinic_id=eq.${syntheticClinicId}&select=id`, { headers }),
   ]);
 
-  expect(offerResponse.status()).toBe(200);
-  expect(slotResponse.status()).toBe(200);
-  expect(await offerResponse.json()).toEqual([]);
-  expect(await slotResponse.json()).toEqual([]);
+  for (const response of responses) {
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual([]);
+  }
 });
 
 test("customer-choice ingestion is POST-only", async ({ request }) => {

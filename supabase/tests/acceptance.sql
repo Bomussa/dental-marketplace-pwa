@@ -55,3 +55,44 @@ join public.branches b on b.id = s.branch_id
 join public.clinics c on c.id = b.clinic_id
 where c.is_synthetic;
 reset role;
+
+-- F. Every direct public surface tied to a synthetic clinic must stay empty.
+set local role anon;
+select count(*) as synthetic_clinics_directly_exposed
+from public.clinics c
+where c.is_synthetic;
+
+select count(*) as synthetic_branches_directly_exposed
+from public.branches b
+join public.clinics c on c.id = b.clinic_id
+where c.is_synthetic;
+
+select count(*) as synthetic_practitioners_directly_exposed
+from public.practitioners p
+join public.clinics c on c.id = p.clinic_id
+where c.is_synthetic;
+
+select count(*) as synthetic_branch_hours_directly_exposed
+from public.branch_hours h
+join public.branches b on b.id = h.branch_id
+join public.clinics c on c.id = b.clinic_id
+where c.is_synthetic;
+
+select count(*) as synthetic_branch_exceptions_directly_exposed
+from public.branch_hour_exceptions e
+join public.branches b on b.id = e.branch_id
+join public.clinics c on c.id = b.clinic_id
+where c.is_synthetic;
+
+select count(*) as synthetic_instant_slots_directly_exposed
+from public.instant_slots i
+join public.branch_service_offers o on o.id = i.offer_id
+join public.branches b on b.id = o.branch_id
+join public.clinics c on c.id = b.clinic_id
+where c.is_synthetic;
+
+select count(*) as synthetic_reviews_directly_exposed
+from public.reviews r
+join public.clinics c on c.id = r.clinic_id
+where c.is_synthetic;
+reset role;
