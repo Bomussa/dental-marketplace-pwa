@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 280
+**عدد الملفات المفهرسة تفصيليًا:** 281
 
 ## .github
 
@@ -99,6 +99,7 @@
 | [`docs/INTENSIVE_HARDENING_2026-08-19.md`](../docs/INTENSIVE_HARDENING_2026-08-19.md) |
 | [`docs/LIVE_AUDIT_OBSERVATIONS_2026-08-18.md`](../docs/LIVE_AUDIT_OBSERVATIONS_2026-08-18.md) |
 | [`docs/LIVE_AUDIT_SCOPE_2026-08-18.md`](../docs/LIVE_AUDIT_SCOPE_2026-08-18.md) |
+| [`docs/LIVE_PRACTICAL_VERIFICATION_2026-08-19.md`](../docs/LIVE_PRACTICAL_VERIFICATION_2026-08-19.md) |
 | [`docs/LIVE_PRODUCTION_TEST_SCOPE_2026-08-17.md`](../docs/LIVE_PRODUCTION_TEST_SCOPE_2026-08-17.md) |
 | [`docs/LIVE_ROLE_TEST_REPORT_2026-08-18.md`](../docs/LIVE_ROLE_TEST_REPORT_2026-08-18.md) |
 | [`docs/LOAD_TEST_REPORT_2026-08-18.md`](../docs/LOAD_TEST_REPORT_2026-08-18.md) |
