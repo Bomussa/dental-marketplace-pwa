@@ -10,8 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 
 const LOGIN_CLIENT_WINDOW_SECONDS = 60;
 const MAX_LOGIN_ATTEMPTS_PER_CLIENT_WINDOW = 30;
-const LOGIN_CLIENT_USERNAME_WINDOW_SECONDS = 5 * 60;
-const MAX_LOGIN_ATTEMPTS_PER_CLIENT_USERNAME_WINDOW = 10;
+const LOGIN_USERNAME_WINDOW_SECONDS = 5 * 60;
+const MAX_LOGIN_ATTEMPTS_PER_USERNAME_WINDOW = 20;
+const DECOY_LOGIN_EMAIL = "asnani-login-decoy@example.invalid";
 
 export async function loginWithPassword(formData: FormData) {
   const parsed = passwordLoginSchema.safeParse({
@@ -26,7 +27,7 @@ export async function loginWithPassword(formData: FormData) {
   const clientKey = publicWriteHeadersClientKey(requestHeaders);
   let rateAllowed = false;
   try {
-    const [clientAllowed, clientUsernameAllowed] = await Promise.all([
+    const [clientAllowed, usernameAllowed] = await Promise.all([
       consumeRateLimit({
         scope: "login",
         subject: `client:${clientKey}`,
@@ -35,12 +36,12 @@ export async function loginWithPassword(formData: FormData) {
       }),
       consumeRateLimit({
         scope: "login",
-        subject: `client-username:${clientKey}:${parsed.data.username}`,
-        maxRequests: MAX_LOGIN_ATTEMPTS_PER_CLIENT_USERNAME_WINDOW,
-        windowSeconds: LOGIN_CLIENT_USERNAME_WINDOW_SECONDS,
+        subject: `username:${parsed.data.username}`,
+        maxRequests: MAX_LOGIN_ATTEMPTS_PER_USERNAME_WINDOW,
+        windowSeconds: LOGIN_USERNAME_WINDOW_SECONDS,
       }),
     ]);
-    rateAllowed = clientAllowed && clientUsernameAllowed;
+    rateAllowed = clientAllowed && usernameAllowed;
   } catch {
     redirect("/login?error=invalid_credentials");
   }
@@ -49,11 +50,12 @@ export async function loginWithPassword(formData: FormData) {
 
   try {
     const email = await emailForUsername(parsed.data.username);
-    if (!email) redirect("/login?error=invalid_credentials");
-
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password: parsed.data.password });
-    if (error) redirect("/login?error=invalid_credentials");
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email ?? DECOY_LOGIN_EMAIL,
+      password: parsed.data.password,
+    });
+    if (!email || error) redirect("/login?error=invalid_credentials");
   } catch {
     redirect("/login?error=invalid_credentials");
   }
