@@ -1,10 +1,17 @@
 import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import {
+  publicWriteRequestBodyIsTooLarge,
+  publicWriteRequestOriginIsAllowed,
+  readPublicWriteRequestTextWithinLimit,
+} from "@/lib/public-write-request-guard";
 import { PhoneVerificationProviderError, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
 import { consumeRateLimit } from "@/lib/operations.server";
 import { patientPhoneVerificationStartSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+
+const MAX_PHONE_VERIFICATION_START_BYTES = 8 * 1024;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -12,7 +19,20 @@ export async function POST(request: Request) {
   const userId = claimsData?.claims?.sub;
   if (claimsError || !userId) return NextResponse.json({ error: "يلزم تسجيل الدخول قبل التحقق من الهاتف." }, { status: 401 });
 
-  const payload = await request.json().catch(() => null);
+  if (!publicWriteRequestOriginIsAllowed(request)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403, headers: { "cache-control": "no-store" } });
+  if (publicWriteRequestBodyIsTooLarge(request, MAX_PHONE_VERIFICATION_START_BYTES)) {
+    return NextResponse.json({ error: "phone_verification_too_large" }, { status: 413, headers: { "cache-control": "no-store" } });
+  }
+
+  const raw = await readPublicWriteRequestTextWithinLimit(request, MAX_PHONE_VERIFICATION_START_BYTES).catch(() => "");
+  if (raw === null) return NextResponse.json({ error: "phone_verification_too_large" }, { status: 413, headers: { "cache-control": "no-store" } });
+
+  let payload: unknown = null;
+  try {
+    payload = raw ? JSON.parse(raw) : null;
+  } catch {
+    return NextResponse.json({ error: "تحقق من بيانات المريض ورقم الهاتف." }, { status: 400, headers: { "cache-control": "no-store" } });
+  }
   const parsed = patientPhoneVerificationStartSchema.safeParse(payload);
   if (!parsed.success) return NextResponse.json({ error: "تحقق من بيانات المريض ورقم الهاتف." }, { status: 400 });
 

@@ -125,12 +125,25 @@ test("sensitive booking and support endpoints reject unauthenticated requests be
   const [bookingResponse, supportResponse, registrationResponse] = await Promise.all([
     request.post("/api/book", { data: {} }),
     request.post("/api/support", { data: {} }),
-    request.post("/api/patient-booking-registration", { data: {} }),
+    request.post("/api/patient-booking-registration", {
+      headers: { origin: "http://127.0.0.1:3000" },
+      data: {},
+    }),
   ]);
 
   expect(bookingResponse.status()).toBe(401);
   expect(supportResponse.status()).toBe(401);
   expect(registrationResponse.status()).toBe(400);
+});
+
+test("device installation rejects an external origin before any write", async ({ request }) => {
+  const response = await request.post("/api/device-installations", {
+    headers: { origin: "https://untrusted.example" },
+    data: { installation_id: "10000000-0000-4000-8000-000000000099", device_class: "desktop" },
+  });
+
+  expect(response.status()).toBe(403);
+  expect((await response.json()).error).toBe("forbidden_origin");
 });
 
 test("activity report export rejects unauthenticated requests before aggregation", async ({ request }) => {
@@ -188,6 +201,10 @@ test("security headers include a first-party CSP without opening frames or objec
   expect(csp).toContain("frame-ancestors 'none'");
   expect(headers["x-content-type-options"]).toBe("nosniff");
   expect(headers["x-frame-options"]).toBe("DENY");
+  expect(headers["cross-origin-opener-policy"]).toBe("same-origin");
+  expect(headers["cross-origin-resource-policy"]).toBe("same-origin");
+  expect(headers["origin-agent-cluster"]).toBe("?1");
+  expect(headers["x-permitted-cross-domain-policies"]).toBe("none");
 });
 
 test("production service worker never converts an offline API failure into cached HTML", async ({ page, context }) => {

@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import type { Json } from "@/lib/database.types";
+import {
+  publicWriteRequestBodyIsTooLarge,
+  publicWriteRequestOriginIsAllowed,
+  readPublicWriteRequestTextWithinLimit,
+} from "@/lib/public-write-request-guard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { supportMessageSchema } from "@/lib/validation";
 import { consumeRateLimit } from "@/lib/operations.server";
 
 const MEDICAL_OR_EMERGENCY = /(?:ألم شديد|نزيف|تورم|عدوى|طارئ|emergency|severe pain|bleeding|swelling|infection)/i;
+const MAX_SUPPORT_MESSAGE_BYTES = 16 * 1024;
 
 type SafetyCategory = "standard" | "medical" | "emergency" | "privacy" | "billing" | "abuse";
 type KnowledgeArticle = { slug: string; title: string; body_markdown: string; category: string };
@@ -31,7 +37,22 @@ export async function POST(request: Request) {
   const userId = claimsData?.claims?.sub;
   if (claimsError || typeof userId !== "string") return NextResponse.json({ error: "AUTH_REQUIRED" }, { status: 401 });
 
-  const parsed = supportMessageSchema.safeParse(await request.json().catch(() => null));
+  if (!publicWriteRequestOriginIsAllowed(request)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403, headers: { "cache-control": "no-store" } });
+  if (publicWriteRequestBodyIsTooLarge(request, MAX_SUPPORT_MESSAGE_BYTES)) {
+    return NextResponse.json({ error: "support_message_too_large" }, { status: 413, headers: { "cache-control": "no-store" } });
+  }
+
+  const raw = await readPublicWriteRequestTextWithinLimit(request, MAX_SUPPORT_MESSAGE_BYTES).catch(() => "");
+  if (raw === null) return NextResponse.json({ error: "support_message_too_large" }, { status: 413, headers: { "cache-control": "no-store" } });
+
+  let payload: unknown = null;
+  try {
+    payload = raw ? JSON.parse(raw) : null;
+  } catch {
+    return NextResponse.json({ error: "VALIDATION_FAILED" }, { status: 400, headers: { "cache-control": "no-store" } });
+  }
+
+  const parsed = supportMessageSchema.safeParse(payload);
   if (!parsed.success) return NextResponse.json({ error: "VALIDATION_FAILED" }, { status: 400 });
 
   const category: SafetyCategory = MEDICAL_OR_EMERGENCY.test(parsed.data.message)

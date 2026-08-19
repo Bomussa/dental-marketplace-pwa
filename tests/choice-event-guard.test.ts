@@ -20,6 +20,18 @@ describe("choice event request guard", () => {
     expect(choiceRequestOriginIsAllowed(new Request("https://example.test/api/choices", { headers: { origin: "https://attacker.test" } }))).toBe(false);
   });
 
+  it("accepts the matching forwarded public origin behind a reverse proxy", () => {
+    const proxied = new Request("http://internal.test/api/choices", {
+      headers: {
+        origin: "https://example.test",
+        host: "internal.test",
+        "x-forwarded-host": "example.test",
+        "x-forwarded-proto": "https",
+      },
+    });
+    expect(choiceRequestOriginIsAllowed(proxied)).toBe(true);
+  });
+
   it("rejects declared bodies above the event budget", () => {
     expect(choiceRequestBodyIsTooLarge(new Request("https://example.test/api/choices", { headers: { "content-length": String(MAX_CHOICE_EVENT_BYTES) } }))).toBe(false);
     expect(choiceRequestBodyIsTooLarge(new Request("https://example.test/api/choices", { headers: { "content-length": String(MAX_CHOICE_EVENT_BYTES + 1) } }))).toBe(true);

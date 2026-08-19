@@ -3,22 +3,45 @@ import { bookingSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { consumeRateLimit } from "@/lib/operations.server";
+import {
+  publicWriteRequestBodyIsTooLarge,
+  publicWriteRequestOriginIsAllowed,
+  readPublicWriteRequestTextWithinLimit,
+} from "@/lib/public-write-request-guard";
+
+const MAX_BOOKING_REQUEST_BYTES = 4 * 1024;
+
+function json(body: unknown, status: number, headers?: HeadersInit) {
+  return NextResponse.json(body, { status, headers: { "cache-control": "no-store", ...headers } });
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
-  if (claimsError || !userId) return NextResponse.json({ error: "يلزم تسجيل الدخول قبل الحجز" }, { status: 401 });
+  if (claimsError || !userId) return json({ error: "يلزم تسجيل الدخول قبل الحجز" }, 401);
 
-  const json = await request.json().catch(() => null);
-  const parsed = bookingSchema.safeParse(json);
-  if (!parsed.success) return NextResponse.json({ error: "بيانات الحجز غير صالحة" }, { status: 400 });
+  if (!publicWriteRequestOriginIsAllowed(request)) return json({ error: "forbidden_origin" }, 403);
+  if (publicWriteRequestBodyIsTooLarge(request, MAX_BOOKING_REQUEST_BYTES)) return json({ error: "booking_too_large" }, 413);
+
+  const raw = await readPublicWriteRequestTextWithinLimit(request, MAX_BOOKING_REQUEST_BYTES).catch(() => "");
+  if (raw === null) return json({ error: "booking_too_large" }, 413);
+
+  let payload: unknown = null;
+  try {
+    payload = raw ? JSON.parse(raw) : null;
+  } catch {
+    return json({ error: "بيانات الحجز غير صالحة" }, 400);
+  }
+
+  const parsed = bookingSchema.safeParse(payload);
+  if (!parsed.success) return json({ error: "بيانات الحجز غير صالحة" }, 400);
 
   let admin;
   try {
     admin = createAdminClient();
   } catch {
-    return NextResponse.json({ error: "خدمة الحجز غير متاحة مؤقتًا" }, { status: 503 });
+    return json({ error: "خدمة الحجز غير متاحة مؤقتًا" }, 503);
   }
 
   let bookingRateAllowed;
@@ -30,12 +53,13 @@ export async function POST(request: Request) {
       windowSeconds: 60 * 60,
     });
   } catch {
-    return NextResponse.json({ error: "خدمة حماية الحجز غير متاحة مؤقتًا" }, { status: 503 });
+    return json({ error: "خدمة حماية الحجز غير متاحة مؤقتًا" }, 503);
   }
   if (!bookingRateAllowed) {
-    return NextResponse.json(
+    return json(
       { error: "تم تجاوز عدد محاولات الحجز المسموح به مؤقتًا. حاول بعد قليل." },
-      { status: 429, headers: { "retry-after": "3600", "cache-control": "no-store" } },
+      429,
+      { "retry-after": "3600" },
     );
   }
 
@@ -53,9 +77,9 @@ export async function POST(request: Request) {
     const invalid = error.code === "22023" || /patient profile is required/i.test(error.message);
     const status = forbidden ? 403 : conflict ? 409 : invalid ? 400 : 500;
     const message = forbidden ? "لا يمكنك الحجز بهذا الملف." : conflict ? "الموعد لم يعد متاحًا. حدّث النتائج." : incompleteProfile ? "أكمل بيانات المريض وتحقق من رقم الهاتف قبل الحجز." : invalid ? "اختر الشخص الذي تريد الحجز له." : "تعذر إنشاء الحجز";
-    return NextResponse.json({ error: message }, { status });
+    return json({ error: message }, status);
   }
 
   const booking = Array.isArray(data) ? data[0] : data;
-  return NextResponse.json(booking, { status: 201 });
+  return json(booking, 201);
 }
