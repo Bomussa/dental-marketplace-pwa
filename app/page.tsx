@@ -50,6 +50,12 @@ export default async function HomePage() {
             <span className="trust-chip"><WalletIcon size={16} className="text-[#91cbff]"/> {t["home.trust.payment"]}</span>
             <span className="trust-chip"><CalendarIcon size={16} className="text-[#d6c0ff]"/> {t["home.trust.booking"]}</span>
           </div>
+
+          <aside className="free-patient-promise reveal reveal-delay-2 mx-auto mt-5 max-w-3xl" aria-label={t["home.free.title"]}>
+            <span className="free-patient-promise__icon" aria-hidden="true"><WalletIcon size={22} /></span>
+            <span className="free-patient-promise__content"><strong>{t["home.free.title"]}</strong><span>{t["home.free.copy"]}</span></span>
+            <span className="free-patient-promise__note"><ShieldCheckIcon size={15} />{t["home.free.note"]}</span>
+          </aside>
         </div>
       </section>
 

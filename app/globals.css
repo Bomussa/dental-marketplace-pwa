@@ -656,3 +656,79 @@ button, input, select, textarea {
 .glass-shell h3 {
   color: #fff !important;
 }
+
+
+/* Patient-free promise: make the no-fee model visible before the first booking decision. */
+.free-patient-promise {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(167, 243, 208, 0.48);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(116, 247, 205, 0.22), transparent 40%),
+    linear-gradient(120deg, rgba(11, 80, 108, 0.92), rgba(9, 48, 91, 0.96));
+  box-shadow: 0 20px 44px -30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  text-align: start;
+}
+
+.free-patient-promise__icon {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, #40d9bd, #3192db);
+  color: #fff;
+  box-shadow: 0 12px 22px -14px rgba(43, 227, 197, 0.8);
+}
+
+.free-patient-promise__content {
+  display: grid;
+  gap: 0.16rem;
+  min-width: 0;
+  color: #d9f5ff;
+  font-size: 0.77rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.free-patient-promise__content strong {
+  color: #fff;
+  font-size: 0.93rem;
+  font-weight: 900;
+}
+
+.free-patient-promise__note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  max-width: 13.75rem;
+  padding: 0.43rem 0.6rem;
+  border: 1px solid rgba(188, 255, 232, 0.4);
+  border-radius: 999px;
+  background: rgba(206, 255, 239, 0.12);
+  color: #cbffea;
+  font-size: 0.67rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .free-patient-promise {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.72rem;
+    padding: 0.8rem;
+  }
+
+  .free-patient-promise__note {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    max-width: none;
+  }
+}

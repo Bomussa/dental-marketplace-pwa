@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 261
+**عدد الملفات المفهرسة تفصيليًا:** 262
 
 ## .github
 
@@ -311,6 +311,7 @@
 | [`supabase/migrations/20260819055000_add_service_only_clinic_operator_rpcs.sql`](../supabase/migrations/20260819055000_add_service_only_clinic_operator_rpcs.sql) |
 | [`supabase/migrations/20260819060000_revoke_legacy_clinic_operator_rpcs.sql`](../supabase/migrations/20260819060000_revoke_legacy_clinic_operator_rpcs.sql) |
 | [`supabase/migrations/20260819063000_explicitly_deny_operator_account_table_access.sql`](../supabase/migrations/20260819063000_explicitly_deny_operator_account_table_access.sql) |
+| [`supabase/migrations/20260819070000_scale_critical_search_and_operator_indexes.sql`](../supabase/migrations/20260819070000_scale_critical_search_and_operator_indexes.sql) |
 | [`supabase/seed.dev.sql`](../supabase/seed.dev.sql) |
 | [`supabase/tests/acceptance.sql`](../supabase/tests/acceptance.sql) |
 
