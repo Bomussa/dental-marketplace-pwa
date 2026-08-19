@@ -1,5 +1,8 @@
 import { existsSync } from "node:fs";
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
+
+loadEnvConfig(process.cwd());
 
 const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? "npm run start";
 const localChromiumPath = "/usr/bin/chromium";

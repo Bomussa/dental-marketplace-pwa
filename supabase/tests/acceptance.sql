@@ -40,3 +40,18 @@ where clinic_id in (
     and vr.source = 'DEV_SYNTHETIC'
 );
 reset role;
+
+-- E. Direct public table reads must also hide synthetic fixtures.
+set local role anon;
+select count(*) as synthetic_offers_directly_exposed
+from public.branch_service_offers o
+join public.branches b on b.id = o.branch_id
+join public.clinics c on c.id = b.clinic_id
+where c.is_synthetic;
+
+select count(*) as synthetic_slots_directly_exposed
+from public.availability_slots s
+join public.branches b on b.id = s.branch_id
+join public.clinics c on c.id = b.clinic_id
+where c.is_synthetic;
+reset role;

@@ -78,6 +78,7 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | 70 | `20260819070151` | `scale_critical_search_and_operator_indexes` |
 | 71 | `20260819095142` | `activity_report_rpc` |
 | 72 | `20260819133741` | `server_only_critical_mutation_policies` |
+| 73 | `20260819171711` | `hide_synthetic_clinics_from_direct_public_reads` |
 
 ## Repository alignment status
 
