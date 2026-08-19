@@ -77,6 +77,7 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | 69 | `20260819052626` | `explicitly_deny_operator_account_table_access` |
 | 70 | `20260819070151` | `scale_critical_search_and_operator_indexes` |
 | 71 | `20260819095142` | `activity_report_rpc` |
+| 72 | `20260819133741` | `server_only_critical_mutation_policies` |
 
 ## Repository alignment status
 

@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 270
+**عدد الملفات المفهرسة تفصيليًا:** 272
 
 ## .github
 
@@ -203,6 +203,7 @@
 | [`lib/phone-verification.server.ts`](../lib/phone-verification.server.ts) |
 | [`lib/price-scope.ts`](../lib/price-scope.ts) |
 | [`lib/price.ts`](../lib/price.ts) |
+| [`lib/public-write-request-guard.ts`](../lib/public-write-request-guard.ts) |
 | [`lib/realtime-refresh-policy.ts`](../lib/realtime-refresh-policy.ts) |
 | [`lib/search-offers.ts`](../lib/search-offers.ts) |
 | [`lib/server-readiness.ts`](../lib/server-readiness.ts) |
@@ -318,6 +319,7 @@
 | [`supabase/migrations/20260819063000_explicitly_deny_operator_account_table_access.sql`](../supabase/migrations/20260819063000_explicitly_deny_operator_account_table_access.sql) |
 | [`supabase/migrations/20260819070000_scale_critical_search_and_operator_indexes.sql`](../supabase/migrations/20260819070000_scale_critical_search_and_operator_indexes.sql) |
 | [`supabase/migrations/20260819080000_activity_report_rpc.sql`](../supabase/migrations/20260819080000_activity_report_rpc.sql) |
+| [`supabase/migrations/20260819140000_server_only_critical_mutation_policies.sql`](../supabase/migrations/20260819140000_server_only_critical_mutation_policies.sql) |
 | [`supabase/seed.dev.sql`](../supabase/seed.dev.sql) |
 | [`supabase/tests/acceptance.sql`](../supabase/tests/acceptance.sql) |
 
