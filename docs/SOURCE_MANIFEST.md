@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 277
+**عدد الملفات المفهرسة تفصيليًا:** 279
 
 ## .github
 
@@ -85,6 +85,7 @@
 
 | الملف |
 |---|
+| [`docs/AUDIT_AND_HARDENING_EXECUTION_PLAN_AR.md`](../docs/AUDIT_AND_HARDENING_EXECUTION_PLAN_AR.md) |
 | [`docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md`](../docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md) |
 | [`docs/CLIENT_OPERATIONS_MANUAL_ASSET_LOG.md`](../docs/CLIENT_OPERATIONS_MANUAL_ASSET_LOG.md) |
 | [`docs/COMPLETION_VERIFICATION_2026-08-17.md`](../docs/COMPLETION_VERIFICATION_2026-08-17.md) |
@@ -137,6 +138,7 @@
 | [`docs/WIDE_AUDIT_COMPLETION_2026-08-17.md`](../docs/WIDE_AUDIT_COMPLETION_2026-08-17.md) |
 | [`docs/WIDE_AUDIT_EVIDENCE_2026-08-17.md`](../docs/WIDE_AUDIT_EVIDENCE_2026-08-17.md) |
 | [`docs/WIDE_AUDIT_SCOPE_2026-08-17.md`](../docs/WIDE_AUDIT_SCOPE_2026-08-17.md) |
+| [`docs/WIDE_CODE_AND_SECURITY_AUDIT_2026-08-19.md`](../docs/WIDE_CODE_AND_SECURITY_AUDIT_2026-08-19.md) |
 | [`docs/audit-notes-2026-08-15.md`](../docs/audit-notes-2026-08-15.md) |
 | [`docs/evidence/live-audit-2026-08-18/account-login-redirect.webp`](../docs/evidence/live-audit-2026-08-18/account-login-redirect.webp) |
 | [`docs/evidence/live-audit-2026-08-18/admin-home-redirect.webp`](../docs/evidence/live-audit-2026-08-18/admin-home-redirect.webp) |

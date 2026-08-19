@@ -2464,6 +2464,16 @@ export type Database = {
         Args: { p_actor_id: string; p_booking_id: string; p_status: string }
         Returns: string
       }
+      clinic_activity_report_server: {
+        Args: {
+          p_actor_id: string
+          p_clinic_id: string
+          p_end: string
+          p_granularity?: string
+          p_start: string
+        }
+        Returns: Json
+      }
       clinic_booking_patient_details: {
         Args: { p_booking_ids?: string[] }
         Returns: {
@@ -2559,6 +2569,15 @@ export type Database = {
           user_id: string
           username: string
         }[]
+      }
+      platform_activity_report_server: {
+        Args: {
+          p_actor_id: string
+          p_end: string
+          p_granularity?: string
+          p_start: string
+        }
+        Returns: Json
       }
       provision_clinic_operator_account: {
         Args: { p_clinic_id: string; p_user_id: string; p_username: string }

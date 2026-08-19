@@ -135,7 +135,7 @@ export async function changeClinicBookingStatus(input: {
   status: "confirmed" | "completed" | "clinic_cancelled" | "no_show" | "failed";
 }) {
   const actorId = await verifiedActor();
-  return callServerRpc("change_booking_status_server", {
+  return callOperationalRpc("change_booking_status_server", {
     p_actor_id: actorId,
     p_booking_id: input.bookingId,
     p_status: input.status,
@@ -194,7 +194,7 @@ export async function platformActivityReport(input: {
   granularity: ActivityReportGranularity;
 }) {
   const actorId = await verifiedActor();
-  return callServerRpc("platform_activity_report_server", {
+  return callOperationalRpc("platform_activity_report_server", {
     p_actor_id: actorId,
     p_start: input.periodStart,
     p_end: input.periodEnd,
@@ -209,7 +209,7 @@ export async function clinicActivityReport(input: {
   granularity: ActivityReportGranularity;
 }) {
   const actorId = await verifiedActor();
-  return callServerRpc("clinic_activity_report_server", {
+  return callOperationalRpc("clinic_activity_report_server", {
     p_actor_id: actorId,
     p_clinic_id: input.clinicId,
     p_start: input.periodStart,
