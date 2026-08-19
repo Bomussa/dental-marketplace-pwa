@@ -72,6 +72,18 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
   const actorId = actorClaims?.claims?.sub;
   if (actorClaimsError || !actorId) redirect("/login?next=/clinic");
 
+  const { data: ownerMembership, error: ownerMembershipError } = await supabase
+    .from("clinic_memberships")
+    .select("id")
+    .eq("clinic_id", parsed.data.clinic_id)
+    .eq("user_id", actorId)
+    .eq("role", "owner")
+    .eq("status", "active")
+    .maybeSingle();
+  if (ownerMembershipError || !ownerMembership) {
+    actionFailure("createClinicOperatorAccount", new Error("FORBIDDEN"));
+  }
+
   let admin;
   try {
     admin = createAdminClient();
