@@ -1,34 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { searchSchema } from "@/lib/validation";
+import { parseSearchQuery } from "@/lib/search-query";
 import { searchLiveOffers } from "@/lib/search-offers";
 
-const whenSchema = z.enum(["earliest", "today", "tomorrow"]);
-
 export async function GET(request: NextRequest) {
-  const params = request.nextUrl.searchParams;
-  const parsed = searchSchema.safeParse({
-    variant: params.get("variant"),
-    lat: params.get("lat") ?? "",
-    lng: params.get("lng") ?? "",
-    radius: params.get("radius") ?? "10",
-    sort: params.get("sort") ?? "balanced",
-  });
-  const when = whenSchema.safeParse(params.get("when") ?? "earliest");
-  if (!parsed.success || !when.success) {
+  const parsed = parseSearchQuery(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) {
     return NextResponse.json({ error: "invalid_search" }, { status: 400, headers: { "cache-control": "no-store" } });
   }
 
-  const lat = parsed.data.lat === "" || parsed.data.lat === undefined ? null : parsed.data.lat;
-  const lng = parsed.data.lng === "" || parsed.data.lng === undefined ? null : parsed.data.lng;
-  const result = await searchLiveOffers({
-    variant: parsed.data.variant,
-    lat,
-    lng,
-    radius: parsed.data.radius,
-    when: when.data,
-    sort: parsed.data.sort,
-  });
+  const { variant, lat: rawLat, lng: rawLng, radius, sort, when } = parsed.data;
+  const lat = rawLat === "" || rawLat === undefined ? null : rawLat;
+  const lng = rawLng === "" || rawLng === undefined ? null : rawLng;
+  const result = await searchLiveOffers({ variant, lat, lng, radius, when, sort });
   if (result.error) {
     return NextResponse.json({ error: "search_unavailable" }, { status: 503, headers: { "cache-control": "no-store" } });
   }

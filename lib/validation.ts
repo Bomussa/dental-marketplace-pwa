@@ -4,6 +4,7 @@ export const uuid = z.string().uuid();
 
 const coordinate = z.coerce.number().finite();
 export const searchSortSchema = z.enum(["balanced", "price", "distance", "rating", "soonest"]);
+export const searchWhenSchema = z.enum(["earliest", "today", "tomorrow"]);
 
 export const searchSchema = z.object({
   variant: uuid,
@@ -11,6 +12,10 @@ export const searchSchema = z.object({
   lng: z.union([z.literal(""), coordinate.min(-180).max(180)]).optional(),
   radius: z.coerce.number().min(1).max(50).default(10),
   sort: searchSortSchema.default("balanced"),
+});
+
+export const searchQuerySchema = searchSchema.extend({
+  when: searchWhenSchema.default("earliest"),
 });
 
 export const bookingSchema = z.object({

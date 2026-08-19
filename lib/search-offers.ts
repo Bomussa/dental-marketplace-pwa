@@ -17,7 +17,7 @@ function nullableNumber(value: number | null) { return value ?? Number.POSITIVE_
 function nullableTime(value: string | null) { return value ? new Date(value).getTime() : Number.POSITIVE_INFINITY; }
 function ratingValue(value: number | string | null) { return value == null ? Number.NEGATIVE_INFINITY : Number(value); }
 
-function compareOffers(sort: SearchSort) {
+function compareOffers(sort: Exclude<SearchSort, "balanced">) {
   return (a: SearchOffer, b: SearchOffer) => {
     const byPrice = nullableNumber(a.min_minor) - nullableNumber(b.min_minor);
     const byDistance = nullableNumber(a.distance_km) - nullableNumber(b.distance_km);
@@ -27,9 +27,37 @@ function compareOffers(sort: SearchSort) {
     if (sort === "price") return byPrice || byDistance || byRating || bySoonest || byName;
     if (sort === "distance") return byDistance || byPrice || byRating || bySoonest || byName;
     if (sort === "rating") return byRating || byPrice || byDistance || bySoonest || byName;
-    if (sort === "soonest") return bySoonest || byPrice || byDistance || byRating || byName;
-    return byPrice || byDistance || byRating || bySoonest || byName;
+    return bySoonest || byPrice || byDistance || byRating || byName;
   };
+}
+
+function normalized(value: number, values: number[], fallback: number) {
+  const finite = values.filter(Number.isFinite);
+  if (!finite.length || !Number.isFinite(value)) return fallback;
+  const min = Math.min(...finite);
+  const max = Math.max(...finite);
+  return min === max ? 0 : (value - min) / (max - min);
+}
+
+function balancedScore(offer: SearchOffer, offers: SearchOffer[]) {
+  const prices = offers.map((item) => nullableNumber(item.min_minor));
+  const distances = offers.map((item) => nullableNumber(item.distance_km));
+  const ratings = offers.map((item) => ratingValue(item.rating_avg));
+  const appointmentTimes = offers.map((item) => nullableTime(item.earliest_slot_at));
+  const priceScore = normalized(nullableNumber(offer.min_minor), prices, 1);
+  const distanceScore = normalized(nullableNumber(offer.distance_km), distances, 0.5);
+  const ratingPenalty = 1 - normalized(ratingValue(offer.rating_avg), ratings, 0.5);
+  const appointmentScore = normalized(nullableTime(offer.earliest_slot_at), appointmentTimes, 1);
+
+  return (priceScore * 0.35) + (ratingPenalty * 0.25) + (appointmentScore * 0.25) + (distanceScore * 0.15);
+}
+
+export function sortSearchOffers(offers: SearchOffer[], sort: SearchSort) {
+  const ordered = [...offers];
+  if (sort !== "balanced") return ordered.sort(compareOffers(sort));
+
+  const fallback = compareOffers("price");
+  return ordered.sort((a, b) => balancedScore(a, offers) - balancedScore(b, offers) || fallback(a, b));
 }
 
 function qatarDate(date: Date) {
@@ -56,16 +84,16 @@ export async function searchLiveOffers(input: LiveSearchInput) {
   const allOffers = (data ?? []) as SearchOffer[];
   const todayKey = qatarDate(new Date());
   const tomorrowKey = qatarDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
-  const offers = allOffers.filter((offer) => {
+  const matchesWhen = allOffers.filter((offer) => {
     if (input.when === "earliest") return true;
     if (!offer.earliest_slot_at) return false;
     const key = qatarDate(new Date(offer.earliest_slot_at));
     return input.when === "today" ? key === todayKey : key === tomorrowKey;
-  }).sort(compareOffers(input.sort));
+  });
 
   return {
     variant,
-    offers,
+    offers: sortSearchOffers(matchesWhen, input.sort),
     error: error ? error.message : null,
   };
 }

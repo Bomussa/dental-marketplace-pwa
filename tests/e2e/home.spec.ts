@@ -41,6 +41,21 @@ test("appointment preference survives into the results URL", async ({ page }) =>
   await expect(page.getByRole("heading", { level: 1, name: "علاج عصب — ضرس" })).toBeVisible();
 });
 
+test("selected distance range survives into the results URL and summary", async ({ page }) => {
+  await page.goto("/");
+  const form = page.getByRole("form", { name: "ابدأ مقارنة علاج الأسنان" });
+  await form.locator('select[name="radius"]').selectOption("25");
+  await page.getByRole("button", { name: "قارن الخيارات الآن" }).click();
+
+  await expect(page).toHaveURL(/radius=25/);
+  await expect(page.getByText("نطاق 25 كم عند توفر الموقع")).toBeVisible();
+});
+
+test("results reject an invalid appointment preference instead of silently changing it", async ({ page }) => {
+  await page.goto(`/results?variant=${rootCanalMolarVariant}&when=next_month&radius=10&sort=balanced`);
+  await expect(page.getByRole("heading", { level: 1, name: "طلب البحث غير صالح" })).toBeVisible();
+});
+
 test("location unavailable degrades safely and keeps search usable", async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(Navigator.prototype, "geolocation", {

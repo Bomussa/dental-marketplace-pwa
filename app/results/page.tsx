@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { searchSchema } from "@/lib/validation";
-import { searchLiveOffers, type SearchSort, type WhenPreference } from "@/lib/search-offers";
+import { parseSearchQuery } from "@/lib/search-query";
+import { searchLiveOffers } from "@/lib/search-offers";
 import { priceLabel } from "@/lib/price";
 import { Badge, Card } from "@/components/ui";
 import { BookButton } from "@/components/book-button";
@@ -13,7 +13,6 @@ import { PriceScopeSummary } from "@/components/price-scope-summary";
 
 export const dynamic = "force-dynamic";
 type Params = Record<string, string | string[] | undefined>;
-function scalar(v: string | string[] | undefined) { return Array.isArray(v) ? v[0] : v; }
 function replaceTokens(template: string, values: Record<string, string | number>) {
   return Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), template);
 }
@@ -24,7 +23,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const t = getDictionary(locale);
   const dateLocale = locale === "ar" ? "ar-QA" : "en-QA";
   const raw = await searchParams;
-  const parsed = searchSchema.safeParse({ variant: scalar(raw.variant), lat: scalar(raw.lat) ?? "", lng: scalar(raw.lng) ?? "", radius: scalar(raw.radius) ?? "10", sort: scalar(raw.sort) ?? "balanced" });
+  const parsed = parseSearchQuery(raw);
   if (!parsed.success) {
     return (
       <main className="workspace-shell mx-auto max-w-4xl px-4 py-16">
@@ -41,9 +40,8 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
 
   const lat = parsed.data.lat === "" || parsed.data.lat === undefined ? null : parsed.data.lat;
   const lng = parsed.data.lng === "" || parsed.data.lng === undefined ? null : parsed.data.lng;
-  const rawWhen = scalar(raw.when) ?? "earliest";
-  const when: WhenPreference = rawWhen === "today" || rawWhen === "tomorrow" ? rawWhen : "earliest";
-  const sort: SearchSort = parsed.data.sort;
+  const when = parsed.data.when;
+  const sort = parsed.data.sort;
   const sortLabel = t[`search.sort.${sort}`];
   const supabase = await createClient();
   const [{ variant, offers, error }, { data: claimsData }] = await Promise.all([

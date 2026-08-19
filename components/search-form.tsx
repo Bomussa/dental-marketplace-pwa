@@ -12,6 +12,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
   const [treatmentId, setTreatmentId] = useState(treatments[0]?.id ?? "");
   const [variantId, setVariantId] = useState("");
   const [when, setWhen] = useState<"earliest" | "today" | "tomorrow">("earliest");
+  const [radius, setRadius] = useState<1 | 5 | 10 | 25 | 50>(10);
   const [sort, setSort] = useState<"balanced" | "price" | "distance" | "rating" | "soonest">("balanced");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
@@ -47,13 +48,13 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
       event_name: "search_submitted",
       treatment_id: treatmentId || undefined,
       variant_id: effectiveVariant || undefined,
-      choice_value: { when, sort, radius_km: 10, location_used: Boolean(lat && lng) },
+      choice_value: { when, sort, radius_km: radius, location_used: Boolean(lat && lng) },
     });
   }
 
   return (
     <form action="/results" onSubmit={submitSearch} className="grid gap-4" aria-label={t["search.aria"]}>
-      <div className="comparison-form grid gap-3 p-3 sm:p-3.5 lg:grid-cols-[1.08fr_1.22fr_.84fr_.86fr_auto] lg:items-stretch">
+      <div className="comparison-form grid gap-3 p-3 sm:p-3.5 lg:grid-cols-[1.03fr_1.16fr_.78fr_.72fr_.8fr_auto] lg:items-stretch">
         <label className="comparison-field">
           <span className="comparison-field__label"><span className="comparison-field__icon"><ToothIcon size={17}/></span>{t["search.treatment"]}</span>
           <select name="treatment" value={treatmentId} onChange={(e) => { const next = e.target.value; setTreatmentId(next); setVariantId(""); trackChoice({ event_name: "treatment_selected", treatment_id: next }); }} required className="comparison-field__select">
@@ -73,6 +74,12 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
           </select>
         </label>
         <label className="comparison-field">
+          <span className="comparison-field__label"><span className="comparison-field__icon"><LocationIcon size={17}/></span>{t["search.radius"]}</span>
+          <select name="radius" value={radius} onChange={(e) => setRadius(Number(e.target.value) as 1 | 5 | 10 | 25 | 50)} className="comparison-field__select">
+            {[1, 5, 10, 25, 50].map((value) => <option key={value} value={value}>{value} {t["search.kilometres"]}</option>)}
+          </select>
+        </label>
+        <label className="comparison-field">
           <span className="comparison-field__label"><span className="comparison-field__icon"><SlidersIcon size={17}/></span>{t["search.sort"]}</span>
           <select name="sort" value={sort} onChange={(e) => setSort(e.target.value as "balanced" | "price" | "distance" | "rating" | "soonest")} className="comparison-field__select">
             <option value="balanced">{t["search.sort.balanced"]}</option><option value="price">{t["search.sort.price"]}</option><option value="distance">{t["search.sort.distance"]}</option><option value="rating">{t["search.sort.rating"]}</option><option value="soonest">{t["search.sort.soonest"]}</option>
@@ -84,7 +91,6 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
       </div>
       <input type="hidden" name="lat" value={lat} />
       <input type="hidden" name="lng" value={lng} />
-      <input type="hidden" name="radius" value="10" />
       <div className="flex min-h-10 flex-wrap items-center justify-center gap-3 px-1 lg:justify-start">
         <button type="button" onClick={locate} className="location-control">
           <LocationIcon size={17}/>{geoState === "loading" ? t["search.locating"] : geoState === "ok" ? t["search.locationUsed"] : t["search.useLocation"]}

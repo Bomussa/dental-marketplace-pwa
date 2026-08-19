@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 272
+**عدد الملفات المفهرسة تفصيليًا:** 274
 
 ## .github
 
@@ -206,6 +206,7 @@
 | [`lib/public-write-request-guard.ts`](../lib/public-write-request-guard.ts) |
 | [`lib/realtime-refresh-policy.ts`](../lib/realtime-refresh-policy.ts) |
 | [`lib/search-offers.ts`](../lib/search-offers.ts) |
+| [`lib/search-query.ts`](../lib/search-query.ts) |
 | [`lib/server-readiness.ts`](../lib/server-readiness.ts) |
 | [`lib/supabase/admin.ts`](../lib/supabase/admin.ts) |
 | [`lib/supabase/client.ts`](../lib/supabase/client.ts) |
@@ -342,6 +343,7 @@
 | [`tests/phone-verification.test.ts`](../tests/phone-verification.test.ts) |
 | [`tests/price.test.ts`](../tests/price.test.ts) |
 | [`tests/realtime-refresh-policy.test.ts`](../tests/realtime-refresh-policy.test.ts) |
+| [`tests/search-query-and-sort.test.ts`](../tests/search-query-and-sort.test.ts) |
 | [`tests/server-operations.test.ts`](../tests/server-operations.test.ts) |
 | [`tests/service-worker.test.ts`](../tests/service-worker.test.ts) |
 | [`tests/validation.test.ts`](../tests/validation.test.ts) |
