@@ -1,82 +1,74 @@
-# Dental Marketplace PWA — Deployment Runbook
+# دليل النشر والتشغيل — أسناني قطر / MMC-MMS
 
-## Current immutable references
-- Local branch: `main`
-- Base implementation commit: `ffc5053`
-- Supabase DEV project ref: `bqvcukxfsnchvkgejolz`
-- Supabase URL: `https://bqvcukxfsnchvkgejolz.supabase.co`
-- Payments: disabled; `pay_at_clinic`
+> هذا الدليل يصف النشر **القائم** وكيفية إدخال تغيير جديد بأمان. لا يُعد سجلاً تاريخياً للأدلة؛ راجع [الحالة الإنتاجية الحالية](CURRENT_PRODUCTION_STATUS.md) و[README الجذري](../README.md) للحالة والعقود الفعلية.
 
-## 1. Create the empty GitHub repository
-Create `Bomussa/dental-marketplace-pwa` as an **empty** repository. Do not initialize README, .gitignore, or license.
+## 1. المراجع التشغيلية الثابتة
 
-From this project directory:
+| البند | القيمة الموثقة |
+|---|---|
+| المستودع | `Bomussa/dental-marketplace-pwa`، والفرع المنشور `main`. |
+| الاستضافة | Vercel project `dental-marketplace-pwa` (`prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr`) ضمن الفريق `team_aFtFTvzgabqEN5bOxn4SiO7`. |
+| النطاقان | `https://www.mmc-mms.com` و`https://mmc-mms.com`. |
+| Supabase | `bqvcukxfsnchvkgejolz` على `https://bqvcukxfsnchvkgejolz.supabase.co`. |
+| المصادقة المعتادة | اسم مستخدم وكلمة مرور؛ ليست Magic Link. |
+| الدفع | معطّل داخل التطبيق، و`pay_at_clinic` فقط. |
 
-```bash
-git remote add origin https://github.com/Bomussa/dental-marketplace-pwa.git
-git branch -M main
-git push -u origin main
-```
+لا تضع مفاتيح Supabase الخادمية أو Twilio أو OpenAI في Git أو متغيرات تبدأ بـ`NEXT_PUBLIC_`. لا يُفصح هذا الملف عن أي قيمة سرية.
 
-If `origin` already exists, inspect it first with `git remote -v`; do not overwrite an unrelated remote.
+## 2. متغيرات بيئة Vercel
 
-## 2. Configure GitHub Actions secrets
-Repository → Settings → Secrets and variables → Actions → New repository secret:
+تُدار القيم في مخزن بيئة Vercel لبيئتي Preview وProduction حسب مبدأ أقل امتياز. تأكد من الأسماء فقط، ومن وجود القيمة الصحيحة في البيئة المقصودة:
 
-- `NEXT_PUBLIC_SUPABASE_URL` = the DEV Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = the DEV project's publishable `sb_publishable_...` key
+| المتغير | النطاق | الغرض |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | عام/خادم | عنوان مشروع Supabase. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | عام/خادم | مفتاح Supabase القابل للنشر. |
+| `NEXT_PUBLIC_SITE_URL` | عام/خادم | الأصل القانوني للتطبيق؛ استخدم `https://www.mmc-mms.com` للإنتاج. |
+| `SUPABASE_SECRET_KEY` أو بديله المرحلي | خادم فقط | عمليات Supabase المميزة الخادمية. |
+| `TWILIO_*` | خادم فقط | OTP فقط عند تهيئة اختبار/تشغيل مقصود. |
+| `OPENAI_*` | خادم فقط | بوابة الدعم المعتمدة إن فُعّلت. |
 
-Do **not** add a Supabase secret key or service-role key to client-side variables.
+لا تستخدم `NEXT_PUBLIC_SUPABASE_ANON_KEY` في هذا المشروع؛ العقد المعتمد هو `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
-The workflow `.github/workflows/ci.yml` runs static checks, TypeScript, ESLint, Vitest, Next.js build, and then Playwright.
+## 3. إعداد Supabase والهوية
 
-## 3. Import to Vercel
-Import `Bomussa/dental-marketplace-pwa` into the existing Vercel team `bomussa` as a new project. Framework preset: Next.js. Keep the normal Next.js build settings.
+اجعل **Site URL** هو `https://www.mmc-mms.com`. أضف مسار التطوير `http://localhost:3000/**` فقط عند الحاجة، ومسار معاينات Vercel المقيد بالفريق فقط عند الحاجة. تسجيل الدخول الاعتيادي يتم بكلمة المرور ولا يحتاج رابط Magic Link. يبقى `/auth/confirm` معالجاً لتدفق رمز جلسة خارجي أو قديم فقط؛ لا تعتمده كاختبار لرحلة الدخول الأساسية.
 
-Set these Vercel environment variables for Preview and Production as appropriate:
+قبل تغيير مخطط قاعدة البيانات، طابق أسماء الملفات محلياً مع [سجل الترحيلات البعيدة](../supabase/REMOTE_APPLIED_MIGRATIONS.md). تطبق ترحيلات DDL عبر مسار Supabase المعتمد، ثم تفحص بقراءات SQL أو اختبارات قبول لا تُنشئ بيانات حقيقية.
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_SITE_URL` — exact canonical Production URL, including `https://`
+## 4. مسار إصدار تغيير جديد
 
-Do not configure `NEXT_PUBLIC_SUPABASE_ANON_KEY`; this codebase uses the current publishable-key variable.
-
-## 4. Supabase Auth URL configuration
-After the first Vercel production URL exists:
-
-- Site URL: exact canonical Production URL.
-- Redirect URL: exact production callback pattern, e.g. `https://your-domain.example/**`.
-- Local development: `http://localhost:3000/**`.
-- Vercel previews: use the account/team-scoped Vercel preview wildcard recommended by Supabase, not a global `https://*.vercel.app/**` allowlist.
-
-The app sends Magic Link callbacks to `/auth/confirm` using `NEXT_PUBLIC_SITE_URL` when configured.
-
-## 5. Dependency and verification loop
-On a machine with working access to the official npm registry:
+نفّذ الخطوات التالية بالترتيب من نسخة نظيفة من `main`. لا تتخط اختبار المتصفح بسبب نجاح البناء وحده.
 
 ```bash
-npm install
-node scripts/predeploy-check.mjs
-npm run typecheck
-npm run lint
-npm run test
-npm run build
-npx playwright install chromium
+npm ci
+npm run verify
 npm run test:e2e
+git diff --check
+git status --short
+git push origin main
 ```
 
-After the first successful install, commit the generated `package-lock.json` so future CI and Vercel builds can move to `npm ci` for deterministic dependency resolution.
+تجميع `npm run verify` هو بوابة موحدة لفحص ما قبل النشر والأنواع وESLint والاختبارات وبناء الإنتاج. إذا أضيفت ترحيلات، طبّقها وتحقق منها قبل دفع الواجهة التي تعتمد عليها. لا تدفع ملف `.env.local` أو مخرجات اختبار أو لقطة تتضمن بيانات شخصية.
 
-A registry mirror may be used only as a temporary local recovery measure. Do not commit a third-party registry as the project's default registry.
+بعد وصول النشر إلى حالة جاهزة، تحقق قراءة فقط من النطاقين و`/api/health` ومسارات البحث العامة. لا تنشئ حجزاً حقيقياً أو OTP أو رسالة SMS ضمن هذا التحقق الاعتيادي.
 
-## 6. Production acceptance
-Do not mark Production launch complete until all are true:
+## 5. قبول إنتاجي بعد كل إصدار
 
-- GitHub CI is green.
-- Vercel production build succeeds.
-- `/`, `/login`, search, booking, `/account`, clinic dashboard, and admin routes load without runtime errors.
-- Magic Link returns to the Vercel/production domain and establishes a session.
-- Anonymous search sees only publishable data.
-- Clinic A cannot access Clinic B tenant data.
-- Atomic booking still rejects a second active booking for the same slot.
-- Payment feature flag remains disabled until its separate gate is approved.
+| مجال | الفحص المطلوب |
+|---|---|
+| الحزمة | `npm run verify` و`npm run test:e2e` ناجحان في إصدار التغيير. |
+| Vercel | النشر المقصود في حالة `READY` ومن دون أخطاء build أو runtime واضحة. |
+| النطاق | يفتح `www.mmc-mms.com` و`mmc-mms.com` عبر HTTPS من دون حلقة تحويل. |
+| الدخول | صفحة `/login` تقبل رحلة اسم المستخدم وكلمة المرور وتعيد التوجيه الداخلي الآمن؛ لا يختبر هذا المسار كلمة مرور واقعية من دون حساب اختبار مخول. |
+| البحث | بحث نوع علاجي دقيق يعرض عروضاً عامة مؤهلة فقط، ويحترم الوقت ونطاق المسافة عند تمرير موقع. |
+| العزل | الزائر لا يرى بيانات مقيدة، والعيادة لا تتجاوز نطاق عضويتها، وتبقى صفحة الإدارة مقيدة بـ`platform_admin`. |
+| الحجز | لا تنفذ رحلة حجز حقيقة في قبول عام. تُغطّى الذرية ومنع الحجز المزدوج باختبارات العزل والعقود المخصصة. |
+| التقارير | بطاقة نشاط العيادة مقيدة للمالك/المدير، وتصدير CSV للنشاط محصور في الإدارة. |
+| الدفع والرسائل | يبقى الدفع `pay_at_clinic`، ولا يفترض نجاح SMS/Push إلا عند اختبار مزود مهيأ ومقصود. |
+
+## 6. الاسترجاع والتعامل مع فشل الإصدار
+
+إذا فشل البناء، عالج السبب على فرع العمل ولا تحذف مخرجات أو ترحيلات عشوائياً. إذا نجح النشر لكن ظهر خلل في واجهة عامة، استعد النشر الجاهز السابق من Vercel وفق سياسة الفريق، ثم افتح إصلاحاً مستقلاً مع اختبار يمنع الرجوع. لا تلغِ ترحيل قاعدة بيانات مطبقاً على الإنتاج بحذف الملف؛ أضف ترحيلاً لاحقاً آمناً يعكس الأثر بعد مراجعة الاعتماديات.
+
+عند الاشتباه بتعرض سر أو وصول غير مصرح به، أوقف/دوّر السر من مزوده أو مخزن الاستضافة أولاً، ثم راجع السجلات والسياسات والإصدار المتأثر. لا تنسخ السر إلى issue أو log أو رسالة دعم.

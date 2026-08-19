@@ -1,29 +1,31 @@
-# DEV verification report — 2026-08-14
+# تقرير الاختبارات الحالي — أسناني قطر / MMC-MMS
 
-## Passed against live Supabase DEV
+> هذا التقرير يلخص بوابة الجودة الحالية. تظل تقارير الاختبارات المؤرخة في `docs/` أدلة تاريخية لنطاقها؛ لا تعاد صياغتها لتغيير سياقها.
 
-- Security Advisor: **0 security lints** after the final RLS/auth hardening.
-- Exact-variant search under `anon`: 3 Root Canal — Molar offers returned in price order (450 / 600 / 700–900 QAR).
-- PostGIS radius: 1 km query around the first synthetic point returned exactly 1 result.
-- Verification activation gate: unverified clinic activation was blocked by a database trigger.
-- Idempotency: same patient + same key returned the same booking ID.
-- Price snapshot: booking captured `min_minor=45000` and mutation was blocked.
-- Duplicate slot: a second patient could not claim the same active slot.
-- Tenant isolation: Alpha receptionist saw Alpha membership/verification and 0 Beta membership/verification rows.
-- Actor-aware booking state: patient could not self-confirm; patient cancellation succeeded.
-- Slot lifecycle: patient cancellation re-published a still-valid held slot.
-- Verified review flow: completed visit -> patient review pending -> patient self-publish blocked -> platform admin publish -> public search reflected rating.
-- Performance Advisor: no WARN items after policy consolidation; remaining entries were INFO-only unused-index notices expected on a fresh DEV database.
+## النتائج المؤكدة في آخر بوابة جودة
 
-## Local code checks
+| الفحص | النتيجة | النطاق |
+|---|---|---|
+| `npm run verify` | ناجح | `predeploy:check` ثم TypeScript وESLint وVitest وبناء الإنتاج. |
+| Vitest | **64 اختباراً ناجحاً** | العقود، المال والتسعير، البحث والفرز، الحجز، الصلاحيات، الأمن، النشاط، الترجمة وPWA. |
+| Playwright | **48 اختباراً ناجحاً** | سطح المكتب والهاتف، البحث، العزل، الدخول، المسارات المحمية، CSP وPWA. |
+| `npm audit --omit=dev` | **0 ثغرات معروفة** | تبعيات الإنتاج في وقت الفحص. |
+| فحص إنتاجي قراءة فقط | ناجح | الصحة والنطاقان والبحث العام في آخر تحقق موثق؛ لا ينشئ بيانات حقيقية. |
 
-- TypeScript transpile/syntax pass: 34 TS/TSX files, 0 syntax diagnostics using the globally available TypeScript compiler.
-- `npm install`, full `tsc`, Vitest and Playwright execution were **not completed** because the execution container could not resolve `registry.npmjs.org` (`EAI_AGAIN`). No false “green build” claim is made.
+## أهم حالات التغطية
 
-## Still required before production
+| المجال | ما تثبته الاختبارات |
+|---|---|
+| البحث | اختيار العلاج والنوع الدقيق، تحليل موحد للصفحة و`/api/search`، نطاق 25 كم، ورفض تفضيل موعد غير صالح بدلاً من تحويله بصمت. |
+| الترتيب | معايير الأرخص والأقرب والأعلى تقييماً والأسرع مستقلة، و«أفضل توازن شامل» موزون ولا يعيد استعمال ترتيب السعر. |
+| الحجز | مفتاح idempotency، متطلبات ملف المريض والتحقق من الهاتف، وتفادي بناء حجز مكرر ضمن منطق الخادم. |
+| الصلاحيات | حواجز مسارات المريض والعيادة والإدارة، وعرض بيانات العيادة حسب العضوية. |
+| التقارير | تطبيع بيانات كشف النشاط، التقييد حسب النطاق، طباعة البطاقة، وحماية تصدير CSV للإدارة. |
+| الكتابة العامة | حارس الأصل نفسه وحد الحجم، ورفض الكتابة غير المسموح بها في المسارات العامة. |
+| الواجهة | العربية والإنجليزية، سياسة CSP، التسجيل في PWA، والتعامل الآمن مع عدم الاتصال. |
 
-- Materialize exact remote migration SQL locally (`supabase db pull`) once the CLI/package registry is reachable.
-- Run `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, then Playwright against Preview.
-- Run true concurrent booking race (50–100 simultaneous attempts); current DB tests prove invariants sequentially, not load concurrency.
-- Configure Supabase Auth Site URL / redirect URLs for the final Vercel domain and test magic-link delivery.
-- Create/link the new GitHub repository and Vercel project; existing unrelated projects were not reused.
+## حدود الاختبار المعلنة
+
+لا يثبت نجاح هذه المجموعة أن التطبيق خالٍ من كل خطأ نظرياً، ولا يمثل اختبار ضغط لحجوم آلاف أو ملايين الجلسات. لم يُرسل اختبار التشغيل الاعتيادي SMS حقيقياً ولم يُنشئ حجزاً حقيقياً، التزاماً بحدود البيئة. يلزم تصميم اختبار أداء معزول ومراقب قبل ادعاء مستوى حمل أعلى، ويلزم إعداد مزود SMS واختبار مقصود قبل ادعاء التسليم الخارجي.
+
+راجع [الحالة الإنتاجية الحالية](CURRENT_PRODUCTION_STATUS.md) لآخر موجز نشر وقيود تشغيلية، و[README الجذري](../README.md) للمسارات والعقود الكاملة.

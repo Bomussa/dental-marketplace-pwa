@@ -1,37 +1,32 @@
-# Execution status — 2026-08-14
+# حالة التنفيذ — أسناني قطر / MMC-MMS
 
-## Source-of-truth scope
+> **الحالة المرجعية:** هذه الوثيقة موجز تنفيذي مختصر. المرجع الهندسي التفصيلي هو [README الجذري](../README.md)، والحالة الإنتاجية المحدثة هي [CURRENT_PRODUCTION_STATUS.md](CURRENT_PRODUCTION_STATUS.md). لا تعدّل الوثائق المؤرخة بأثر رجعي لتغيير دليلها الزمني.
 
-This DEV implementation follows the latest Qatar Dental execution specification: a responsive price-comparison, availability and booking PWA. It intentionally does **not** implement the older generic patient-QID CRUD prompt, because that would collect unnecessary PII and build a different product.
+## الحالة الحالية
 
-## Phase status
+| المرحلة | الحالة | الدليل أو المرجع |
+|---|---|---|
+| البنية والتطبيق | مكتملة ومتابعة على `main` | Next.js App Router، TypeScript، Tailwind CSS وPWA. |
+| المستودع والنشر | منشوران | المستودع `Bomussa/dental-marketplace-pwa` ومشروع Vercel `dental-marketplace-pwa` مرتبطان؛ النطاقان [www.mmc-mms.com](https://www.mmc-mms.com) و[mmc-mms.com](https://mmc-mms.com) متاحان. |
+| البيانات والعمليات | مطبقة على Supabase | المشروع `bqvcukxfsnchvkgejolz` يستخدم PostgreSQL وRLS وRPC للخادم؛ سجل التطبيق البعيد في [REMOTE_APPLIED_MIGRATIONS.md](../supabase/REMOTE_APPLIED_MIGRATIONS.md). |
+| الدخول واللغات | مطبق | الواجهة العربية والإنجليزية متاحتان؛ الدخول المعتاد باسم المستخدم وكلمة المرور، وليس Magic Link. |
+| البحث والمقارنة | مطبق ومختبر | نوع علاجي دقيق، تفضيل موعد، نطاق مسافة من 1 إلى 50 كم، ومعايير فرز مستقلة تشمل توازنًا موزونًا. |
+| الحجز | مطبق ومقيد | مسار خادمي ذري، idempotency، ملف مريض مكتمل، وتحقق هاتف OTP قبل إنشاء الحجز. |
+| لوحات التشغيل | مطبقة ومقيدة | عيادة بصلاحيات حسب العضوية، وإدارة بمنحى كامل للتشغيل والحوكمة. |
+| كشف النشاط | مطبق ومطبوع | نطاق منصة للإدارة ونطاق عيادة للمالك/المدير، بالتجميع بالساعة/اليوم/الأسبوع/الشهر وتوقيت قطر؛ CSV للإدارة فقط. |
+| التحديث اللحظي | مطبق | الأسطح التشغيلية تعيد التحقق عند تغيّر جداول Realtime المصرح بها، مع بقاء RLS حاجز الرؤية النهائي. |
+| بوابة الجودة | ناجحة | 64 اختبار وحدة و48 اختبار متصفح، إضافة إلى TypeScript وESLint وبناء الإنتاج ضمن `npm run verify`. |
 
-### Phase 1 — infrastructure
+## الضوابط والقيود الحالية
 
-- Local Next.js/TypeScript/Tailwind project structure: complete.
-- Dedicated Supabase DEV project: complete (`bqvcukxfsnchvkgejolz`).
-- Local Git repository on `main`: complete; commit is created at handoff.
-- Remote GitHub repository: blocked because the connected GitHub tool can write to existing repositories but does not expose repository creation, and no dental repository exists.
-- Vercel project/deployment: blocked because no dental Vercel project exists and the connected Vercel tool does not expose project creation. Existing unrelated `love` / `love-api` projects are intentionally untouched.
+| المجال | الوضع الصحيح |
+|---|---|
+| SMS | محول Twilio Verify مبني، لكنه يفشل بأمان عند غياب أسراره. اختبار SMS مستثنى من الاختبار الاعتيادي ولا تُرسل رسالة حقيقية من دون اختبار مقصود. |
+| الدفع | `pay_at_clinic` فقط؛ لا توجد بوابة تحصيل بطاقات مفعلة. |
+| الأمان | RLS، عمليات خادمية مقيدة، حارس الكتابة العامة، وسياسات منع التعديل العميل المباشر للعمليات الحرجة. |
+| الأداء | لا يدّعي هذا الموجز تحمل آلاف أو ملايين الجلسات. اختبار الضغط التاريخي يوثق فقط ما اختُبر وقتها؛ أي حمل أعلى يحتاج خطة ومراقبة منفصلتين. |
+| البيانات الواقعية | لا ينشأ حجز أو رسالة واقعية في التحقق العام أو التطوير. |
 
-### Phase 2 — data/backend
+## التسلسل التشغيلي عند أي تغيير لاحق
 
-Implemented in live Supabase DEV: normalized taxonomy, clinics/branches, verification gates, tenant memberships, offers, PostGIS search, hours, practitioners/resources, exact-treatment slots, atomic booking/idempotency, immutable price snapshot, booking state machine, slot lifecycle, reviews, disputes, audit records, payment skeleton and feature flags.
-
-### Phase 3 — frontend
-
-Implemented locally: patient search/results/booking/account, clinic application/operations dashboard, admin compliance/moderation dashboard, Arabic-first PWA shell, manifest/service worker and security headers.
-
-A full Arabic/English language toggle is not yet implemented; taxonomy carries both Arabic and English names.
-
-### Phase 4 — QA
-
-Live database acceptance probes passed; see `TEST_REPORT.md`.
-
-Local unit/E2E/build execution is authored but not completed because this execution container cannot resolve `registry.npmjs.org` (`EAI_AGAIN`). A syntax-only TypeScript transpile check passed 34 TS/TSX files with zero diagnostics. True 50–100-way concurrent booking load remains an explicit pre-production test.
-
-### Phase 5 — deployment
-
-Not falsely marked complete. Deployment requires: create an empty GitHub repository, push this commit/bundle, create/link a new Vercel project, set the Supabase URL + publishable key, configure Supabase Auth redirect URLs, then run the full CI/Preview acceptance suite.
-
-Payments remain disabled (`pay_at_clinic`) until the project's legal/commercial payment gate is cleared.
+شغّل `npm run verify` و`npm run test:e2e`، راجع فرق الشفرة والوثائق، طبّق ترحيلات قاعدة البيانات عبر المسار المعتمد عند الحاجة، ثم تحقق من الصفحة العامة و`/api/health` من دون إنشاء بيانات حقيقية. حدّث [README الجذري](../README.md) و[CURRENT_PRODUCTION_STATUS.md](CURRENT_PRODUCTION_STATUS.md) في الإيداع نفسه إذا تغيّر عقد عام أو قيد تشغيلي.

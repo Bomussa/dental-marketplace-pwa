@@ -35,7 +35,7 @@ flowchart TD
   E --> F{عرض عام مؤهل؟}
   F -- لا --> G[حالة فارغة آمنة]
   F -- نعم --> H[بطاقات مقارنة: السعر ونطاقه والموعد والمسافة]
-  H --> I[تسجيل الدخول عبر Magic Link]
+  H --> I[تسجيل الدخول باسم المستخدم وكلمة المرور]
   I --> J[ملف مريض + تحقق هاتف]
   J --> K[book_slot_server: حجز ذري]
   K --> L[سجل الحجز وإشعار داخلي/Outbox]
@@ -77,8 +77,8 @@ flowchart LR
 |---|---|---|
 | `/` | عام | البحث والمقارنة وملخص الكتالوج والمساعد. |
 | `/results` | عام | نتائج النوع العلاجي الدقيق؛ يحترم الوقت، نطاق البحث، ومسافة اختيارية. |
-| `/login` | عام | إرسال Magic Link مع `next` آمن نسبيًا فقط. |
-| `/auth/confirm` | مستخدم مصدّق | تأكيد رابط الدخول ثم إعادة التوجيه. |
+| `/login` | عام | الدخول باسم المستخدم وكلمة المرور، مع `next` داخلي آمن وإتاحة تفعيل بيانات الدخول للحسابات السابقة عبر صفحة الحساب. |
+| `/auth/confirm` | مستخدم مصدّق عبر تدفق خارجي قديم | تأكيد رمز جلسة مستلم وإعادة التوجيه؛ ليس مسار تسجيل الدخول الاعتيادي. |
 | `/auth/signout` | مستخدم مصدّق | إنهاء جلسة Supabase. |
 | `/account` | المريض | ملفات المرضى التابعة، الحجوزات، الإلغاء، والمراجعات. |
 | `/clinic` | أعضاء المركز | الفروع والساعات والممارسون والعروض والمواعيد وعمليات الحجز. |
@@ -101,10 +101,11 @@ flowchart LR
 | `/api/patient-phone-verification/confirm` | `POST` | مطلوب | `patient_profile_id`, `code` | يؤكد OTP، يحدّث `phone_verified_at` ويستهلك challenge؛ حد 5/10 دقائق. |
 | `/api/support` | `POST` | مطلوب | `message`, `locale`, `conversation_id?` | دعم محكوم بقاعدة معرفة معتمدة؛ يمنع التشخيص ويصعّد كلمات الطوارئ؛ حد 30/ساعة. |
 | `/api/admin/reports/csv` | `GET` | مدير فقط | نطاق تقرير مصدق | تصدير تقارير تشغيلية/مالية عبر طبقة الإدارة. |
+| `/api/admin/reports/activity-csv` | `GET` | مدير المنصة فقط | `start`, `end`, `granularity` | يستدعي ملخص النشاط على نطاق المنصة ويصدر CSV؛ لا يتيح للعيادة تصدير بيانات المنصة. |
 
 ### عقود الإدخال المركزية
 
-المصدر الوحيد لعقود الإدخال هو [`lib/validation.ts`](lib/validation.ts). تشمل العقود: `searchSchema`، `bookingSchema`، `choiceEventSchema`، `clinicApplicationSchema`، `branchSchema`، `offerSchema`، `slotSchema`، `verificationSchema`، `featureFlagSchema`، `practitionerSchema`، `bookingStatusSchema`، `reviewSchema`، `offerRevisionSchema`، `attendanceSchema`، `settlementPeriodSchema`، `financialReportSchema`، `supportMessageSchema`، `supportKnowledgeArticleSchema`، `notificationTemplateSchema`، `patientProfileSchema`، `patientPhoneVerificationStartSchema`، `patientPhoneVerificationConfirmSchema`، `deviceInstallationSchema`، `treatmentCatalogSchema`، `treatmentVariantSchema`، و`adminOfferUpdateSchema`/`adminSlotUpdateSchema`.
+المصدر الوحيد لعقود الإدخال هو [`lib/validation.ts`](lib/validation.ts). تشمل العقود: `searchSchema`، `searchQuerySchema`، `searchWhenSchema`، `activityReportSchema`، `bookingSchema`، `choiceEventSchema`، `clinicApplicationSchema`، `branchSchema`، `offerSchema`، `slotSchema`، `verificationSchema`، `featureFlagSchema`، `practitionerSchema`، `bookingStatusSchema`، `reviewSchema`، `offerRevisionSchema`، `attendanceSchema`، `settlementPeriodSchema`، `financialReportSchema`، `supportMessageSchema`، `supportKnowledgeArticleSchema`، `notificationTemplateSchema`، `patientProfileSchema`، `patientPhoneVerificationStartSchema`، `patientPhoneVerificationConfirmSchema`، `deviceInstallationSchema`، `treatmentCatalogSchema`، `treatmentVariantSchema`، و`adminOfferUpdateSchema`/`adminSlotUpdateSchema`.
 
 ينفّذ الملف نفسه تطبيع الرقم الشخصي القطري (`normalizeNationalId`) ورقم الهاتف (`normalizePhone`) وتاريخ/وقت قطر (`normalizeQatarDateTime`). لا يُنشأ عقد منفصل متكرر في الواجهة أو Route Handler.
 
@@ -114,7 +115,7 @@ flowchart LR
 |---|---|
 | المطابقة | البحث على `treatment_variants.id` وليس اسم علاج حر. لذلك لا تُقارن خدمتان مختلفتان تحت تسمية عامة واحدة. |
 | تفضيل الموعد | `earliest` يعرض جميع المؤهل؛ `today` و`tomorrow` يرشحان `earliest_slot_at` وفق المنطقة الزمنية `Asia/Qatar`. |
-| ترتيب المقارنة | دالة القاعدة ترجع العروض المؤهلة حسب السعر ثم المسافة عند وجود موقع؛ الواجهة تحفظ نطاق البحث ولا تخزن إحداثيات المستخدم في أحداث الاختيار. |
+| نطاق البحث والترتيب | يقبل البحث نطاقاً صريحاً من 1 أو 5 أو 10 أو 25 أو 50 كم عند وجود موقع، وتستعمل الصفحة وواجهة API المحلل نفسه. «الأرخص» و«الأعلى تقييماً» و«الأقرب» و«الأسرع» معايير منفصلة؛ «أفضل توازن شامل» ترتيب موزون مستقل: 35% سعر، 25% تقييم، 25% موعد، 15% مسافة. الواجهة تحفظ النطاق ولا تخزن إحداثيات المستخدم في أحداث الاختيار. |
 | نطاق السعر | `price_scope` يفرض حالة لكل من التسجيل والفحص والأشعة والتشخيص الإضافي والتخدير والمختبر والدواء: `included` أو `excluded` أو `assessment_required` أو `not_applicable`. لا يظهر العرض العام إن لم يكن النطاق قابلًا للنشر. |
 | العملة | تحفظ مبالغ QAR بوحدات صغرى صحيحة، وتحوّلها `qarInputToMinor`/`priceInputsToMinor` قبل الحفظ؛ يمنع ذلك كسور الفاصلة العائمة. |
 | الحجز | `book_slot_server` يتحقق من الممثل والملف والموعد والعرض ويستخدم `idempotency_key`؛ يعيد كود الحجز وحالته من معاملة واحدة. |
@@ -145,7 +146,7 @@ flowchart LR
 | الحجز | `book_slot`, `book_slot_server`, `cancel_booking_server`, `change_booking_status_server`, `clinic_booking_patient_details`. |
 | التشغيل والحوكمة | `consume_rate_limit_server`, `register_device_installation_server`, `verify_and_activate_server`, `create_clinic_application`, `create_branch_application`. |
 | مراجعة السعر والحضور | `request_offer_revision`, `request_offer_revision_server`, `review_offer_revision`, `review_offer_revision_server`, `record_booking_check_in`, `record_booking_check_in_server`, `reverse_booking_attendance`, `reverse_booking_attendance_server`. |
-| التسوية والتقارير | `create_settlement_period`, `create_settlement_period_server`, `financial_report_summary`, `financial_report_summary_server`, `admin_customer_choice_analytics`. |
+| التسوية والتقارير | `create_settlement_period`, `create_settlement_period_server`, `financial_report_summary`, `financial_report_summary_server`, `admin_customer_choice_analytics`, `activity_report_summary`, `activity_report_summary_server`. |
 | ملفات المرضى | `handle_new_account_patient_profile` (trigger). |
 
 > لا يستدعي المتصفح أي دالة تتطلب امتيازات. الدوال ذات اللاحقة `_server` تستقبل `p_actor_id` وتتحقق من الهوية والصلاحية في PostgreSQL؛ أما `SECURITY DEFINER` فمقصورة على مسارات خادمية موثوقة وسياسات قاعدة البيانات.
@@ -157,7 +158,7 @@ flowchart LR
 1. يختار المريض علاجًا رئيسيًا ثم نوعًا دقيقًا.
 2. يطلب `/results` أو `/api/search`، فتستدعي الخوادم `search_dental_offers`.
 3. لا تظهر بطاقة حجز إلا إذا أعاد العرض موعدًا صالحًا؛ ويُعرض نطاق السعر بدل افتراض أن الفحص أو الأشعة مشمولان.
-4. يمر المستخدم بـMagic Link، ثم يُنشئ أو يحدّث ملف مريض.
+4. يسجل المستخدم الدخول باسم المستخدم وكلمة المرور، ثم يُنشئ أو يحدّث ملف مريض.
 5. يبدأ OTP، ويؤكد الرمز؛ لا يتم ملء `phone_verified_at` من المتصفح.
 6. يرسل `BookButton` طلبًا بمفتاح idempotency؛ الحجز يحصل أو يفشل بصورة ذرية، ولا ينشأ حجز مكرر من إعادة الضغط.
 
@@ -182,10 +183,12 @@ flowchart LR
 | التحكم | التطبيق |
 |---|---|
 | RLS | مفعّل على جداول `public`؛ RLS وليس إخفاء عناصر الواجهة هو آلية فرض الوصول. |
-| الجلسات | Supabase Auth عبر Magic Link وcookies SSR؛ Proxy ينعش claims. |
+| الجلسات | Supabase Auth باسم المستخدم وكلمة المرور وcookies SSR؛ Proxy ينعش claims. يبقى `/auth/confirm` لتدفقات رمز الجلسة الخارجية فقط، وليس واجهة الدخول الاعتيادية. |
 | الأسرار | لا تضع مفاتيح فعلية في Git أو `NEXT_PUBLIC_*`. لا يُعرض `SUPABASE_SECRET_KEY` أو مفاتيح Twilio/OpenAI في السجل أو الواجهة. |
 | التحقق | Zod في كل حدود الإدخال، وتطبيع للرقم الشخصي والهاتف والعملة والتاريخ. |
 | الحجز | RPC ذري ومفتاح idempotency وقيد ملف المريض/OTP. |
+| حارس الكتابة العامة | `lib/public-write-request-guard.ts` يفرض الأصل نفسه وحجم الجسم قبل الكتابة في الحجز وتسجيل المريض وOTP والدعم وتثبيت الجهاز والتحليلات. |
+| التعديل الحرج | سياسات PostgreSQL تسحب التعديل العميل المباشر للحجوزات ودعم العملاء وتغيير حالة المراجعة؛ الإجراءات الخادمية المقيّدة هي المسار التشغيلي المعتمد. |
 | Telemetry | `/api/choices` يرفض الأصل غير المسموح، الجسم الكبير، والفيض؛ الإدخال المباشر من المتصفح إلى الجدول مسحوب. |
 | الدعم | رد أمان للحالات الطبية/الطارئة، ومعرفة approved فقط، ولا تشخيص أو توصية علاجية. |
 | CSP وPWA | اختبارات E2E تتحقق من CSP وعدم تحويل فشل API offline إلى HTML مخزّن. |
@@ -218,7 +221,7 @@ app/
   account/actions.ts                    account/page.tsx
   actions/locale.ts
   admin/actions.ts                      admin/page.tsx
-  api/admin/reports/csv/route.ts
+  api/admin/reports/activity-csv/route.ts  api/admin/reports/csv/route.ts
   api/book/route.ts                     api/choices/route.ts
   api/device-installations/route.ts     api/health/route.ts
   api/patient-phone-verification/confirm/route.ts
@@ -233,8 +236,9 @@ app/
   page.tsx                              pwa/icon/[size]/route.tsx
   results/page.tsx
 components/
-  account-live-refresh.tsx              admin-analytics-live-refresh.tsx
-  admin-choice-analytics.tsx            app-icon-artwork.tsx
+  account-live-refresh.tsx              activity-report-card.tsx
+  admin-analytics-live-refresh.tsx      admin-choice-analytics.tsx
+  app-icon-artwork.tsx
   book-button.tsx                       brand-lockup.tsx
   clinic-booking-status-form.tsx        clinic-live-refresh.tsx
   device-installation-registrar.tsx     icons.tsx
@@ -254,8 +258,10 @@ lib/
   notifications.server.ts               operation-feedback.ts
   operations.server.ts                  phone-verification.server.ts
   price-scope.ts                        price.ts
-  search-offers.ts                      server-readiness.ts
-  supabase/admin.ts                     supabase/client.ts
+  public-write-request-guard.ts         search-offers.ts
+  search-query.ts                       server-readiness.ts
+  activity-report.ts                    supabase/admin.ts
+  supabase/client.ts
   supabase/proxy.ts                     supabase/server.ts
   validation.ts
 public/
@@ -330,6 +336,15 @@ tests/
 20260818044000_localize_clinic_booking_notifications_v1.sql
 20260818053000_localize_recent_choice_events_v1.sql
 20260818195000_treatment_catalog_and_price_scope_transparency.sql
+20260818230000_username_password_and_clinic_operator_accounts.sql
+20260819003000_public_search_branch_coordinates_for_directions.sql
+20260819053000_lock_down_clinic_operator_security_definer_rpcs.sql
+20260819055000_add_service_only_clinic_operator_rpcs.sql
+20260819060000_revoke_legacy_clinic_operator_rpcs.sql
+20260819063000_explicitly_deny_operator_account_table_access.sql
+20260819070000_scale_critical_search_and_operator_indexes.sql
+20260819080000_activity_report_rpc.sql
+20260819140000_server_only_critical_mutation_policies.sql
 ```
 
 </details>
@@ -357,8 +372,9 @@ npm run dev
 
 ## 14. الاختبار والمراقبة
 
-- [`tests/e2e/home.spec.ts`](tests/e2e/home.spec.ts) يغطي البحث العربي/الإنجليزي، تحديث النوع الدقيق، التفضيل الزمني، فشل الموقع بأمان، المسارات المحمية، Magic Link UI، health، حارس عروض DEV، CSP، PWA وعدم الاتصال.
-- اختبارات الوحدة تفحص تحويل المال، validation، idempotency intent، حارس telemetry، أدوار العيادة، الترجمة، server operations، OTP adapter، وservice worker.
+- بوابة الجودة الحالية: **64 اختبار وحدة** و**48 اختبار متصفح** ناجحة، إضافة إلى TypeScript وESLint وبناء إنتاجي ضمن `npm run verify`.
+- [`tests/e2e/home.spec.ts`](tests/e2e/home.spec.ts) واختبارات المتصفح المرتبطة تغطي البحث العربي/الإنجليزي، النوع الدقيق، التفضيل الزمني، نطاق 25 كم، رفض تفضيل موعد غير صالح، الدخول باسم المستخدم وكلمة المرور، المسارات المحمية، health، حارس عروض DEV، CSP، PWA وعدم الاتصال، وحماية تصدير النشاط.
+- اختبارات الوحدة تفحص تحويل المال، validation وعقد البحث، فرز التوازن المستقل، نموذج كشف النشاط، idempotency intent، حارس telemetry والكتابة العامة، أدوار العيادة، الترجمة، server operations، OTP adapter، وservice worker.
 - [`supabase/tests/acceptance.sql`](supabase/tests/acceptance.sql) يضم مجسات قبول قاعدة البيانات.
 - [`scripts/safe-load-test.mjs`](scripts/safe-load-test.mjs) للاختبارات المحلية غير الهدمية فقط؛ لا تنفّذ حملاً على الإنتاج أو تنشئ حجوزات واقعية من دون تفويض واضح وخطة اختبار مخصصة.
 
@@ -390,7 +406,8 @@ npm run dev
 | [`docs/DEPLOYMENT_RUNBOOK.md`](docs/DEPLOYMENT_RUNBOOK.md) | تشغيل النشر وإعدادات الاستضافة. |
 | [`docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md`](docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md) | عقد الحجز والصلاحيات وRealtime. |
 | [`docs/TREATMENT_CATALOG_AND_PRICE_SCOPE_AUDIT_2026-08-18.md`](docs/TREATMENT_CATALOG_AND_PRICE_SCOPE_AUDIT_2026-08-18.md) | كتالوج العلاج ونطاق السعر. |
-| [`docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md`](docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md) | ملاحظات الجاهزية والقيود التشغيلية. |
+| [`docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md`](docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md) | ملاحظات الجاهزية والقيود التشغيلية التاريخية. |
+| [`docs/CURRENT_PRODUCTION_STATUS.md`](docs/CURRENT_PRODUCTION_STATUS.md) | موجز الحالة الإنتاجية والقيود الحالية وآخر تحقق موثق. |
 | [`supabase/REMOTE_APPLIED_MIGRATIONS.md`](supabase/REMOTE_APPLIED_MIGRATIONS.md) | سجل الترحيلات الذي ظهر في قاعدة البيانات البعيدة. |
 | [`docs/README.md`](docs/README.md) | فهرس الوثائق: يميز المرجع الحالي عن تقارير التدقيق والاختبار التاريخية. |
 | [`docs/SOURCE_MANIFEST.md`](docs/SOURCE_MANIFEST.md) | فهرس مولّد من `git ls-files` لكل الملفات المتتبعة، بما فيها الأصول المرئية ولقطات الإثبات. |
