@@ -44,7 +44,7 @@ async function callServerRpc(functionName: string, args: Record<string, unknown>
 }
 
 export async function consumeRateLimit(input: {
-  scope: "booking" | "device_installation" | "support_message" | "choice_event" | "phone_verification_start" | "phone_verification_confirm" | "patient_booking_registration" | "login";
+  scope: "booking" | "device_installation" | "support_message" | "choice_event" | "phone_verification_start" | "phone_verification_confirm" | "patient_booking_registration" | "patient_profile_create" | "login";
   subject: string;
   maxRequests: number;
   windowSeconds: number;
