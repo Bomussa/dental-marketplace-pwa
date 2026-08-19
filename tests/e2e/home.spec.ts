@@ -263,3 +263,13 @@ test("production service worker provides only a static public document fallback 
   await expect(page.getByText("لوحة الإدارة")).toHaveCount(0);
   await context.setOffline(false);
 });
+
+
+test("signout rejects an external origin before changing a session", async ({ request }) => {
+  const response = await request.post("/auth/signout", {
+    headers: { origin: "https://untrusted.example" },
+  });
+
+  expect(response.status()).toBe(403);
+  expect((await response.json()).error).toBe("forbidden_origin");
+});
