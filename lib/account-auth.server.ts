@@ -9,6 +9,8 @@ type ProvisionResult =
   | { ok: true; userId: string; patientProfileId: string }
   | { ok: false; code: "username_taken" | "email_taken" | "national_id_taken" | "unavailable" };
 
+const DECOY_USER_ID = "00000000-0000-0000-0000-000000000000";
+
 function conflictCode(error: unknown): string {
   if (!error || typeof error !== "object") return "";
   const candidate = error as { code?: unknown; message?: unknown; details?: unknown };
@@ -31,10 +33,8 @@ export async function emailForUsername(username: string): Promise<string | null>
     .is("disabled_at", null)
     .maybeSingle();
 
-  if (usernameError || !usernameRow) return null;
-
-  const { data: userResult, error: userError } = await admin.auth.admin.getUserById(usernameRow.user_id);
-  if (userError || !userResult.user?.email || userResult.user.banned_until) return null;
+  const { data: userResult, error: userError } = await admin.auth.admin.getUserById(usernameRow?.user_id ?? DECOY_USER_ID);
+  if (usernameError || !usernameRow || userError || !userResult.user?.email || userResult.user.banned_until) return null;
   return userResult.user.email;
 }
 
