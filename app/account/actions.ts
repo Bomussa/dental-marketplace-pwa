@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { consumeRateLimit } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { passwordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, usernameSchema, uuid } from "@/lib/validation";
@@ -14,7 +15,7 @@ async function requireUser() {
   return { supabase, userId: data.claims.sub };
 }
 
-function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "duplicate_identity" | "cannot_archive_self"): never {
+function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "cannot_archive_self"): never {
   redirect(`/account?patient_profile_error=${code}`);
 }
 
@@ -87,6 +88,14 @@ export async function createPatientProfile(formData: FormData) {
   const input = parsed.data;
 
   const { userId } = await requireUser();
+  const profileCreateAllowed = await consumeRateLimit({
+    scope: "patient_profile_create",
+    subject: userId,
+    maxRequests: 10,
+    windowSeconds: 60 * 60,
+  }).catch(() => false);
+  if (!profileCreateAllowed) return profileActionError("unavailable");
+
   const admin = requireAdmin(() => profileActionError("unavailable"));
 
   if (input.relationship === "self") {
@@ -112,7 +121,7 @@ export async function createPatientProfile(formData: FormData) {
     phone_verified_at: null,
     gender: input.gender ?? null,
   });
-  if (error?.code === "23505") return profileActionError("duplicate_identity");
+  if (error?.code === "23505") return profileActionError("invalid");
   if (error) return profileActionError("unavailable");
 
   revalidatePath("/account");
