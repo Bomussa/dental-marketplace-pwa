@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+type HeaderReader = Pick<Headers, "get">;
+
 export function publicWriteRequestOriginIsAllowed(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return false;
@@ -53,9 +55,13 @@ export async function readPublicWriteRequestTextWithinLimit(request: Request, ma
   return new TextDecoder().decode(combined);
 }
 
-export function publicWriteRequestClientKey(request: Request) {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const realIp = request.headers.get("x-real-ip")?.trim();
+export function publicWriteHeadersClientKey(headers: HeaderReader) {
+  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = headers.get("x-real-ip")?.trim();
   const source = forwarded || realIp || "unknown-client";
   return createHash("sha256").update(source).digest("base64url").slice(0, 24);
+}
+
+export function publicWriteRequestClientKey(request: Request) {
+  return publicWriteHeadersClientKey(request.headers);
 }
