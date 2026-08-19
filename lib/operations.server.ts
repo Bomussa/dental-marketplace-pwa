@@ -77,7 +77,7 @@ export async function registerDeviceInstallation(input: {
     p_platform: input.platform ?? null,
     p_browser: input.browser ?? null,
     p_device_class: input.deviceClass,
-    p_app_version: input.app_version ?? null,
+    p_app_version: input.appVersion ?? null,
   });
 }
 
