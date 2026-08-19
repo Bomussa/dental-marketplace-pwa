@@ -77,7 +77,7 @@ export async function registerDeviceInstallation(input: {
     p_platform: input.platform ?? null,
     p_browser: input.browser ?? null,
     p_device_class: input.deviceClass,
-    p_app_version: input.appVersion ?? null,
+    p_app_version: input.app_version ?? null,
   });
 }
 
@@ -181,7 +181,39 @@ export async function financialReportSummary(input: { clinicId: string; periodSt
   return callOperationalRpc("financial_report_summary_server", {
     p_actor_id: actorId,
     p_clinic_id: input.clinicId,
-    p_period_start: input.periodStart,
-    p_period_end: input.periodEnd,
+    p_start: input.periodStart,
+    p_end: input.periodEnd,
+  });
+}
+
+export type ActivityReportGranularity = "hourly" | "daily" | "weekly" | "monthly";
+
+export async function platformActivityReport(input: {
+  periodStart: string;
+  periodEnd: string;
+  granularity: ActivityReportGranularity;
+}) {
+  const actorId = await verifiedActor();
+  return callOperationalRpc("platform_activity_report_server", {
+    p_actor_id: actorId,
+    p_start: input.periodStart,
+    p_end: input.periodEnd,
+    p_granularity: input.granularity,
+  });
+}
+
+export async function clinicActivityReport(input: {
+  clinicId: string;
+  periodStart: string;
+  periodEnd: string;
+  granularity: ActivityReportGranularity;
+}) {
+  const actorId = await verifiedActor();
+  return callOperationalRpc("clinic_activity_report_server", {
+    p_actor_id: actorId,
+    p_clinic_id: input.clinicId,
+    p_start: input.periodStart,
+    p_end: input.periodEnd,
+    p_granularity: input.granularity,
   });
 }
