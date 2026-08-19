@@ -7,7 +7,7 @@
 | البند | القيمة الموثقة |
 |---|---|
 | المستودع | `Bomussa/dental-marketplace-pwa`، والفرع المنشور `main`. |
-| الاستضافة | Vercel project `dental-marketplace-pwa` (`prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr`) ضمن الفريق `team_aFtFTvzgabqEN5bOxn4SiO7`. |
+| الاستضافة | Vercel project `dental-marketplace-pwa` (`prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr`) ضمن الفريق `team_aFtFTvzgabqENB5bOxn4SiO7`. |
 | النطاقان | `https://www.mmc-mms.com` و`https://mmc-mms.com`. |
 | Supabase | `bqvcukxfsnchvkgejolz` على `https://bqvcukxfsnchvkgejolz.supabase.co`. |
 | المصادقة المعتادة | اسم مستخدم وكلمة مرور؛ ليست Magic Link. |
