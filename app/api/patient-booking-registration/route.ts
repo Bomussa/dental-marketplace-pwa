@@ -13,13 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 const MAX_PATIENT_BOOKING_REGISTRATION_BYTES = 8 * 1024;
 const PATIENT_REGISTRATION_CLIENT_WINDOW_SECONDS = 60 * 60;
 const MAX_PATIENT_REGISTRATIONS_PER_CLIENT_WINDOW = 10;
-
-const messages = {
-  username_taken: "اسم المستخدم مستخدم بالفعل. اختر اسمًا آخر.",
-  email_taken: "البريد الإلكتروني مسجل بالفعل. سجّل الدخول لإكمال طلب الحجز.",
-  national_id_taken: "الرقم الشخصي مسجل بالفعل. سجّل الدخول لإكمال طلب الحجز.",
-  unavailable: "تعذر إنشاء الحساب الآن. حاول لاحقًا دون تكرار البيانات.",
-} as const;
+const REGISTRATION_CONFLICT_MESSAGE = "تعذر إنشاء الحساب بهذه البيانات. إذا كان لديك حساب بالفعل، سجّل الدخول لإكمال طلب الحجز.";
 
 function json(body: unknown, status: number, headers?: HeadersInit) {
   return NextResponse.json(body, { status, headers: { "cache-control": "no-store", ...headers } });
@@ -68,7 +62,12 @@ export async function POST(request: Request) {
   }
 
   const created = await provisionPatientBookingAccount(input);
-  if (!created.ok) return json({ error: messages[created.code] }, created.code === "unavailable" ? 503 : 409);
+  if (!created.ok) {
+    if (created.code === "unavailable") {
+      return json({ error: "تعذر إنشاء الحساب الآن. حاول لاحقًا دون تكرار البيانات." }, 503);
+    }
+    return json({ error: REGISTRATION_CONFLICT_MESSAGE }, 409);
+  }
 
   const supabase = await createClient();
   const { error: sessionError } = await supabase.auth.signInWithPassword({ email: input.email, password: input.password });
