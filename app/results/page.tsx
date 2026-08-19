@@ -60,18 +60,18 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="workspace-shell relative mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-12">
-      <div className="surface-aurora mb-7 flex flex-wrap items-end justify-between gap-4 rounded-[32px] p-6 text-white sm:p-8">
+      <div className="surface-aurora mb-8 flex flex-wrap items-end justify-between gap-5 rounded-[36px] p-7 text-white sm:p-10">
         <div>
-          <p className="relative text-xs font-black uppercase tracking-[.18em] text-cyan-100">{t["results.kicker"]}</p>
-          <h1 className="relative mt-2 text-3xl font-black tracking-[-.035em] text-white sm:text-4xl">{variantName ?? t["results.fallbackTitle"]}</h1>
-          <p className="relative mt-2 text-sm font-medium text-blue-50/82">{t["results.intro"]}</p>
+          <p className="relative text-[.78rem] font-black uppercase tracking-[.18em] text-cyan-100">{t["results.kicker"]}</p>
+          <h1 className="relative mt-3 text-4xl font-black tracking-[-.045em] text-white sm:text-5xl">{variantName ?? t["results.fallbackTitle"]}</h1>
+          <p className="relative mt-3 max-w-2xl text-[.98rem] font-semibold leading-7 text-blue-50/90">{t["results.intro"]}</p>
         </div>
         <Link href="/" className="relative inline-flex min-h-11 items-center gap-2 rounded-full border border-white/18 bg-white/12 px-4 text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.18)] transition hover:-translate-y-0.5 hover:bg-white/20">
           <ArrowUpLeftIcon size={17} />{t["results.newSearch"]}
         </Link>
       </div>
 
-      <div className="surface-aurora mb-6 flex flex-wrap items-center gap-2 rounded-[24px] px-4 py-3 text-xs font-extrabold text-blue-50/95">
+      <div className="surface-aurora mb-7 flex flex-wrap items-center gap-2.5 rounded-[26px] px-5 py-3.5 text-[.84rem] font-extrabold text-blue-50/95">
         <SlidersIcon size={17} className="text-[#83f1d5]" />
         <span>{whenLabel}</span><span className="text-white/35">•</span>
         <span>{replaceTokens(t["results.sortedBy"], { sort: sortLabel })}</span><span className="text-white/35">•</span>
@@ -81,16 +81,16 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
       </div>
 
       {error ? <Card className="p-7 text-red-700">{t["results.loadError"]}: {error}</Card> : offers.length === 0 ? (
-        <Card className="p-10 text-center">
-          <h2 className="text-xl font-black">{t["results.emptyTitle"]}</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{t["results.emptyCopy"]}</p>
+        <Card className="p-11 text-center sm:p-14">
+          <h2 className="text-2xl font-black tracking-[-.03em]">{t["results.emptyTitle"]}</h2>
+          <p className="mx-auto mt-3 max-w-xl text-[.98rem] font-medium leading-7 text-slate-500">{t["results.emptyCopy"]}</p>
         </Card>
       ) : (
         <div className="space-y-4">
           {offers.map((offer, index) => (
             <Card key={offer.offer_id} className="lift overflow-hidden p-0">
-              <div className="grid lg:grid-cols-[1fr_290px]">
-                <div className="p-5 sm:p-6">
+              <div className="grid lg:grid-cols-[1fr_315px]">
+                <div className="p-6 sm:p-7">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -98,8 +98,8 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                         {offer.last_verified_at && <Badge tone="blue"><span className="inline-flex items-center gap-1"><ShieldCheckIcon size={13} />{t["results.verified"]}</span></Badge>}
                         <Badge tone={offer.open_now ? "green" : "slate"}>{offer.open_now ? t["results.openNow"] : t["results.closedNow"]}</Badge>
                       </div>
-                      <h2 className="mt-3 truncate text-xl font-black tracking-tight sm:text-2xl">{offer.clinic_name}</h2>
-                      <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-slate-500"><LocationIcon size={15} />{offer.branch_name}{offer.area ? ` · ${offer.area}` : ""}</p>
+                      <h2 className="mt-4 truncate text-2xl font-black tracking-[-.035em] sm:text-[1.8rem]">{offer.clinic_name}</h2>
+                      <p className="mt-2 flex items-center gap-1.5 text-[.96rem] font-semibold text-slate-500"><LocationIcon size={15} />{offer.branch_name}{offer.area ? ` · ${offer.area}` : ""}</p>
                     </div>
                     {Number(offer.review_count) > 0 && <div className="flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-black text-slate-800"><StarIcon size={14} className="text-amber-500" />{Number(offer.rating_avg).toFixed(1)}<span className="font-bold text-slate-400">({offer.review_count})</span></div>}
                   </div>
@@ -113,9 +113,9 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                   {offer.branch_latitude != null && offer.branch_longitude != null ? <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${offer.branch_latitude},${offer.branch_longitude}`)}`} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-[#0b71a2]/15 bg-white px-4 text-xs font-black text-[#084884] transition hover:-translate-y-0.5 hover:border-[#0b71a2]/35 hover:bg-cyan-50"><RouteIcon size={16}/>{t["results.directions"]}</a> : <p className="mt-4 text-xs font-bold text-slate-400">{t["results.directionsUnavailable"]}</p>}
                 </div>
 
-                <aside className="border-t border-[#0d6f99]/10 bg-[linear-gradient(150deg,rgba(230,250,247,.95),rgba(233,240,255,.94))] p-5 sm:p-6 lg:border-s lg:border-t-0">
-                  <div className="text-xs font-extrabold text-slate-500">{t["results.advertisedPrice"]}</div><div className="mt-1 text-2xl font-black tracking-tight text-slate-950">{priceLabel(offer.price_type, offer.min_minor, offer.max_minor, locale)}</div>
-                  <div className="mt-5 text-xs font-extrabold text-slate-500">{t["results.nearestAppointment"]}</div><div className="mt-1 min-h-10 text-sm font-black leading-6">{offer.earliest_slot_at ? new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" }).format(new Date(offer.earliest_slot_at)) : t["results.noAppointment"]}</div>
+                <aside className="border-t border-[#0d6f99]/10 bg-[linear-gradient(150deg,rgba(226,251,247,.98),rgba(230,239,255,.96))] p-6 sm:p-7 lg:border-s lg:border-t-0">
+                  <div className="text-xs font-extrabold text-slate-500">{t["results.advertisedPrice"]}</div><div className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950">{priceLabel(offer.price_type, offer.min_minor, offer.max_minor, locale)}</div>
+                  <div className="mt-5 text-xs font-extrabold text-slate-500">{t["results.nearestAppointment"]}</div><div className="mt-2 min-h-10 text-[.98rem] font-black leading-7">{offer.earliest_slot_at ? new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" }).format(new Date(offer.earliest_slot_at)) : t["results.noAppointment"]}</div>
                   <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} patientProfiles={patientProfiles} isAuthenticated={Boolean(userId)} /> : <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">{t["results.comparisonOnly"]}</div>}</div>
                 </aside>
               </div>

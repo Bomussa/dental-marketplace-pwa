@@ -387,3 +387,272 @@ html[dir="rtl"] .home-hero__title { letter-spacing: -.035em !important; line-hei
   .home-hero__title { font-size: clamp(2.35rem, 11.2vw, 3.1rem) !important; line-height: 1.18 !important; }
   .home-hero p { line-height: 1.95 !important; }
 }
+
+
+/* 2026 visual polish: calmer depth, bolder hierarchy, and more legible clinical controls. */
+:root {
+  --type-strong: #082c59;
+  --type-body: #34536f;
+  --type-muted: #62809a;
+  --focus-ring: rgba(46, 165, 215, .22);
+  --surface-border: rgba(10, 86, 143, .12);
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.62;
+  color: var(--type-strong);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--type-strong);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+button, input, select, textarea {
+  line-height: 1.45;
+}
+
+.glass-shell {
+  border-color: rgba(190, 235, 244, .29);
+  box-shadow: 0 22px 58px -30px rgba(2, 20, 54, .62), inset 0 1px 0 rgba(255,255,255,.16);
+}
+
+.glass-panel {
+  border-color: rgba(255,255,255,.92);
+  box-shadow: 0 36px 96px -52px rgba(5, 33, 78, .58), inset 0 1px 0 rgba(255,255,255,.98);
+}
+
+.comparison-form {
+  border-radius: 2rem;
+  border-color: rgba(8, 74, 132, .16);
+  background: linear-gradient(125deg, rgba(255,255,255,.99), rgba(233,249,250,.92));
+  box-shadow: 0 30px 76px -42px rgba(4, 36, 84, .49), inset 0 1px 0 rgba(255,255,255,.99);
+}
+
+.comparison-field {
+  min-height: 5.1rem;
+  gap: .48rem;
+  border-radius: 1.2rem;
+  border-color: rgba(15, 81, 136, .12);
+  padding: .9rem 1rem .8rem;
+}
+
+.comparison-field:hover {
+  border-color: rgba(14, 128, 170, .42);
+  box-shadow: 0 18px 30px -24px rgba(10,70,132,.56);
+}
+
+.comparison-field:focus-within {
+  border-color: rgba(12, 129, 179, .72);
+  box-shadow: 0 0 0 5px var(--focus-ring), 0 18px 30px -25px rgba(9,65,120,.4);
+}
+
+.comparison-field__label {
+  color: #476b8c;
+  font-size: .82rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.comparison-field__icon {
+  width: 1.62rem;
+  height: 1.62rem;
+  border-radius: .62rem;
+  color: #086f85;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.86);
+}
+
+.comparison-field__select {
+  height: 2rem;
+  color: #062d5c;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -.018em;
+}
+
+.comparison-submit {
+  min-height: 5.1rem !important;
+  border-radius: 1.2rem !important;
+  font-size: 1.03rem !important;
+}
+
+.location-control {
+  min-height: 2.72rem;
+  border-color: rgba(8, 94, 140, .16);
+  background: rgba(255,255,255,.82);
+  padding: .48rem 1.05rem;
+  color: #315b7d;
+  font-size: .84rem;
+  font-weight: 800;
+}
+
+.home-hero__title {
+  max-width: 58rem;
+  font-weight: 800 !important;
+  line-height: 1.12 !important;
+  text-shadow: 0 17px 42px rgba(0, 11, 37, .46);
+}
+
+.home-hero p {
+  max-width: 43rem;
+  color: rgba(235, 248, 255, .96) !important;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  line-height: 1.92 !important;
+}
+
+.home-search-card {
+  border-radius: 2.35rem;
+  border-color: rgba(255,255,255,.66);
+  background: linear-gradient(135deg, rgba(255,255,255,.91), rgba(232,250,250,.84));
+  box-shadow: 0 40px 100px -48px rgba(0,18,55,.84), inset 0 1px 0 rgba(255,255,255,.94);
+}
+
+.trust-row { border-top-color: rgba(255,255,255,.16); }
+.trust-chip {
+  border-color: rgba(255,255,255,.19);
+  background: rgba(255,255,255,.10);
+  padding: .55rem .86rem;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.home-metric {
+  min-height: 9.7rem;
+  border-radius: 1.8rem;
+  padding: 1.75rem;
+}
+
+.home-metric__value {
+  font-size: clamp(2.2rem, 4vw, 2.7rem);
+  font-weight: 800;
+}
+
+.decision-section {
+  border-radius: 2.5rem;
+  padding-block: 5rem;
+}
+
+.feature-card {
+  min-height: 16.5rem;
+  border-radius: 1.8rem;
+}
+
+.feature-card h3 {
+  font-size: 1.2rem;
+  letter-spacing: -.02em;
+}
+
+.feature-card p {
+  color: #55738d;
+  font-size: .97rem;
+  line-height: 1.85;
+}
+
+.workspace-shell h1 {
+  font-size: clamp(2rem, 3vw, 3rem);
+  letter-spacing: -.04em;
+}
+
+.workspace-shell h2 {
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+}
+
+.workspace-shell label,
+.workspace-shell .text-xs {
+  font-weight: 700;
+}
+
+.workspace-shell input,
+.workspace-shell select,
+.workspace-shell textarea {
+  border-color: rgba(9, 83, 141, .16);
+  font-size: .96rem;
+}
+
+.workspace-shell textarea {
+  line-height: 1.65;
+}
+
+.site-footer__panel {
+  border-radius: 1.8rem;
+  padding: 1.5rem;
+}
+
+.site-footer__system {
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.site-footer__disclaimer {
+  color: #496982;
+  font-size: .84rem;
+  font-weight: 600;
+  line-height: 1.9;
+}
+
+@media (min-width: 640px) {
+  .home-hero__title { font-size: clamp(3.65rem, 7vw, 5.25rem) !important; }
+  .home-search-card { padding: 1.15rem; }
+  .site-footer__panel { padding: 1.7rem 1.9rem; }
+}
+
+@media (max-width: 640px) {
+  html { font-size: 16px; }
+  .home-hero { padding-top: 3.75rem; }
+  .home-hero__title { font-size: clamp(2.55rem, 11.6vw, 3.3rem) !important; }
+  .home-hero p { font-size: 1rem !important; line-height: 1.85 !important; }
+  .home-search-card { border-radius: 1.85rem; }
+  .comparison-form { border-radius: 1.55rem; }
+  .comparison-field { min-height: 4.85rem; }
+  .decision-section { border-radius: 2rem; padding-block: 3.8rem; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .comparison-form, .home-search-card, .home-metric, .feature-card { transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, border-color .28s ease; }
+  .home-search-card:hover { transform: translateY(-2px); }
+}
+
+
+/* Operational readability pass: compact data remains scannable at normal viewing distance. */
+.workspace-shell .text-xs {
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+.workspace-shell .text-sm {
+  font-size: .94rem;
+  line-height: 1.58;
+}
+
+.workspace-shell button,
+.workspace-shell a[role="button"] {
+  font-weight: 800;
+}
+
+.workspace-shell .rounded-2xl,
+.workspace-shell .rounded-\[20px\],
+.workspace-shell .rounded-\[22px\] {
+  border-color: rgba(8, 82, 139, .10);
+}
+
+.workspace-shell .surface-aurora {
+  border-radius: 2.25rem;
+}
+
+@media (max-width: 640px) {
+  .workspace-shell .text-xs { font-size: .76rem; }
+  .workspace-shell .text-sm { font-size: .91rem; }
+}
+
+
+/* Preserve high-contrast display typography on dark aurora surfaces. */
+.home-hero__title,
+.surface-aurora h1,
+.glass-shell h1,
+.glass-shell h2,
+.glass-shell h3 {
+  color: #fff !important;
+}
