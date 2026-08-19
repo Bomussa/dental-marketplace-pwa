@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getLocale } from "@/lib/i18n";
 import { accountNationality } from "@/lib/account-copy";
 import { clinicPriceType, clinicRole, clinicStatus, getClinicCopy } from "@/lib/clinic-copy";
@@ -93,7 +94,9 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
   const slotWritableBranches = branches.filter((branch) => canManageSlots(branch.id));
   const canManageClinic = selectedClinic?.status === "active" && canManageClinicStructure;
   const canManageOperatorAccounts = selectedClinic?.status === "active" && memberships.some((membership) => membership.clinic_id === selectedClinicId && membership.role === "owner" && membership.status === "active");
-  const { data: operatorAccountData } = canManageOperatorAccounts ? await supabase.rpc("list_clinic_operator_accounts", { p_clinic_id: selectedClinicId }) : { data: [] };
+  const { data: operatorAccountData } = canManageOperatorAccounts
+    ? await createAdminClient().rpc("list_clinic_operator_accounts_server", { p_actor_id: userId, p_clinic_id: selectedClinicId })
+    : { data: [] };
   const operatorAccounts = (operatorAccountData ?? []) as ClinicOperatorAccount[];
   const activeOperatorAccounts = operatorAccounts.filter((account) => !account.revoked_at && account.status === "active");
   const displayedRole = effectiveClinicRole(memberships, selectedClinicId);

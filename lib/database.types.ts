@@ -2412,6 +2412,10 @@ export type Database = {
         Args: { p_operator_account_id: string }
         Returns: undefined
       }
+      audit_clinic_operator_password_reset_server: {
+        Args: { p_actor_id: string; p_operator_account_id: string }
+        Returns: undefined
+      }
       book_slot:
         | {
             Args: {
@@ -2544,8 +2548,29 @@ export type Database = {
           username: string
         }[]
       }
+      list_clinic_operator_accounts_server: {
+        Args: { p_actor_id: string; p_clinic_id: string }
+        Returns: {
+          created_at: string
+          operator_account_id: string
+          revoked_at: string
+          slot_no: number
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
       provision_clinic_operator_account: {
         Args: { p_clinic_id: string; p_user_id: string; p_username: string }
+        Returns: string
+      }
+      provision_clinic_operator_account_server: {
+        Args: {
+          p_actor_id: string
+          p_clinic_id: string
+          p_user_id: string
+          p_username: string
+        }
         Returns: string
       }
       record_booking_check_in: {
@@ -2614,6 +2639,10 @@ export type Database = {
       }
       revoke_clinic_operator_account: {
         Args: { p_operator_account_id: string }
+        Returns: undefined
+      }
+      revoke_clinic_operator_account_server: {
+        Args: { p_actor_id: string; p_operator_account_id: string }
         Returns: undefined
       }
       search_dental_offers: {

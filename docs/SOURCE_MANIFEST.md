@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 258
+**عدد الملفات المفهرسة تفصيليًا:** 260
 
 ## .github
 
@@ -308,6 +308,8 @@
 | [`supabase/migrations/20260818230000_username_password_and_clinic_operator_accounts.sql`](../supabase/migrations/20260818230000_username_password_and_clinic_operator_accounts.sql) |
 | [`supabase/migrations/20260819003000_public_search_branch_coordinates_for_directions.sql`](../supabase/migrations/20260819003000_public_search_branch_coordinates_for_directions.sql) |
 | [`supabase/migrations/20260819053000_lock_down_clinic_operator_security_definer_rpcs.sql`](../supabase/migrations/20260819053000_lock_down_clinic_operator_security_definer_rpcs.sql) |
+| [`supabase/migrations/20260819055000_add_service_only_clinic_operator_rpcs.sql`](../supabase/migrations/20260819055000_add_service_only_clinic_operator_rpcs.sql) |
+| [`supabase/migrations/20260819060000_revoke_legacy_clinic_operator_rpcs.sql`](../supabase/migrations/20260819060000_revoke_legacy_clinic_operator_rpcs.sql) |
 | [`supabase/seed.dev.sql`](../supabase/seed.dev.sql) |
 | [`supabase/tests/acceptance.sql`](../supabase/tests/acceptance.sql) |
 

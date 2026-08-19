@@ -68,6 +68,10 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
   if (!parsed.success) validationFailure("createClinicOperatorAccount");
 
   const supabase = await requireUser();
+  const { data: actorClaims, error: actorClaimsError } = await supabase.auth.getClaims();
+  const actorId = actorClaims?.claims?.sub;
+  if (actorClaimsError || !actorId) redirect("/login?next=/clinic");
+
   let admin;
   try {
     admin = createAdminClient();
@@ -88,7 +92,8 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
   }
 
   try {
-    const { error } = await supabase.rpc("provision_clinic_operator_account", {
+    const { error } = await admin.rpc("provision_clinic_operator_account_server", {
+      p_actor_id: actorId,
       p_clinic_id: parsed.data.clinic_id,
       p_user_id: created.user.id,
       p_username: parsed.data.username,
@@ -105,8 +110,16 @@ export async function revokeClinicOperatorAccount(formData: FormData): Promise<v
   const parsed = clinicOperatorAccountIdSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) validationFailure("revokeClinicOperatorAccount");
   const supabase = await requireUser();
+  const { data: actorClaims, error: actorClaimsError } = await supabase.auth.getClaims();
+  const actorId = actorClaims?.claims?.sub;
+  if (actorClaimsError || !actorId) redirect("/login?next=/clinic");
+
   try {
-    const { error } = await supabase.rpc("revoke_clinic_operator_account", { p_operator_account_id: parsed.data.operator_account_id });
+    const admin = createAdminClient();
+    const { error } = await admin.rpc("revoke_clinic_operator_account_server", {
+      p_actor_id: actorId,
+      p_operator_account_id: parsed.data.operator_account_id,
+    });
     if (error) throw new Error(error.code || "OPERATION_FAILED");
     revalidatePath("/clinic");
   } catch (error) {
