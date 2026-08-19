@@ -23,6 +23,8 @@ export type SearchOffer = {
   branch_id: string;
   branch_name: string;
   area: string | null;
+  branch_latitude: number | null;
+  branch_longitude: number | null;
   variant_id: string;
   price_type: "fixed" | "from" | "range" | "package" | "consultation_required" | string;
   min_minor: number | null;

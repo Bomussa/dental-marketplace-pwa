@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     lat: params.get("lat") ?? "",
     lng: params.get("lng") ?? "",
     radius: params.get("radius") ?? "10",
+    sort: params.get("sort") ?? "balanced",
   });
   const when = whenSchema.safeParse(params.get("when") ?? "earliest");
   if (!parsed.success || !when.success) {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     lng,
     radius: parsed.data.radius,
     when: when.data,
+    sort: parsed.data.sort,
   });
   if (result.error) {
     return NextResponse.json({ error: "search_unavailable" }, { status: 503, headers: { "cache-control": "no-store" } });

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Treatment, TreatmentVariant } from "@/lib/models";
 import { Button } from "@/components/ui";
-import { CalendarIcon, LocationIcon, SearchIcon, ToothIcon } from "@/components/icons";
+import { CalendarIcon, LocationIcon, SearchIcon, SlidersIcon, ToothIcon } from "@/components/icons";
 import { trackChoice } from "@/lib/choice-events.client";
 import { getDictionary, type Locale } from "@/lib/i18n";
 
@@ -12,6 +12,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
   const [treatmentId, setTreatmentId] = useState(treatments[0]?.id ?? "");
   const [variantId, setVariantId] = useState("");
   const [when, setWhen] = useState<"earliest" | "today" | "tomorrow">("earliest");
+  const [sort, setSort] = useState<"balanced" | "price" | "distance" | "rating" | "soonest">("balanced");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [geoState, setGeoState] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -46,13 +47,13 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
       event_name: "search_submitted",
       treatment_id: treatmentId || undefined,
       variant_id: effectiveVariant || undefined,
-      choice_value: { when, radius_km: 10, location_used: Boolean(lat && lng) },
+      choice_value: { when, sort, radius_km: 10, location_used: Boolean(lat && lng) },
     });
   }
 
   return (
     <form action="/results" onSubmit={submitSearch} className="grid gap-3.5" aria-label={t["search.aria"]}>
-      <div className="comparison-form grid gap-2.5 p-2.5 lg:grid-cols-[1.04fr_1.16fr_.78fr_auto] lg:items-stretch">
+      <div className="comparison-form grid gap-2.5 p-2.5 lg:grid-cols-[1.04fr_1.16fr_.78fr_.78fr_auto] lg:items-stretch">
         <label className="comparison-field">
           <span className="comparison-field__label"><span className="comparison-field__icon"><ToothIcon size={16}/></span>{t["search.treatment"]}</span>
           <select name="treatment" value={treatmentId} onChange={(e) => { const next = e.target.value; setTreatmentId(next); setVariantId(""); trackChoice({ event_name: "treatment_selected", treatment_id: next }); }} required className="comparison-field__select">
@@ -69,6 +70,12 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
           <span className="comparison-field__label"><span className="comparison-field__icon"><CalendarIcon size={16}/></span>{t["search.appointment"]}</span>
           <select name="when" value={when} onChange={(e) => { const next = e.target.value as "earliest" | "today" | "tomorrow"; setWhen(next); trackChoice({ event_name: "appointment_preference_selected", treatment_id: treatmentId || undefined, variant_id: effectiveVariant || undefined, choice_value: { when: next } }); }} className="comparison-field__select">
             <option value="earliest">{t["search.earliest"]}</option><option value="today">{t["search.today"]}</option><option value="tomorrow">{t["search.tomorrow"]}</option>
+          </select>
+        </label>
+        <label className="comparison-field">
+          <span className="comparison-field__label"><span className="comparison-field__icon"><SlidersIcon size={16}/></span>{t["search.sort"]}</span>
+          <select name="sort" value={sort} onChange={(e) => setSort(e.target.value as "balanced" | "price" | "distance" | "rating" | "soonest")} className="comparison-field__select">
+            <option value="balanced">{t["search.sort.balanced"]}</option><option value="price">{t["search.sort.price"]}</option><option value="distance">{t["search.sort.distance"]}</option><option value="rating">{t["search.sort.rating"]}</option><option value="soonest">{t["search.sort.soonest"]}</option>
           </select>
         </label>
         <div className="flex items-stretch">

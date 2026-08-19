@@ -2626,6 +2626,8 @@ export type Database = {
         Returns: {
           area: string
           branch_id: string
+          branch_latitude: number
+          branch_longitude: number
           branch_name: string
           clinic_attested_at: string
           clinic_id: string

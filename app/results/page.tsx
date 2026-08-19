@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { searchSchema } from "@/lib/validation";
-import { searchLiveOffers, type WhenPreference } from "@/lib/search-offers";
+import { searchLiveOffers, type SearchSort, type WhenPreference } from "@/lib/search-offers";
 import { priceLabel } from "@/lib/price";
 import { Badge, Card } from "@/components/ui";
 import { BookButton } from "@/components/book-button";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { ArrowUpLeftIcon, ClockIcon, LocationIcon, ShieldCheckIcon, SlidersIcon, StarIcon } from "@/components/icons";
+import { ArrowUpLeftIcon, ClockIcon, LocationIcon, RouteIcon, ShieldCheckIcon, SlidersIcon, StarIcon } from "@/components/icons";
 import { ResultsLiveRefresh } from "@/components/results-live-refresh";
 import { PriceScopeSummary } from "@/components/price-scope-summary";
 
@@ -24,7 +24,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const t = getDictionary(locale);
   const dateLocale = locale === "ar" ? "ar-QA" : "en-QA";
   const raw = await searchParams;
-  const parsed = searchSchema.safeParse({ variant: scalar(raw.variant), lat: scalar(raw.lat) ?? "", lng: scalar(raw.lng) ?? "", radius: scalar(raw.radius) ?? "10" });
+  const parsed = searchSchema.safeParse({ variant: scalar(raw.variant), lat: scalar(raw.lat) ?? "", lng: scalar(raw.lng) ?? "", radius: scalar(raw.radius) ?? "10", sort: scalar(raw.sort) ?? "balanced" });
   if (!parsed.success) {
     return (
       <main className="workspace-shell mx-auto max-w-4xl px-4 py-16">
@@ -43,9 +43,11 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const lng = parsed.data.lng === "" || parsed.data.lng === undefined ? null : parsed.data.lng;
   const rawWhen = scalar(raw.when) ?? "earliest";
   const when: WhenPreference = rawWhen === "today" || rawWhen === "tomorrow" ? rawWhen : "earliest";
+  const sort: SearchSort = parsed.data.sort;
+  const sortLabel = t[`search.sort.${sort}`];
   const supabase = await createClient();
   const [{ variant, offers, error }, { data: claimsData }] = await Promise.all([
-    searchLiveOffers({ variant: parsed.data.variant, lat, lng, radius: parsed.data.radius, when }),
+    searchLiveOffers({ variant: parsed.data.variant, lat, lng, radius: parsed.data.radius, when, sort }),
     supabase.auth.getClaims(),
   ]);
   const userId = claimsData?.claims?.sub;
@@ -72,6 +74,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
       <div className="surface-aurora mb-6 flex flex-wrap items-center gap-2 rounded-[24px] px-4 py-3 text-xs font-extrabold text-blue-50/95">
         <SlidersIcon size={17} className="text-[#83f1d5]" />
         <span>{whenLabel}</span><span className="text-white/35">•</span>
+        <span>{replaceTokens(t["results.sortedBy"], { sort: sortLabel })}</span><span className="text-white/35">•</span>
         <span>{replaceTokens(t["results.radius"], { radius: parsed.data.radius })}</span><span className="text-white/35">•</span>
         <span>{replaceTokens(t["results.count"], { count: offers.length })}</span><span className="text-white/35">•</span>
         <ResultsLiveRefresh variantId={parsed.data.variant} locale={locale} />
@@ -107,6 +110,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                     <div className="rounded-2xl bg-slate-50/90 p-3.5 sm:col-span-2 lg:col-span-1"><div className="text-[11px] font-bold text-slate-500">{t["results.lastVerified"]}</div><div className="mt-1 text-sm font-black">{offer.last_verified_at ? new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeZone: "Asia/Qatar" }).format(new Date(offer.last_verified_at)) : t["results.notRecorded"]}</div></div>
                   </div>
                   <PriceScopeSummary offer={offer} locale={locale} />
+                  {offer.branch_latitude != null && offer.branch_longitude != null ? <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${offer.branch_latitude},${offer.branch_longitude}`)}`} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-[#0b71a2]/15 bg-white px-4 text-xs font-black text-[#084884] transition hover:-translate-y-0.5 hover:border-[#0b71a2]/35 hover:bg-cyan-50"><RouteIcon size={16}/>{t["results.directions"]}</a> : <p className="mt-4 text-xs font-bold text-slate-400">{t["results.directionsUnavailable"]}</p>}
                 </div>
 
                 <aside className="border-t border-[#0d6f99]/10 bg-[linear-gradient(150deg,rgba(230,250,247,.95),rgba(233,240,255,.94))] p-5 sm:p-6 lg:border-s lg:border-t-0">

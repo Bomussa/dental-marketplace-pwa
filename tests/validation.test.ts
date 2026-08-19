@@ -21,6 +21,13 @@ describe("validation", () => {
     expect(searchSchema.safeParse({ variant: "11111111-1111-4111-8111-111111111111", radius: "10", lat: "100", lng: "51.53" }).success).toBe(false);
   });
 
+  it("accepts only explicit comparison sorting criteria", () => {
+    const base = { variant: "11111111-1111-4111-8111-111111111111", radius: "10" };
+    expect(searchSchema.safeParse({ ...base, sort: "distance" }).success).toBe(true);
+    expect(searchSchema.safeParse({ ...base, sort: "rating" }).success).toBe(true);
+    expect(searchSchema.safeParse({ ...base, sort: "invented" }).success).toBe(false);
+  });
+
   it("requires max price for range", () => {
     expect(offerSchema.safeParse({ branch_id:"11111111-1111-4111-8111-111111111111", variant_id:"22222222-2222-4222-8222-222222222222", price_type:"range", min_qar:"200", duration_minutes:"30" }).success).toBe(false);
   });

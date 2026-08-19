@@ -3,12 +3,14 @@ import { z } from "zod";
 export const uuid = z.string().uuid();
 
 const coordinate = z.coerce.number().finite();
+export const searchSortSchema = z.enum(["balanced", "price", "distance", "rating", "soonest"]);
 
 export const searchSchema = z.object({
   variant: uuid,
   lat: z.union([z.literal(""), coordinate.min(-90).max(90)]).optional(),
   lng: z.union([z.literal(""), coordinate.min(-180).max(180)]).optional(),
   radius: z.coerce.number().min(1).max(50).default(10),
+  sort: searchSortSchema.default("balanced"),
 });
 
 export const bookingSchema = z.object({

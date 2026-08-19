@@ -65,30 +65,44 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
       return { ok: false, code: conflictCode(usernameError).includes("account_usernames") || usernameError.code === "23505" ? "username_taken" : "unavailable" };
     }
 
-    const { data: profile, error: profileError } = await admin
+    const profilePayload = {
+      account_id: userId,
+      display_name: input.display_name,
+      relationship: "self" as const,
+      national_id: input.national_id,
+      nationality: input.nationality,
+      date_of_birth: input.date_of_birth,
+      phone: input.phone,
+      gender: input.gender ?? null,
+      phone_verified_at: null,
+    };
+    const { data: existingProfile, error: existingProfileError } = await admin
       .from("patient_profiles")
-      .update({
-        display_name: input.display_name,
-        relationship: "self",
-        national_id: input.national_id,
-        nationality: input.nationality,
-        date_of_birth: input.date_of_birth,
-        phone: input.phone,
-        gender: input.gender ?? null,
-        phone_verified_at: null,
-      })
+      .update(profilePayload)
       .eq("account_id", userId)
       .eq("relationship", "self")
       .is("archived_at", null)
       .select("id")
-      .single();
+      .maybeSingle();
 
-    if (profileError || !profile) {
+    if (existingProfileError) {
       await cleanupProvisionedPatientAccount(userId);
-      return { ok: false, code: profileError?.code === "23505" ? "national_id_taken" : "unavailable" };
+      return { ok: false, code: existingProfileError.code === "23505" ? "national_id_taken" : "unavailable" };
     }
 
-    return { ok: true, userId, patientProfileId: profile.id };
+    if (existingProfile) return { ok: true, userId, patientProfileId: existingProfile.id };
+
+    const { data: insertedProfile, error: insertProfileError } = await admin
+      .from("patient_profiles")
+      .insert(profilePayload)
+      .select("id")
+      .single();
+    if (insertProfileError || !insertedProfile) {
+      await cleanupProvisionedPatientAccount(userId);
+      return { ok: false, code: insertProfileError?.code === "23505" ? "national_id_taken" : "unavailable" };
+    }
+
+    return { ok: true, userId, patientProfileId: insertedProfile.id };
   } catch {
     await cleanupProvisionedPatientAccount(userId);
     return { ok: false, code: "unavailable" };
