@@ -44,7 +44,7 @@ async function callServerRpc(functionName: string, args: Record<string, unknown>
 }
 
 export async function consumeRateLimit(input: {
-  scope: "booking" | "device_installation" | "support_message" | "choice_event" | "phone_verification_start" | "phone_verification_confirm" | "patient_booking_registration";
+  scope: "booking" | "device_installation" | "support_message" | "choice_event" | "phone_verification_start" | "phone_verification_confirm" | "patient_booking_registration" | "login";
   subject: string;
   maxRequests: number;
   windowSeconds: number;
@@ -181,39 +181,7 @@ export async function financialReportSummary(input: { clinicId: string; periodSt
   return callOperationalRpc("financial_report_summary_server", {
     p_actor_id: actorId,
     p_clinic_id: input.clinicId,
-    p_start: input.periodStart,
-    p_end: input.periodEnd,
-  });
-}
-
-export type ActivityReportGranularity = "hourly" | "daily" | "weekly" | "monthly";
-
-export async function platformActivityReport(input: {
-  periodStart: string;
-  periodEnd: string;
-  granularity: ActivityReportGranularity;
-}) {
-  const actorId = await verifiedActor();
-  return callOperationalRpc("platform_activity_report_server", {
-    p_actor_id: actorId,
-    p_start: input.periodStart,
-    p_end: input.periodEnd,
-    p_granularity: input.granularity,
-  });
-}
-
-export async function clinicActivityReport(input: {
-  clinicId: string;
-  periodStart: string;
-  periodEnd: string;
-  granularity: ActivityReportGranularity;
-}) {
-  const actorId = await verifiedActor();
-  return callOperationalRpc("clinic_activity_report_server", {
-    p_actor_id: actorId,
-    p_clinic_id: input.clinicId,
-    p_start: input.periodStart,
-    p_end: input.periodEnd,
-    p_granularity: input.granularity,
+    p_period_start: input.periodStart,
+    p_period_end: input.periodEnd,
   });
 }
