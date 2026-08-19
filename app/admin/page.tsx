@@ -1,21 +1,23 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { financialReportSummary } from "@/lib/operations.server";
+import { financialReportSummary, platformActivityReport, type ActivityReportGranularity } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale, type Locale } from "@/lib/i18n";
 import { adminPriceType, adminStatus, getAdminCopy } from "@/lib/admin-copy";
 import { AdminChoiceAnalytics } from "@/components/admin-choice-analytics";
 import { AdminLiveRefresh } from "@/components/admin-analytics-live-refresh";
+import { ActivityReportCard } from "@/components/activity-report-card";
 import { PrintReportButton } from "@/components/print-report-button";
 import { PriceScopeFields } from "@/components/price-scope-fields";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { BuildingIcon, CheckIcon, ShieldCheckIcon, SlidersIcon, StarIcon, WalletIcon } from "@/components/icons";
 import { parseCustomerChoiceAnalytics } from "@/lib/customer-choice-analytics";
+import { activityReportLabel, getActivityReportCopy, parseActivityReport } from "@/lib/activity-report";
 import { activateNotificationTemplate, approveSupportKnowledgeArticle, archiveSupportKnowledgeArticle, createNotificationTemplate, createSettlement, createSupportKnowledgeArticle, createTreatmentCatalog, createTreatmentVariant, moderateReview, reviewPriceRevision, updateAdminOffer, updateAdminSlot, updateFeatureFlag, updateTreatmentCatalog, updateTreatmentVariant, verifyAndActivate } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type AdminPageProps = { searchParams: Promise<{ days?: string | string[]; clinic?: string | string[]; start?: string | string[]; end?: string | string[] }> };
+type AdminPageProps = { searchParams: Promise<{ days?: string | string[]; clinic?: string | string[]; start?: string | string[]; end?: string | string[]; activity_start?: string | string[]; activity_end?: string | string[]; activity_granularity?: string | string[] }> };
 type FinancialReport = { clinic_id: string; period_start: string; period_end: string; attended_bookings: number; posted_debit_minor: number; posted_credit_minor: number };
 type ProposedSnapshot = { price_type?: string; min_minor?: number | null; max_minor?: number | null; duration_minutes?: number };
 
@@ -34,6 +36,10 @@ function qatarDate(daysOffset = 0) {
 
 function validDate(value: string | undefined, fallback: string) {
   return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
+}
+
+function activityGranularity(value: string | undefined): ActivityReportGranularity {
+  return value === "hourly" || value === "weekly" || value === "monthly" ? value : "daily";
 }
 
 function qatarDateTimeInput(value: string) {
@@ -66,6 +72,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const days = parseAnalyticsDays(query.days);
   const reportStart = validDate(firstValue(query.start), qatarDate(-29));
   const reportEnd = validDate(firstValue(query.end), qatarDate());
+  const activityStart = validDate(firstValue(query.activity_start), qatarDate(-29));
+  const activityEnd = validDate(firstValue(query.activity_end), qatarDate());
+  const activityGranularityValue = activityGranularity(firstValue(query.activity_granularity));
+  const activityCopy = getActivityReportCopy(locale);
   const supabase = await createClient();
   const { data: claimsData, error } = await supabase.auth.getClaims();
   const meta = (claimsData?.claims?.app_metadata ?? {}) as Record<string, unknown>;
@@ -130,6 +140,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     }
   }
 
+  let activityReport = null;
+  try {
+    activityReport = parseActivityReport(await platformActivityReport({ periodStart: activityStart, periodEnd: activityEnd, granularity: activityGranularityValue }));
+  } catch {
+    activityReport = null;
+  }
+
   return (
     <main className="workspace-shell mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12">
       <section className="glass-panel rounded-[32px] p-5 sm:p-7">
@@ -158,6 +175,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <Card className="p-5 sm:p-6"><div className="flex items-center gap-2"><WalletIcon size={19} className="text-[#0B5CAD]"/><h2 className="font-black">{copy.offerControl}</h2></div><p className="mt-2 text-xs leading-5 text-slate-500">{copy.offerControlCopy}</p><div className="mt-4 space-y-3">{adminOffers?.length ? adminOffers.map((offer) => <form key={offer.id} action={updateAdminOffer} className="rounded-[20px] bg-slate-50/80 p-4 ring-1 ring-slate-200/60"><input type="hidden" name="id" value={offer.id}/><div className="flex flex-wrap items-start justify-between gap-2"><div><div className="font-black">{variantNameById.get(offer.variant_id) ?? offer.variant_id.slice(0, 8)}</div><div className="mt-1 text-xs font-bold text-slate-500">{branchNameById.get(offer.branch_id) ?? offer.branch_id.slice(0, 8)}</div></div><Badge tone={offer.status === "active" ? "green" : offer.status === "suspended" || offer.status === "archived" ? "slate" : "amber"}>{adminStatus(locale, offer.status)}</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2"><Select name="price_type" defaultValue={offer.price_type}><option value="fixed">{copy.fixed}</option><option value="from">{copy.from}</option><option value="range">{copy.range}</option><option value="package">{copy.package}</option><option value="consultation_required">{copy.consultation_required}</option></Select><Select name="status" defaultValue={offer.status}><option value="draft">{copy.draft}</option><option value="active">{copy.active}</option><option value="needs_review">{copy.needs_review}</option><option value="stale">{copy.stale}</option><option value="suspended">{copy.suspended}</option><option value="archived">{copy.archived}</option></Select><Input name="min_qar" type="number" min="0" step="0.01" defaultValue={offer.min_minor === null ? "" : offer.min_minor / 100} placeholder={copy.minQar}/><Input name="max_qar" type="number" min="0" step="0.01" defaultValue={offer.max_minor === null ? "" : offer.max_minor / 100} placeholder={copy.maxQar}/><Input name="duration_minutes" type="number" min="5" max="480" defaultValue={offer.duration_minutes}/><PriceScopeFields locale={locale} source={offer} /><Button className="sm:col-span-2">{copy.saveOfferPublish}</Button></div></form>) : <p className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">{copy.noControllableOffers}</p>}</div></Card>
         <Card className="p-5 sm:p-6"><div className="flex items-center gap-2"><BuildingIcon size={19} className="text-[#0B5CAD]"/><h2 className="font-black">{copy.slotControl}</h2></div><p className="mt-2 text-xs leading-5 text-slate-500">{copy.slotControlCopy}</p><div className="mt-4 space-y-3">{adminSlots?.length ? adminSlots.map((slot) => <form key={slot.id} action={updateAdminSlot} className="rounded-[20px] bg-slate-50/80 p-4 ring-1 ring-slate-200/60"><input type="hidden" name="id" value={slot.id}/><div className="flex flex-wrap items-start justify-between gap-2"><div><div className="font-black">{variantNameById.get(slot.variant_id) ?? slot.variant_id.slice(0, 8)}</div><div className="mt-1 text-xs font-bold text-slate-500">{branchNameById.get(slot.branch_id) ?? slot.branch_id.slice(0, 8)}</div></div><Badge tone={slot.status === "published" ? "green" : slot.status === "cancelled" || slot.status === "consumed" ? "slate" : "amber"}>{adminStatus(locale, slot.status)}</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2"><label className="grid gap-1 text-xs font-bold text-slate-600">{copy.start}<Input name="start_at" type="datetime-local" defaultValue={qatarDateTimeInput(slot.start_at)} required/></label><label className="grid gap-1 text-xs font-bold text-slate-600">{copy.end}<Input name="end_at" type="datetime-local" defaultValue={qatarDateTimeInput(slot.end_at)} required/></label><Select name="status" defaultValue={slot.status}><option value="draft">{copy.draft}</option><option value="published">{copy.published}</option><option value="held">{copy.held}</option><option value="consumed">{copy.consumed}</option><option value="expired">{copy.expired}</option><option value="cancelled">{copy.cancelled}</option></Select><Button>{copy.saveSlotPublish}</Button></div></form>) : <p className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">{copy.noControllableSlots}</p>}</div></Card>
       </section>
+
+      <form method="get" className="mt-7 grid gap-3 rounded-[24px] border border-[#0a5e92]/10 bg-white/70 p-4 sm:grid-cols-4 no-print">
+        <label className="grid gap-1 text-xs font-bold text-slate-600">{activityCopy.period}<Input name="activity_start" type="date" defaultValue={activityStart} /></label>
+        <label className="grid gap-1 text-xs font-bold text-slate-600">{activityCopy.period}<Input name="activity_end" type="date" defaultValue={activityEnd} /></label>
+        <label className="grid gap-1 text-xs font-bold text-slate-600">{activityCopy.aggregation}<Select name="activity_granularity" defaultValue={activityGranularityValue}><option value="hourly">{activityReportLabel(locale, "hourly")}</option><option value="daily">{activityReportLabel(locale, "daily")}</option><option value="weekly">{activityReportLabel(locale, "weekly")}</option><option value="monthly">{activityReportLabel(locale, "monthly")}</option></Select></label>
+        <Button className="self-end">{activityCopy.refresh}</Button>
+      </form>
+      <ActivityReportCard report={activityReport} locale={locale} targetId="platform-activity-report" exportHref={`/api/admin/reports/activity-csv?start=${encodeURIComponent(activityStart)}&end=${encodeURIComponent(activityEnd)}&granularity=${encodeURIComponent(activityGranularityValue)}`} />
 
       <section id="financial-report" className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
         <Card className="p-5 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><WalletIcon size={19} className="text-[#0B5CAD]"/><h2 className="font-black">{copy.financeTitle}</h2></div><div className="flex flex-wrap gap-2"><PrintReportButton label={copy.print} />{selectedClinicId && <a href={`/api/admin/reports/csv?clinic=${encodeURIComponent(selectedClinicId)}&start=${encodeURIComponent(reportStart)}&end=${encodeURIComponent(reportEnd)}`} className="inline-flex min-h-10 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-black text-slate-800 transition hover:bg-slate-50">CSV</a>}</div></div><form method="get" className="mt-4 grid gap-3 sm:grid-cols-4"><Select name="clinic" defaultValue={selectedClinicId}>{clinicRows.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.display_name}</option>)}</Select><Input name="start" type="date" defaultValue={reportStart}/><Input name="end" type="date" defaultValue={reportEnd}/><Button>{copy.refreshReport}</Button></form>{report ? <div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-blue-50 p-4"><div className="text-2xl font-black text-[#084884]">{report.attended_bookings}</div><div className="mt-1 text-xs font-bold text-slate-600">{copy.attendedPatients}</div></div><div className="rounded-2xl bg-slate-50 p-4"><div className="text-2xl font-black">{(report.posted_debit_minor / 100).toFixed(2)}</div><div className="mt-1 text-xs font-bold text-slate-600">{copy.totalDebit}</div></div><div className="rounded-2xl bg-emerald-50 p-4"><div className="text-2xl font-black text-emerald-700">{(report.posted_credit_minor / 100).toFixed(2)}</div><div className="mt-1 text-xs font-bold text-slate-600">{copy.totalCredit}</div></div></div> : <p className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800">{reportUnavailable ? copy.reportUnavailable : copy.noClinicReport}</p>}<p className="mt-4 text-xs leading-5 text-slate-500">{copy.reportScope}: {reportStart} — {reportEnd} · {selectedClinic?.display_name ?? "—"}. {copy.reportScopeCopy}</p></Card>

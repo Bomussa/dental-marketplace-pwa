@@ -732,3 +732,21 @@ button, input, select, textarea {
     max-width: none;
   }
 }
+
+
+/* Operational reports print as a self-contained document, not as a full dashboard screenshot. */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  html, body { background: #fff !important; color: #071d37 !important; }
+  body::before, body::after { display: none !important; }
+  body[data-print-report-target] main.workspace-shell > :not([id]) { display: none !important; }
+  body[data-print-report-target="platform-activity-report"] main.workspace-shell > :not(#platform-activity-report) { display: none !important; }
+  body[data-print-report-target="clinic-activity-report"] main.workspace-shell > :not(#clinic-activity-report) { display: none !important; }
+  [data-print-report-section] { break-inside: avoid; }
+  [data-print-report-section] .no-print,
+  [data-print-report-section] .print\:hidden { display: none !important; }
+  [data-print-report-section] table { min-width: 0 !important; font-size: 8.5pt; }
+  [data-print-report-section] th,
+  [data-print-report-section] td { padding: 6px 7px !important; }
+  [data-print-report-section] .overflow-x-auto { overflow: visible !important; }
+}

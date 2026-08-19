@@ -76,6 +76,7 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | 68 | `20260819051756` | `revoke_legacy_clinic_operator_rpcs` |
 | 69 | `20260819052626` | `explicitly_deny_operator_account_table_access` |
 | 70 | `20260819070151` | `scale_critical_search_and_operator_indexes` |
+| 71 | `20260819095142` | `activity_report_rpc` |
 
 ## Repository alignment status
 

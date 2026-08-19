@@ -199,6 +199,23 @@ export const financialReportSchema = z.object({
   period_end: isoDate,
 }).refine((value) => value.period_end >= value.period_start, { path: ["period_end"], message: "نهاية التقرير يجب أن تكون بعد بدايته" });
 
+export const activityReportSchema = z.object({
+  clinic_id: uuid.optional(),
+  period_start: isoDate,
+  period_end: isoDate,
+  granularity: z.enum(["hourly", "daily", "weekly", "monthly"]).default("daily"),
+}).superRefine((value, context) => {
+  if (value.period_end < value.period_start) {
+    context.addIssue({ code: "custom", path: ["period_end"], message: "نهاية التقرير يجب أن تكون بعد بدايته" });
+    return;
+  }
+  const spanDays = Math.floor((Date.parse(`${value.period_end}T00:00:00Z`) - Date.parse(`${value.period_start}T00:00:00Z`)) / 86_400_000) + 1;
+  const maximumDays = value.granularity === "hourly" ? 31 : value.granularity === "daily" ? 366 : 1_826;
+  if (spanDays > maximumDays) {
+    context.addIssue({ code: "custom", path: ["period_end"], message: "نطاق التقرير أطول من الحد المسموح لهذا التجميع" });
+  }
+});
+
 export const supportMessageSchema = z.object({
   message: z.string().trim().min(1).max(2000),
   locale: z.enum(["ar", "en"]),

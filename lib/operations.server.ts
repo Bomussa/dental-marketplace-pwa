@@ -185,3 +185,35 @@ export async function financialReportSummary(input: { clinicId: string; periodSt
     p_end: input.periodEnd,
   });
 }
+
+export type ActivityReportGranularity = "hourly" | "daily" | "weekly" | "monthly";
+
+export async function platformActivityReport(input: {
+  periodStart: string;
+  periodEnd: string;
+  granularity: ActivityReportGranularity;
+}) {
+  const actorId = await verifiedActor();
+  return callServerRpc("platform_activity_report_server", {
+    p_actor_id: actorId,
+    p_start: input.periodStart,
+    p_end: input.periodEnd,
+    p_granularity: input.granularity,
+  });
+}
+
+export async function clinicActivityReport(input: {
+  clinicId: string;
+  periodStart: string;
+  periodEnd: string;
+  granularity: ActivityReportGranularity;
+}) {
+  const actorId = await verifiedActor();
+  return callServerRpc("clinic_activity_report_server", {
+    p_actor_id: actorId,
+    p_clinic_id: input.clinicId,
+    p_start: input.periodStart,
+    p_end: input.periodEnd,
+    p_granularity: input.granularity,
+  });
+}

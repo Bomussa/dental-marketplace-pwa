@@ -133,6 +133,11 @@ test("sensitive booking and support endpoints reject unauthenticated requests be
   expect(registrationResponse.status()).toBe(400);
 });
 
+test("activity report export rejects unauthenticated requests before aggregation", async ({ request }) => {
+  const response = await request.get("/api/admin/reports/activity-csv?start=2026-08-01&end=2026-08-19&granularity=daily");
+  expect(response.status()).toBe(403);
+});
+
 test("operation failures render a safe public message without database internals", async ({ page }) => {
   await page.goto("/operation-error?area=clinic&action=createOffer&code=forbidden");
   await expect(page.getByRole("heading", { level: 1, name: "هذه العملية غير مسموحة" })).toBeVisible();

@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 265
+**عدد الملفات المفهرسة تفصيليًا:** 270
 
 ## .github
 
@@ -23,6 +23,7 @@
 | [`app/actions/locale.ts`](../app/actions/locale.ts) |
 | [`app/admin/actions.ts`](../app/admin/actions.ts) |
 | [`app/admin/page.tsx`](../app/admin/page.tsx) |
+| [`app/api/admin/reports/activity-csv/route.ts`](../app/api/admin/reports/activity-csv/route.ts) |
 | [`app/api/admin/reports/csv/route.ts`](../app/api/admin/reports/csv/route.ts) |
 | [`app/api/book/route.ts`](../app/api/book/route.ts) |
 | [`app/api/choices/route.ts`](../app/api/choices/route.ts) |
@@ -56,6 +57,7 @@
 | الملف |
 |---|
 | [`components/account-live-refresh.tsx`](../components/account-live-refresh.tsx) |
+| [`components/activity-report-card.tsx`](../components/activity-report-card.tsx) |
 | [`components/admin-analytics-live-refresh.tsx`](../components/admin-analytics-live-refresh.tsx) |
 | [`components/admin-choice-analytics.tsx`](../components/admin-choice-analytics.tsx) |
 | [`components/app-icon-artwork.tsx`](../components/app-icon-artwork.tsx) |
@@ -179,6 +181,7 @@
 | الملف |
 |---|
 | [`lib/account-copy.ts`](../lib/account-copy.ts) |
+| [`lib/activity-report.ts`](../lib/activity-report.ts) |
 | [`lib/account-auth.server.ts`](../lib/account-auth.server.ts) |
 | [`lib/admin-copy.ts`](../lib/admin-copy.ts) |
 | [`lib/booking-intent.client.ts`](../lib/booking-intent.client.ts) |
@@ -314,6 +317,7 @@
 | [`supabase/migrations/20260819060000_revoke_legacy_clinic_operator_rpcs.sql`](../supabase/migrations/20260819060000_revoke_legacy_clinic_operator_rpcs.sql) |
 | [`supabase/migrations/20260819063000_explicitly_deny_operator_account_table_access.sql`](../supabase/migrations/20260819063000_explicitly_deny_operator_account_table_access.sql) |
 | [`supabase/migrations/20260819070000_scale_critical_search_and_operator_indexes.sql`](../supabase/migrations/20260819070000_scale_critical_search_and_operator_indexes.sql) |
+| [`supabase/migrations/20260819080000_activity_report_rpc.sql`](../supabase/migrations/20260819080000_activity_report_rpc.sql) |
 | [`supabase/seed.dev.sql`](../supabase/seed.dev.sql) |
 | [`supabase/tests/acceptance.sql`](../supabase/tests/acceptance.sql) |
 
@@ -323,6 +327,7 @@
 
 | الملف |
 |---|
+| [`tests/activity-report.test.ts`](../tests/activity-report.test.ts) |
 | [`tests/booking-intent.test.ts`](../tests/booking-intent.test.ts) |
 | [`tests/choice-event-guard.test.ts`](../tests/choice-event-guard.test.ts) |
 | [`tests/clinic-role-display.test.ts`](../tests/clinic-role-display.test.ts) |

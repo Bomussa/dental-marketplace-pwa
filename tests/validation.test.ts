@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, notificationTemplateSchema, offerSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
+import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, notificationTemplateSchema, offerSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -77,6 +77,14 @@ describe("validation", () => {
     expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة", relationship: "self", national_id: "28412345678", nationality: "QA", date_of_birth: "1992-04-15", phone: "+97455123456", username: "bad user", email: "not-an-email", password: "weakpassword" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "Fatima.Ahmed", password: "anything", next: "/results" }).success).toBe(true);
     expect(passwordLoginSchema.safeParse({ username: "a", password: "anything", next: "https://unsafe.example" }).success).toBe(false);
+  });
+
+  it("validates activity report windows and supported aggregation safely", () => {
+    expect(activityReportSchema.safeParse({ period_start: "2026-08-01", period_end: "2026-08-31", granularity: "hourly" }).success).toBe(true);
+    expect(activityReportSchema.safeParse({ period_start: "2026-08-01", period_end: "2026-09-01", granularity: "hourly" }).success).toBe(false);
+    expect(activityReportSchema.safeParse({ period_start: "2026-01-01", period_end: "2026-12-31", granularity: "daily" }).success).toBe(true);
+    expect(activityReportSchema.safeParse({ period_start: "2026-12-31", period_end: "2026-01-01", granularity: "monthly" }).success).toBe(false);
+    expect(activityReportSchema.safeParse({ period_start: "2026-01-01", period_end: "2026-01-31", granularity: "minute" }).success).toBe(false);
   });
 
   it("requires secure credentials when the owner provisions either clinic operator account", () => {

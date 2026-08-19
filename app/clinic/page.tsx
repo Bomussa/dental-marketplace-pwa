@@ -2,15 +2,18 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { clinicActivityReport, type ActivityReportGranularity } from "@/lib/operations.server";
 import { getLocale } from "@/lib/i18n";
 import { accountNationality } from "@/lib/account-copy";
 import { clinicPriceType, clinicRole, clinicStatus, getClinicCopy } from "@/lib/clinic-copy";
 import { effectiveClinicRole } from "@/lib/clinic-role-display";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { BuildingIcon, CalendarIcon, CheckIcon, ClockIcon, ShieldCheckIcon, SlidersIcon, UserIcon, WalletIcon } from "@/components/icons";
+import { ActivityReportCard } from "@/components/activity-report-card";
 import { ClinicBookingStatusForm } from "@/components/clinic-booking-status-form";
 import { ClinicLiveRefresh } from "@/components/clinic-live-refresh";
 import { PriceScopeFields } from "@/components/price-scope-fields";
+import { activityReportLabel, getActivityReportCopy, parseActivityReport } from "@/lib/activity-report";
 import { applyClinic, changeBookingStatus, createBranch, createClinicOperatorAccount, createOffer, createPractitioner, createSlot, markBookingCheckedIn, publishOffer, publishSlot, requestPriceRevision, reverseBookingCheckIn, revokeClinicOperatorAccount, setDailyHours } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +29,26 @@ type BookingPatientDetails = { booking_id: string; patient_display_name: string;
 type ClinicNotification = { id: string; event_type: string; created_at: string; status: string; payload: unknown };
 type ClinicOperatorAccount = { operator_account_id: string; user_id: string; username: string; slot_no: number; status: string; created_at: string; revoked_at: string | null };
 
-export default async function ClinicPage({ searchParams }: { searchParams: Promise<{ clinic?: string }> }) {
+function qatarDate(daysOffset = 0) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Qatar", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() + daysOffset * 86_400_000));
+}
+
+function validDate(value: string | undefined, fallback: string) {
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
+}
+
+function activityGranularity(value: string | undefined): ActivityReportGranularity {
+  return value === "hourly" || value === "weekly" || value === "monthly" ? value : "daily";
+}
+
+export default async function ClinicPage({ searchParams }: { searchParams: Promise<{ clinic?: string; activity_start?: string; activity_end?: string; activity_granularity?: string }> }) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
   const locale = getLocale(cookieStore.get("asnani_locale")?.value);
   const copy = getClinicCopy(locale);
+  const activityCopy = getActivityReportCopy(locale);
+  const activityStart = validDate(params.activity_start, qatarDate(-29));
+  const activityEnd = validDate(params.activity_end, qatarDate());
+  const activityGranularityValue = activityGranularity(params.activity_granularity);
   const dateLocale = locale === "ar" ? "ar-QA" : "en-QA";
   const supabase = await createClient();
   const { data: claimsData, error } = await supabase.auth.getClaims();
@@ -94,6 +113,14 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
   const slotWritableBranches = branches.filter((branch) => canManageSlots(branch.id));
   const canManageClinic = selectedClinic?.status === "active" && canManageClinicStructure;
   const canManageOperatorAccounts = selectedClinic?.status === "active" && memberships.some((membership) => membership.clinic_id === selectedClinicId && membership.role === "owner" && membership.status === "active");
+  let activityReport = null;
+  if (canManageClinicStructure) {
+    try {
+      activityReport = parseActivityReport(await clinicActivityReport({ clinicId: selectedClinicId, periodStart: activityStart, periodEnd: activityEnd, granularity: activityGranularityValue }));
+    } catch {
+      activityReport = null;
+    }
+  }
   const { data: operatorAccountData } = canManageOperatorAccounts
     ? await createAdminClient().rpc("list_clinic_operator_accounts_server", { p_actor_id: userId, p_clinic_id: selectedClinicId })
     : { data: [] };
@@ -107,6 +134,8 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
       {!canManageClinic && <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900 ring-1 ring-amber-200">{copy.pendingNotice}</div>}
       <div className="mt-6 grid gap-3 sm:grid-cols-4"><div className="rounded-2xl bg-[linear-gradient(135deg,rgba(255,255,255,.96),rgba(234,248,248,.9))] p-4 ring-1 ring-[#0a5e92]/[.07]"><div className="text-2xl font-black text-[#092b56]">{branches.length}</div><div className="mt-1 text-xs font-bold text-slate-500">{copy.branches}</div></div><div className="rounded-2xl bg-[linear-gradient(135deg,rgba(231,243,255,.95),rgba(221,250,247,.91))] p-4 ring-1 ring-[#46a6de]/15"><div className="text-2xl font-black text-[#084884]">{publishedOffers}</div><div className="mt-1 text-xs font-bold text-slate-500">{copy.publishedOffers}</div></div><div className="rounded-2xl bg-[linear-gradient(135deg,rgba(230,252,244,.95),rgba(228,247,255,.9))] p-4 ring-1 ring-emerald-100"><div className="text-2xl font-black text-emerald-700">{publishedSlots}</div><div className="mt-1 text-xs font-bold text-slate-500">{copy.publishedSlots}</div></div><div className="rounded-2xl bg-[linear-gradient(135deg,rgba(248,245,255,.96),rgba(234,245,255,.9))] p-4 ring-1 ring-[#7554cf]/10"><div className="text-2xl font-black text-[#092b56]">{bookings.length}</div><div className="mt-1 text-xs font-bold text-slate-500">{copy.visibleBookings}</div></div></div>
     </section>
+
+    {canManageClinicStructure ? <><form method="get" action="/clinic" className="mt-7 grid gap-3 rounded-[24px] border border-[#0a5e92]/10 bg-white/70 p-4 sm:grid-cols-4 no-print"><input type="hidden" name="clinic" value={selectedClinicId} /><label className="grid gap-1 text-xs font-bold text-slate-600">{activityCopy.period}<Input name="activity_start" type="date" defaultValue={activityStart} /></label><label className="grid gap-1 text-xs font-bold text-slate-600">{activityCopy.period}<Input name="activity_end" type="date" defaultValue={activityEnd} /></label><label className="grid gap-1 text-xs font-bold text-slate-600">{activityCopy.aggregation}<Select name="activity_granularity" defaultValue={activityGranularityValue}><option value="hourly">{activityReportLabel(locale, "hourly")}</option><option value="daily">{activityReportLabel(locale, "daily")}</option><option value="weekly">{activityReportLabel(locale, "weekly")}</option><option value="monthly">{activityReportLabel(locale, "monthly")}</option></Select></label><Button className="self-end">{activityCopy.refresh}</Button></form><ActivityReportCard report={activityReport} locale={locale} targetId="clinic-activity-report" /></> : null}
 
     <section className="mt-7 grid gap-6 lg:grid-cols-4">
       <Card className="p-5"><div className="flex items-center gap-2"><BuildingIcon size={18} className="text-[#0B5CAD]" /><h2 className="font-black">{copy.addBranch}</h2></div><form action={createBranch} className="mt-4 grid gap-3"><input type="hidden" name="clinic_id" value={selectedClinic?.id} /><Input name="name" required placeholder={copy.branchName} /><Input name="area" placeholder={copy.area} /><Input name="address_line" placeholder={copy.address} /><div className="grid grid-cols-2 gap-2"><Input name="lat" type="number" step="any" placeholder={copy.latitude} dir="ltr" /><Input name="lng" type="number" step="any" placeholder={copy.longitude} dir="ltr" /></div><Button disabled={!canManageClinic} title={!canManageClinic ? copy.restrictedAction : undefined}>{copy.saveBranch}</Button></form></Card>
