@@ -2,7 +2,7 @@
 
 > مولّد من `git ls-files` بتاريخ بناء الدليل. هذا الفهرس يكمل [README الجذري](../README.md) ولا يكرر عقود التشغيل؛ مهمته ضمان عدم سقوط أي ملف متتبع من جرد المشروع، بما في ذلك الأصول المرئية ولقطات الإثبات.
 
-**عدد الملفات المفهرسة تفصيليًا:** 262
+**عدد الملفات المفهرسة تفصيليًا:** 265
 
 ## .github
 
@@ -75,6 +75,7 @@
 | [`components/site-header.tsx`](../components/site-header.tsx) |
 | [`components/support-chat.tsx`](../components/support-chat.tsx) |
 | [`components/ui.tsx`](../components/ui.tsx) |
+| [`components/use-realtime-router-refresh.ts`](../components/use-realtime-router-refresh.ts) |
 
 ## docs
 
@@ -199,6 +200,7 @@
 | [`lib/phone-verification.server.ts`](../lib/phone-verification.server.ts) |
 | [`lib/price-scope.ts`](../lib/price-scope.ts) |
 | [`lib/price.ts`](../lib/price.ts) |
+| [`lib/realtime-refresh-policy.ts`](../lib/realtime-refresh-policy.ts) |
 | [`lib/search-offers.ts`](../lib/search-offers.ts) |
 | [`lib/server-readiness.ts`](../lib/server-readiness.ts) |
 | [`lib/supabase/admin.ts`](../lib/supabase/admin.ts) |
@@ -332,6 +334,7 @@
 | [`tests/operation-feedback.test.ts`](../tests/operation-feedback.test.ts) |
 | [`tests/phone-verification.test.ts`](../tests/phone-verification.test.ts) |
 | [`tests/price.test.ts`](../tests/price.test.ts) |
+| [`tests/realtime-refresh-policy.test.ts`](../tests/realtime-refresh-policy.test.ts) |
 | [`tests/server-operations.test.ts`](../tests/server-operations.test.ts) |
 | [`tests/service-worker.test.ts`](../tests/service-worker.test.ts) |
 | [`tests/validation.test.ts`](../tests/validation.test.ts) |
