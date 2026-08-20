@@ -1,5 +1,7 @@
 import "server-only";
 
+const TWILIO_VERIFY_TIMEOUT_MS = 12_000;
+
 type TwilioVerificationResponse = {
   sid?: string;
   status?: string;
@@ -37,15 +39,21 @@ function authorization(apiKey: string, apiSecret: string) {
 
 async function requestTwilioVerify(path: string, params: URLSearchParams) {
   const { serviceSid, apiKey, apiSecret } = twilioConfig();
-  const response = await fetch(`https://verify.twilio.com/v2/Services/${encodeURIComponent(serviceSid)}/${path}`, {
-    method: "POST",
-    headers: {
-      authorization: authorization(apiKey, apiSecret),
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    body: params,
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`https://verify.twilio.com/v2/Services/${encodeURIComponent(serviceSid)}/${path}`, {
+      method: "POST",
+      headers: {
+        authorization: authorization(apiKey, apiSecret),
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: params,
+      cache: "no-store",
+      signal: AbortSignal.timeout(TWILIO_VERIFY_TIMEOUT_MS),
+    });
+  } catch {
+    throw new PhoneVerificationProviderError();
+  }
   const payload = await response.json().catch(() => ({})) as TwilioVerificationResponse;
   if (!response.ok) throw new PhoneVerificationProviderError();
   return payload;

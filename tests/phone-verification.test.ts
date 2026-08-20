@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { confirmPhoneVerification, ensurePhoneVerificationAvailable, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
+import { confirmPhoneVerification, ensurePhoneVerificationAvailable, PhoneVerificationProviderError, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
 
 const originalFetch = globalThis.fetch;
 const originalServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
@@ -34,6 +34,20 @@ describe("phone verification provider", () => {
     process.env.TWILIO_API_SECRET = "secret_test";
 
     expect(() => ensurePhoneVerificationAvailable()).not.toThrow();
+  });
+
+  it("maps a Twilio transport failure to a controlled provider error", async () => {
+    process.env.TWILIO_VERIFY_SERVICE_SID = "VA_test";
+    process.env.TWILIO_API_KEY = "SK_test";
+    process.env.TWILIO_API_SECRET = "secret_test";
+    const fetchMock = vi.fn().mockRejectedValue(new DOMException("timed out", "TimeoutError"));
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await expect(startPhoneVerification("+97455123456")).rejects.toBeInstanceOf(PhoneVerificationProviderError);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://verify.twilio.com/v2/Services/VA_test/Verifications",
+      expect.objectContaining({ method: "POST", signal: expect.any(AbortSignal) }),
+    );
   });
 
   it("sends and checks an E.164 number through Twilio Verify without exposing credentials", async () => {
