@@ -80,7 +80,11 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | 72 | `20260819133741` | `server_only_critical_mutation_policies` |
 | 73 | `20260819171711` | `hide_synthetic_clinics_from_direct_public_reads` |
 | 74 | `20260819173555` | `hide_synthetic_clinic_entities_from_public_reads` |
+| 75 | `20260820004925` | `remove_duplicate_feature_flags_admin_update_policy` |
+| 76 | `20260820010207` | `atomic_phone_verification_finalize` |
+| 77 | `20260820011431` | `revoke_redundant_client_write_grants` |
+| 78 | `20260820011608` | `fail_closed_default_client_privileges` |
 
 ## Repository alignment status
 
-ملفات SQL اللاحقة محفوظة في `supabase/migrations` ضمن ترتيب المصدر المقصود، وسجل الإنتاج أعلاه هو المرجع في إثبات ما طُبق فعليًا. عناصر المخطط الأساسية من 1 إلى 15 تسبق ملفات الهجرة المادية المتاحة في هذا المستودع، ولذلك يجب أن يبقى مخطط الإنتاج المرجع الأساس لإنشاء baseline موثوق بدل إعادة بناء SQL تاريخي بالافتراض.
+تطابقت أسماء الترحيلات المحلية من 16 إلى 78 مع الأسماء المسجلة في الإنتاج في تدقيق قراءة فقط بتاريخ 20 أغسطس 2026. قد يختلف رقم `version` البعيد عن بادئة اسم الملف إذا سُجل الترحيل عبر واجهة الإدارة، كما هو موضح أعلاه. عناصر المخطط الأساسية من 1 إلى 15 تسبق ملفات الهجرة المادية المتاحة في هذا المستودع؛ لذلك يبقى مخطط الإنتاج المرجع الأساس لإنشاء baseline موثوق بدل إعادة بناء SQL تاريخي بالافتراض.
