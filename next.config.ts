@@ -53,6 +53,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/favicon.ico", destination: "/pwa/icon/192" },
       { source: "/favicon.png", destination: "/pwa/icon/192" },
+      { source: "/apple-touch-icon.png", destination: "/apple-icon" },
+      { source: "/apple-touch-icon-precomposed.png", destination: "/apple-icon" },
     ];
   },
 };
