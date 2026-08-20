@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { supportMessageSchema } from "@/lib/validation";
 import { consumeRateLimit } from "@/lib/operations.server";
+import { requestSupportModelAnswer } from "@/lib/support-model.server";
 
 const MEDICAL_OR_EMERGENCY = /(?:ألم شديد|نزيف|تورم|عدوى|طارئ|emergency|severe pain|bleeding|swelling|infection)/i;
 const MAX_SUPPORT_MESSAGE_BYTES = 16 * 1024;
@@ -25,10 +26,6 @@ function safetyReply(locale: "ar" | "en", category: SafetyCategory) {
   return locale === "ar"
     ? "أنا مساعد للمنصة ولست مختصًا طبيًا. أستطيع المساعدة في الحجز والأسعار والتوفر والحسابات، لكن لا أستطيع تشخيص الأعراض أو اقتراح علاج؛ يرجى التواصل مع طبيب أسنان مؤهل بشأن أي عرض صحي."
     : "I am a platform assistant, not a medical professional. I can help with booking, prices, availability, and accounts, but I cannot diagnose symptoms or recommend treatment; please consult a qualified dentist for health concerns.";
-}
-
-function safeText(value: unknown) {
-  return typeof value === "string" ? value.trim().slice(0, 5000) : "";
 }
 
 export async function POST(request: Request) {
@@ -141,21 +138,14 @@ export async function POST(request: Request) {
       : "You are the customer support assistant for Asnani Qatar. Answer only in English. Use only the knowledge base below for platform facts. Help only with booking, prices, availability, accounts, and privacy. Do not diagnose or recommend medical treatment, and never invent a price, appointment, or policy. If the answer is not in the knowledge base, say so clearly and suggest contacting support. Keep the answer concise and practical.";
 
     try {
-      const response = await fetch(`${configuredBaseUrl.replace(/\/$/, "")}/chat/completions`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${configuredApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "gpt-5-mini",
-          max_completion_tokens: 500,
-          messages: [
-            { role: "system", content: `${system}\n\nقاعدة المعرفة / Knowledge base:\n${knowledge}` },
-            { role: "user", content: parsed.data.message },
-          ],
-        }),
+      answer = await requestSupportModelAnswer({
+        baseUrl: configuredBaseUrl,
+        apiKey: configuredApiKey,
+        model: "gpt-5-mini",
+        maxCompletionTokens: 500,
+        systemMessage: `${system}\n\nقاعدة المعرفة / Knowledge base:\n${knowledge}`,
+        userMessage: parsed.data.message,
       });
-      if (!response.ok) throw new Error(`LLM_${response.status}`);
-      const payload = await response.json() as { choices?: Array<{ message?: { content?: unknown } }> };
-      answer = safeText(payload.choices?.[0]?.message?.content);
     } catch (modelError) {
       console.error("support_model_failed", { code: modelError instanceof Error ? modelError.message : "UNKNOWN" });
       return NextResponse.json({ error: "SUPPORT_UNAVAILABLE" }, { status: 503 });
