@@ -14,6 +14,7 @@
     "predeploy:check": "node scripts/predeploy-check.mjs",
     "verify": "npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:e2e": "npm run test:e2e",
+    "check:production": "node scripts/production-readiness-check.mjs",
     "vercel-build": "npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {

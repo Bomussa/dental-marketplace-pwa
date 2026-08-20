@@ -5,7 +5,7 @@ import {
   publicWriteRequestOriginIsAllowed,
   readPublicWriteRequestTextWithinLimit,
 } from "@/lib/public-write-request-guard";
-import { PhoneVerificationProviderError, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
+import { ensurePhoneVerificationAvailable, PhoneVerificationProviderError, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
 import { consumeRateLimit } from "@/lib/operations.server";
 import { patientPhoneVerificationStartSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -35,6 +35,15 @@ export async function POST(request: Request) {
   }
   const parsed = patientPhoneVerificationStartSchema.safeParse(payload);
   if (!parsed.success) return NextResponse.json({ error: "تحقق من بيانات المريض ورقم الهاتف." }, { status: 400 });
+
+  try {
+    ensurePhoneVerificationAvailable();
+  } catch (error) {
+    if (error instanceof PhoneVerificationUnavailableError) {
+      return NextResponse.json({ error: "تحقق الرسائل القصيرة غير مهيأ بعد. لن يتم الحجز قبل تفعيله." }, { status: 503 });
+    }
+    return NextResponse.json({ error: "خدمة التحقق غير متاحة مؤقتًا." }, { status: 503 });
+  }
 
   let admin;
   try {

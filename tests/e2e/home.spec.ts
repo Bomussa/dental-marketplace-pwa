@@ -73,6 +73,19 @@ test("location unavailable degrades safely and keeps search usable", async ({ pa
   await expect(page.getByRole("button", { name: "قارن الخيارات الآن" })).toBeEnabled();
 });
 
+test("location status is announced accessibly and the home keeps a single primary heading", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, "geolocation", {
+      configurable: true,
+      get: () => undefined,
+    });
+  });
+  await page.goto("/");
+  await expect(page.locator("h1")).toHaveCount(1);
+  await page.getByRole("button", { name: "استخدم موقعي لترتيب الأقرب" }).click();
+  await expect(page.getByRole("status")).toHaveText("يمكنك المتابعة بدون الموقع؛ لن يظهر ترتيب المسافة.");
+});
+
 test("language switch persists an English product experience", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "تغيير اللغة إلى الإنجليزية" }).click();

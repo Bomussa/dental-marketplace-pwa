@@ -27,6 +27,10 @@ function twilioConfig() {
   return { serviceSid, apiKey, apiSecret };
 }
 
+export function ensurePhoneVerificationAvailable() {
+  twilioConfig();
+}
+
 function authorization(apiKey: string, apiSecret: string) {
   return `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`;
 }

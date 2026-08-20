@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { confirmPhoneVerification, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
+import { confirmPhoneVerification, ensurePhoneVerificationAvailable, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
 
 const originalFetch = globalThis.fetch;
 const originalServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
@@ -25,6 +25,15 @@ describe("phone verification provider", () => {
     delete process.env.TWILIO_API_SECRET;
 
     await expect(startPhoneVerification("+97455123456")).rejects.toBeInstanceOf(PhoneVerificationUnavailableError);
+    expect(() => ensurePhoneVerificationAvailable()).toThrow(PhoneVerificationUnavailableError);
+  });
+
+  it("accepts a complete server-only configuration before any database or rate-limit work", () => {
+    process.env.TWILIO_VERIFY_SERVICE_SID = "VA_test";
+    process.env.TWILIO_API_KEY = "SK_test";
+    process.env.TWILIO_API_SECRET = "secret_test";
+
+    expect(() => ensurePhoneVerificationAvailable()).not.toThrow();
   });
 
   it("sends and checks an E.164 number through Twilio Verify without exposing credentials", async () => {

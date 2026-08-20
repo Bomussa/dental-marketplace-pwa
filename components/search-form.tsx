@@ -95,8 +95,8 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
         <button type="button" onClick={locate} className="location-control">
           <LocationIcon size={17}/>{geoState === "loading" ? t["search.locating"] : geoState === "ok" ? t["search.locationUsed"] : t["search.useLocation"]}
         </button>
-        {geoState === "ok" && <span className="text-[.78rem] font-bold text-slate-500">{t["search.locationPrivacy"]}</span>}
-        {geoState === "error" && <span className="text-[.78rem] font-bold text-amber-700">{t["search.locationUnavailable"]}</span>}
+        {geoState === "ok" && <span role="status" aria-live="polite" className="text-[.78rem] font-bold text-slate-500">{t["search.locationPrivacy"]}</span>}
+        {geoState === "error" && <span role="status" aria-live="polite" className="text-[.78rem] font-bold text-amber-700">{t["search.locationUnavailable"]}</span>}
       </div>
     </form>
   );
