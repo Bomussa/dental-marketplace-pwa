@@ -6,7 +6,7 @@
 
 ## دليل بيئة النشر
 
-في صفحة متغيرات بيئة مشروع Vercel `dental-marketplace-pwa` كانت المتغيرات الوحيدة المضبوطة: `SUPABASE_SERVICE_ROLE_KEY` و`NEXT_PUBLIC_SUPABASE_URL` و`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` و`NEXT_PUBLIC_SITE_URL`. لم تظهر أي من متغيرات Twilio الثلاثة المطلوبة: `TWILIO_VERIFY_SERVICE_SID` و`TWILIO_API_KEY` و`TWILIO_API_SECRET`.
+في صفحة متغيرات بيئة مشروع Vercel `dental-marketplace-pwa` كانت المتغيرات الوحيدة المضبوطة: `SUPABASE_SERVICE_ROLE_KEY` و`NEXT_PUBLIC_SUPABASE_URL` و`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` و`NEXT_PUBLIC_SITE_URL`. لم تظهر أي من متغيرات Twilio الثلاثة المطلوبة: `TWILIO_VERIFY_SERVICE_SID` و`TWILIO_API_KEY` و`TWILIO_API_SECRET`. كما لم تظهر أي متغيرات مشتركة مربوطة بالمشروع يمكن منها استعادة الاعتماد.
 
 ## الأثر والضبط الآمن
 
