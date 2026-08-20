@@ -1,0 +1,122 @@
+{
+  "project_info": {
+    "title": "أسناني قطر — MMC-MMS",
+    "created": 1787161592.004,
+    "last_updated": 1787255920.11,
+    "total_slides": 10
+  },
+  "slides": [
+    {
+      "id": "cover",
+      "state": "edited",
+      "pageNum": 1
+    },
+    {
+      "id": "value",
+      "state": "edited",
+      "pageNum": 2
+    },
+    {
+      "id": "patient_journey",
+      "state": "edited",
+      "pageNum": 3
+    },
+    {
+      "id": "roles",
+      "state": "edited",
+      "pageNum": 4
+    },
+    {
+      "id": "comparison",
+      "state": "edited",
+      "pageNum": 5
+    },
+    {
+      "id": "synthetic_isolation",
+      "state": "edited",
+      "pageNum": 6
+    },
+    {
+      "id": "rls_hardening",
+      "state": "edited",
+      "pageNum": 7
+    },
+    {
+      "id": "testing",
+      "state": "edited",
+      "pageNum": 8
+    },
+    {
+      "id": "production",
+      "state": "edited",
+      "pageNum": 9
+    },
+    {
+      "id": "next_steps",
+      "state": "edited",
+      "pageNum": 10
+    }
+  ],
+  "outline": [
+    {
+      "id": "cover",
+      "title": "أسناني قطر — MMC-MMS",
+      "summary": "غلاف العرض التنفيذي: حالة التنفيذ والتحقق والحماية التشغيلية، تحديث 19 أغسطس 2026.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "value",
+      "title": "منصة مقارنة واضحة قبل طلب الحجز",
+      "summary": "يوضح قيمة المنصة في مطابقة النوع العلاجي الدقيق والسعر والموعد والمسافة قبل بدء الطلب.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "patient_journey",
+      "title": "رحلة مريض مقيدة من البداية للنهاية",
+      "summary": "يلخص خطوات البحث والدخول والملف والتحقق والحجز الذري بمفتاح منع التكرار.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "roles",
+      "title": "لوحات تشغيل بصلاحيات دقيقة",
+      "summary": "يعرض فصل صلاحيات المريض والعيادة والإدارة ودور RLS كحاجز نهائي للرؤية.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "comparison",
+      "title": "بحث ومقارنة منضبطان",
+      "summary": "يعرض نطاق المسافة ومعايير الفرز واستقلال أفضل توازن شامل ومنع مقارنة أنواع مختلفة.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "synthetic_isolation",
+      "title": "بيانات الاختبار لا تصل إلى الجمهور",
+      "summary": "يبين عزل بيانات العيادات التجريبية عن البحث العام والقراءة المباشرة مع حفظ وصول الأدوار المخولة.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "rls_hardening",
+      "title": "إغلاق ثغرتين مثبتتين في RLS",
+      "summary": "يوثق اكتشاف تسربات القراءة العامة وإصلاحها واختبار تسعة أسطح قراءة عامة بعد الإصلاح.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "testing",
+      "title": "اختبارات عملية متعددة الطبقات",
+      "summary": "يعرض نتائج اختبارات الوحدة والمتصفح والتحقق الحي وحراس منع الرجوع.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "production",
+      "title": "جاهزية إنتاج مثبتة بالأدلة",
+      "summary": "يعرض بوابة الجودة وحالة النشر وفحص الصحة ومراقبة أخطاء التشغيل.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "next_steps",
+      "title": "حدود معلنة وخطوة تشغيلية تالية",
+      "summary": "يوضح القيود الصريحة والخطوة التشغيلية المطلوبة لاختبار رحلة مقارنة وحجز حية كاملة.",
+      "image_plan": "Use a suitable image if needed"
+    }
+  ]
+}
