@@ -13,6 +13,15 @@ export type LiveSearchInput = {
   sort: SearchSort;
 };
 
+type NormalizationRange = { min: number; max: number } | null;
+
+const qatarDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Qatar",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 function nullableNumber(value: number | null) { return value ?? Number.POSITIVE_INFINITY; }
 function nullableTime(value: string | null) { return value ? new Date(value).getTime() : Number.POSITIVE_INFINITY; }
 function ratingValue(value: number | string | null) { return value == null ? Number.NEGATIVE_INFINITY : Number(value); }
@@ -31,42 +40,44 @@ function compareOffers(sort: Exclude<SearchSort, "balanced">) {
   };
 }
 
-function normalized(value: number, values: number[], fallback: number) {
+function normalizationRange(values: number[]): NormalizationRange {
   const finite = values.filter(Number.isFinite);
-  if (!finite.length || !Number.isFinite(value)) return fallback;
-  const min = Math.min(...finite);
-  const max = Math.max(...finite);
-  return min === max ? 0 : (value - min) / (max - min);
+  if (!finite.length) return null;
+  return { min: Math.min(...finite), max: Math.max(...finite) };
 }
 
-function balancedScore(offer: SearchOffer, offers: SearchOffer[]) {
-  const prices = offers.map((item) => nullableNumber(item.min_minor));
-  const distances = offers.map((item) => nullableNumber(item.distance_km));
-  const ratings = offers.map((item) => ratingValue(item.rating_avg));
-  const appointmentTimes = offers.map((item) => nullableTime(item.earliest_slot_at));
-  const priceScore = normalized(nullableNumber(offer.min_minor), prices, 1);
-  const distanceScore = normalized(nullableNumber(offer.distance_km), distances, 0.5);
-  const ratingPenalty = 1 - normalized(ratingValue(offer.rating_avg), ratings, 0.5);
-  const appointmentScore = normalized(nullableTime(offer.earliest_slot_at), appointmentTimes, 1);
+function normalize(value: number, range: NormalizationRange, fallback: number) {
+  if (!range || !Number.isFinite(value)) return fallback;
+  return range.min === range.max ? 0 : (value - range.min) / (range.max - range.min);
+}
 
-  return (priceScore * 0.35) + (ratingPenalty * 0.25) + (appointmentScore * 0.25) + (distanceScore * 0.15);
+function balancedScores(offers: SearchOffer[]) {
+  const priceRange = normalizationRange(offers.map((offer) => nullableNumber(offer.min_minor)));
+  const distanceRange = normalizationRange(offers.map((offer) => nullableNumber(offer.distance_km)));
+  const ratingRange = normalizationRange(offers.map((offer) => ratingValue(offer.rating_avg)));
+  const appointmentRange = normalizationRange(offers.map((offer) => nullableTime(offer.earliest_slot_at)));
+
+  return new Map(offers.map((offer) => {
+    const priceScore = normalize(nullableNumber(offer.min_minor), priceRange, 1);
+    const distanceScore = normalize(nullableNumber(offer.distance_km), distanceRange, 0.5);
+    const ratingPenalty = 1 - normalize(ratingValue(offer.rating_avg), ratingRange, 0.5);
+    const appointmentScore = normalize(nullableTime(offer.earliest_slot_at), appointmentRange, 1);
+    const score = (priceScore * 0.35) + (ratingPenalty * 0.25) + (appointmentScore * 0.25) + (distanceScore * 0.15);
+    return [offer.offer_id, score] as const;
+  }));
 }
 
 export function sortSearchOffers(offers: SearchOffer[], sort: SearchSort) {
   const ordered = [...offers];
   if (sort !== "balanced") return ordered.sort(compareOffers(sort));
 
+  const scores = balancedScores(offers);
   const fallback = compareOffers("price");
-  return ordered.sort((a, b) => balancedScore(a, offers) - balancedScore(b, offers) || fallback(a, b));
+  return ordered.sort((a, b) => (scores.get(a.offer_id) ?? 0) - (scores.get(b.offer_id) ?? 0) || fallback(a, b));
 }
 
 function qatarDate(date: Date) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Qatar",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
+  return qatarDateFormatter.format(date);
 }
 
 export async function searchLiveOffers(input: LiveSearchInput) {

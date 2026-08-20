@@ -1,11 +1,10 @@
 import { cookies } from "next/headers";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { createClient } from "@/lib/supabase/server";
+import { getActiveTreatmentCatalog } from "@/lib/treatment-catalog.server";
 import { SearchForm } from "@/components/search-form";
 import { SupportChat } from "@/components/support-chat";
 import { Badge, Card } from "@/components/ui";
 import { CalendarIcon, RouteIcon, ShieldCheckIcon, SparklesIcon, WalletIcon } from "@/components/icons";
-import type { Treatment, TreatmentVariant } from "@/lib/models";
 
 export const dynamic = "force-dynamic";
 
@@ -13,14 +12,7 @@ export default async function HomePage() {
   const cookieStore = await cookies();
   const locale = getLocale(cookieStore.get("asnani_locale")?.value);
   const t = getDictionary(locale);
-  const supabase = await createClient();
-  const [{ data: treatments, error: tError }, { data: variants, error: vError }] = await Promise.all([
-    supabase.from("treatment_catalog").select("id,code,category,name_ar,name_en").eq("active", true).order("category").order("name_ar"),
-    supabase.from("treatment_variants").select("id,catalog_id,variant_key,name_ar,name_en").eq("active", true).order("name_ar"),
-  ]);
-  const loadError = tError || vError;
-  const treatmentRows = (treatments ?? []) as Treatment[];
-  const variantRows = (variants ?? []) as TreatmentVariant[];
+  const { treatments: treatmentRows, variants: variantRows, hasError: loadError } = await getActiveTreatmentCatalog();
 
   return (
     <main className="home-page overflow-hidden">

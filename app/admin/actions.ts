@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
@@ -8,6 +8,7 @@ import { createSettlementPeriod, reviewOfferRevision, verifyAndActivateSubject }
 import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { createClient } from "@/lib/supabase/server";
+import { ACTIVE_TREATMENT_CATALOG_TAG } from "@/lib/treatment-catalog.server";
 import type { Json } from "@/lib/database.types";
 import { adminOfferUpdateSchema, adminSlotUpdateSchema, featureFlagUpdateSchema, normalizeQatarDateTime, notificationTemplateSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, treatmentCatalogSchema, treatmentCatalogUpdateSchema, treatmentVariantSchema, treatmentVariantUpdateSchema, uuid, verificationSchema } from "@/lib/validation";
 
@@ -67,6 +68,11 @@ function revalidateDisplaySurfaces() {
   revalidatePath("/admin");
 }
 
+function revalidateTreatmentCatalogSurfaces() {
+  updateTag(ACTIVE_TREATMENT_CATALOG_TAG);
+  revalidateDisplaySurfaces();
+}
+
 export async function updateFeatureFlag(formData: FormData): Promise<void> {
   const parsed = featureFlagUpdateSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) validationFailure("updateFeatureFlag");
@@ -88,7 +94,7 @@ export async function createTreatmentCatalog(formData: FormData): Promise<void> 
   try {
     const result = await supabase.from("treatment_catalog").insert(parsed.data).select("id").single();
     requireReturnedRow(result.data, result.error);
-    revalidateDisplaySurfaces();
+    revalidateTreatmentCatalogSurfaces();
   } catch (error) {
     adminActionFailure("createTreatmentCatalog", error);
   }
@@ -102,7 +108,7 @@ export async function updateTreatmentCatalog(formData: FormData): Promise<void> 
     const { id, ...changes } = parsed.data;
     const result = await supabase.from("treatment_catalog").update(changes).eq("id", id).select("id").maybeSingle();
     requireReturnedRow(result.data, result.error);
-    revalidateDisplaySurfaces();
+    revalidateTreatmentCatalogSurfaces();
   } catch (error) {
     adminActionFailure("updateTreatmentCatalog", error);
   }
@@ -117,7 +123,7 @@ export async function createTreatmentVariant(formData: FormData): Promise<void> 
     const attributes = parseJsonObject(attributesJson);
     const result = await supabase.from("treatment_variants").insert({ ...values, attributes }).select("id").single();
     requireReturnedRow(result.data, result.error);
-    revalidateDisplaySurfaces();
+    revalidateTreatmentCatalogSurfaces();
   } catch (error) {
     adminActionFailure("createTreatmentVariant", error);
   }
@@ -140,7 +146,7 @@ export async function updateTreatmentVariant(formData: FormData): Promise<void> 
     };
     const result = await supabase.from("treatment_variants").update(changes).eq("id", id).select("id").maybeSingle();
     requireReturnedRow(result.data, result.error);
-    revalidateDisplaySurfaces();
+    revalidateTreatmentCatalogSurfaces();
   } catch (error) {
     adminActionFailure("updateTreatmentVariant", error);
   }

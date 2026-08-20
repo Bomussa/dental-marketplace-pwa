@@ -2,8 +2,18 @@ import http from "node:http";
 import https from "node:https";
 import { performance } from "node:perf_hooks";
 
-const target = new URL(process.argv[2] ?? "http://127.0.0.1:3000/manifest.webmanifest");
-const requestedLevels = (process.argv[3] ?? "50,1000,5000,10000")
+const DEFAULT_TARGET = "http://127.0.0.1:3000/manifest.webmanifest";
+const DEFAULT_LEVELS = "5,25,50";
+const MAX_SAFE_CONCURRENCY = 50;
+const SAFE_STATIC_PATHS = new Set([
+  "/manifest.webmanifest",
+  "/icon",
+  "/apple-icon",
+  "/offline.html",
+]);
+
+const target = new URL(process.argv[2] ?? DEFAULT_TARGET);
+const requestedLevels = (process.argv[3] ?? DEFAULT_LEVELS)
   .split(",")
   .map((value) => Number.parseInt(value.trim(), 10))
   .filter((value) => Number.isInteger(value) && value > 0);
@@ -11,8 +21,17 @@ const requestedLevels = (process.argv[3] ?? "50,1000,5000,10000")
 if (!requestedLevels.length) {
   throw new Error("Provide at least one positive concurrency level.");
 }
+if (!["http:", "https:"].includes(target.protocol)) {
+  throw new Error("Only HTTP(S) targets are permitted.");
+}
+if (!SAFE_STATIC_PATHS.has(target.pathname)) {
+  throw new Error("This safe load test only permits static, mutation-free PWA assets.");
+}
+if (requestedLevels.some((value) => value > MAX_SAFE_CONCURRENCY)) {
+  throw new Error(`Safe load tests are capped at ${MAX_SAFE_CONCURRENCY} concurrent requests. Use an isolated, approved performance environment for higher load.`);
+}
 
-const timeoutMs = 45_000;
+const timeoutMs = 15_000;
 
 function requestOnce(agent) {
   return new Promise((resolve) => {
@@ -103,6 +122,8 @@ const report = {
   target: target.toString(),
   startedAt: new Date().toISOString(),
   mutationFree: true,
+  staticAssetOnly: true,
+  maxSafeConcurrency: MAX_SAFE_CONCURRENCY,
   rounds: [],
 };
 
