@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { financialReportSummary, platformActivityReport, type ActivityReportGranularity } from "@/lib/operations.server";
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
 import { getLocale, type Locale } from "@/lib/i18n";
 import { adminPriceType, adminStatus, getAdminCopy } from "@/lib/admin-copy";
 import { AdminChoiceAnalytics } from "@/components/admin-choice-analytics";
@@ -30,8 +30,11 @@ function parseAnalyticsDays(value: string | string[] | undefined): 1 | 7 | 30 {
   return raw === "1" ? 1 : raw === "30" ? 30 : 7;
 }
 
+const qatarDateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Qatar", year: "numeric", month: "2-digit", day: "2-digit" });
+const qatarDateTimeInputFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Qatar", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+
 function qatarDate(daysOffset = 0) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Qatar", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() + daysOffset * 86_400_000));
+  return qatarDateFormatter.format(new Date(Date.now() + daysOffset * 86_400_000));
 }
 
 function validDate(value: string | undefined, fallback: string) {
@@ -43,9 +46,8 @@ function activityGranularity(value: string | undefined): ActivityReportGranulari
 }
 
 function qatarDateTimeInput(value: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Qatar", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })
-    .formatToParts(new Date(value))
-    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+  const parts: Record<string, string> = {};
+  for (const part of qatarDateTimeInputFormatter.formatToParts(new Date(value))) parts[part.type] = part.value;
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
@@ -76,11 +78,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const activityEnd = validDate(firstValue(query.activity_end), qatarDate());
   const activityGranularityValue = activityGranularity(firstValue(query.activity_granularity));
   const activityCopy = getActivityReportCopy(locale);
-  const supabase = await createClient();
-  const { data: claimsData, error } = await supabase.auth.getClaims();
+  const supabase = await getServerSupabaseClient();
+  const { data: claimsData, error } = await getServerAuthClaims();
   const meta = (claimsData?.claims?.app_metadata ?? {}) as Record<string, unknown>;
   if (error || !claimsData?.claims?.sub || meta.platform_admin !== true) redirect("/");
 
+  const activityReportPromise = platformActivityReport({ periodStart: activityStart, periodEnd: activityEnd, granularity: activityGranularityValue }).then(parseActivityReport).catch(() => null);
   const [
     { data: clinics },
     { data: branches },
@@ -129,23 +132,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ...(practitioners ?? []).filter((practitioner) => !practitioner.active).map((practitioner) => ({ type: "practitioner", id: practitioner.id, label: practitioner.display_name })),
   ];
 
-  let report: FinancialReport | null = null;
-  let reportUnavailable = false;
-  if (selectedClinicId) {
-    try {
-      const response = await financialReportSummary({ clinicId: selectedClinicId, periodStart: reportStart, periodEnd: reportEnd });
-      report = isFinancialReport(response) ? response : null;
-    } catch {
-      reportUnavailable = true;
-    }
-  }
-
-  let activityReport = null;
-  try {
-    activityReport = parseActivityReport(await platformActivityReport({ periodStart: activityStart, periodEnd: activityEnd, granularity: activityGranularityValue }));
-  } catch {
-    activityReport = null;
-  }
+  const financialReportPromise = selectedClinicId
+    ? financialReportSummary({ clinicId: selectedClinicId, periodStart: reportStart, periodEnd: reportEnd }).then((response) => ({ report: isFinancialReport(response) ? response : null, unavailable: false })).catch(() => ({ report: null, unavailable: true }))
+    : Promise.resolve({ report: null, unavailable: false });
+  const [{ report, unavailable: reportUnavailable }, activityReport] = await Promise.all([financialReportPromise, activityReportPromise]);
 
   return (
     <main className="workspace-shell mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12">

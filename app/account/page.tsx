@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
 import { getLocale } from "@/lib/i18n";
 import { accountNationality, accountNationalityOptions, accountRelationship, accountStatus, getAccountCopy } from "@/lib/account-copy";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
@@ -20,6 +20,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const locale = getLocale(cookieStore.get("asnani_locale")?.value);
   const copy = getAccountCopy(locale);
   const dateLocale = locale === "ar" ? "ar-QA" : "en-QA";
+  const dateTimeFormatter = new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" });
   const bookingErrorMessage = params.booking_error ? copy.bookingErrors[params.booking_error] ?? null : null;
   const bookingSuccessMessage = params.booking_success === "cancelled" ? copy.bookingSuccess : null;
   const patientProfileErrorMessage = params.patient_profile_error ? copy.profileErrors[params.patient_profile_error] ?? null : null;
@@ -29,21 +30,23 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const credentialsErrorMessage = params.credentials_error ? copy.credentialsErrors[params.credentials_error] ?? null : null;
   const credentialsSuccessMessage = params.credentials_success === "activated" ? copy.credentialsSuccess : null;
 
-  const supabase = await createClient();
-  const { data: claimsData, error } = await supabase.auth.getClaims();
+  const supabase = await getServerSupabaseClient();
+  const { data: claimsData, error } = await getServerAuthClaims();
   const userId = claimsData?.claims?.sub;
   if (error || !userId) redirect("/login?next=/account");
 
-  let hasLoginCredentials = false;
-  try {
-    const admin = createAdminClient();
-    const { data: usernameRow } = await admin.from("account_usernames").select("user_id").eq("user_id", userId).is("disabled_at", null).maybeSingle();
-    hasLoginCredentials = Boolean(usernameRow);
-  } catch {
-    hasLoginCredentials = true;
-  }
+  const hasLoginCredentialsPromise = (async () => {
+    try {
+      const admin = createAdminClient();
+      const { data: usernameRow } = await admin.from("account_usernames").select("user_id").eq("user_id", userId).is("disabled_at", null).maybeSingle();
+      return Boolean(usernameRow);
+    } catch {
+      return true;
+    }
+  })();
 
-  const [{ data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }] = await Promise.all([
+  const [hasLoginCredentials, { data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }] = await Promise.all([
+    hasLoginCredentialsPromise,
     supabase.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle(),
     supabase.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").order("created_at", { ascending: false }).limit(20),
     supabase.from("reviews").select("booking_id,status,rating").eq("patient_id", userId),
@@ -106,7 +109,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           const canCancel = ["pending_clinic_confirmation", "confirmed"].includes(booking.status);
           const existingReview = reviewed.get(booking.id);
           const tone = booking.status === "completed" ? "green" : booking.status.includes("cancel") || booking.status === "failed" ? "red" : "blue";
-          return <Card key={booking.id} className="lift overflow-hidden p-0"><div className="grid md:grid-cols-[1fr_230px]"><div className="p-5 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-black">{String(name ?? copy.defaultBooking)}</h3><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-slate-500"><span className="inline-flex items-center gap-1.5"><CalendarIcon size={14} />{new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" }).format(new Date(booking.start_at))}</span><span dir="ltr">#{booking.booking_code}</span></div></div><Badge tone={tone}>{accountStatus(locale, booking.status)}</Badge></div>{canCancel && <form action={cancelBooking} className="mt-5"><input type="hidden" name="booking_id" value={booking.id} /><Button className="bg-white text-red-700 shadow-none ring-1 ring-red-200 hover:bg-red-50">{copy.cancelBooking}</Button></form>}</div><aside className="border-t border-slate-200/70 bg-slate-50/60 p-5 md:border-s md:border-t-0"><div className="flex items-center gap-2 text-xs font-extrabold text-slate-500"><ClockIcon size={15} />{copy.visitStatus}</div><div className="mt-2 text-sm font-black">{accountStatus(locale, booking.status)}</div>{booking.status === "completed" && <div className="mt-4">{existingReview ? <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/70"><div className="flex items-center gap-1.5 font-black"><StarIcon size={15} className="text-amber-500" />{existingReview.rating}/5</div><div className="mt-1 text-xs font-bold text-slate-500">{existingReview.status}</div></div> : <span className="text-xs font-bold text-slate-500">{copy.reviewAvailable}</span>}</div>}</aside></div>{booking.status === "completed" && !existingReview && <form action={submitReview} className="border-t border-slate-200/70 bg-white/70 p-5 sm:p-6"><input type="hidden" name="booking_id" value={booking.id} /><div className="flex items-center gap-2 text-sm font-black"><StarIcon size={18} className="text-amber-500" />{copy.reviewTitle}</div><div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr_auto]"><Select name="rating" defaultValue="5"><option value="5">5 / 5</option><option value="4">4 / 5</option><option value="3">3 / 5</option><option value="2">2 / 5</option><option value="1">1 / 5</option></Select><textarea name="review_text" maxLength={1500} className="min-h-12 rounded-2xl border border-slate-200/80 bg-white p-3 text-sm font-medium outline-none transition focus:border-[#0B5CAD] focus:ring-4 focus:ring-blue-500/10" placeholder={copy.reviewPlaceholder} /><Button>{copy.submitReview}</Button></div></form>}</Card>;
+          return <Card key={booking.id} className="lift overflow-hidden p-0"><div className="grid md:grid-cols-[1fr_230px]"><div className="p-5 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-black">{String(name ?? copy.defaultBooking)}</h3><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-slate-500"><span className="inline-flex items-center gap-1.5"><CalendarIcon size={14} />{dateTimeFormatter.format(new Date(booking.start_at))}</span><span dir="ltr">#{booking.booking_code}</span></div></div><Badge tone={tone}>{accountStatus(locale, booking.status)}</Badge></div>{canCancel && <form action={cancelBooking} className="mt-5"><input type="hidden" name="booking_id" value={booking.id} /><Button className="bg-white text-red-700 shadow-none ring-1 ring-red-200 hover:bg-red-50">{copy.cancelBooking}</Button></form>}</div><aside className="border-t border-slate-200/70 bg-slate-50/60 p-5 md:border-s md:border-t-0"><div className="flex items-center gap-2 text-xs font-extrabold text-slate-500"><ClockIcon size={15} />{copy.visitStatus}</div><div className="mt-2 text-sm font-black">{accountStatus(locale, booking.status)}</div>{booking.status === "completed" && <div className="mt-4">{existingReview ? <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/70"><div className="flex items-center gap-1.5 font-black"><StarIcon size={15} className="text-amber-500" />{existingReview.rating}/5</div><div className="mt-1 text-xs font-bold text-slate-500">{existingReview.status}</div></div> : <span className="text-xs font-bold text-slate-500">{copy.reviewAvailable}</span>}</div>}</aside></div>{booking.status === "completed" && !existingReview && <form action={submitReview} className="border-t border-slate-200/70 bg-white/70 p-5 sm:p-6"><input type="hidden" name="booking_id" value={booking.id} /><div className="flex items-center gap-2 text-sm font-black"><StarIcon size={18} className="text-amber-500" />{copy.reviewTitle}</div><div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr_auto]"><Select name="rating" defaultValue="5"><option value="5">5 / 5</option><option value="4">4 / 5</option><option value="3">3 / 5</option><option value="2">2 / 5</option><option value="1">1 / 5</option></Select><textarea name="review_text" maxLength={1500} className="min-h-12 rounded-2xl border border-slate-200/80 bg-white p-3 text-sm font-medium outline-none transition focus:border-[#0B5CAD] focus:ring-4 focus:ring-blue-500/10" placeholder={copy.reviewPlaceholder} /><Button>{copy.submitReview}</Button></div></form>}</Card>;
         })}</div>}
       </section>
     </main>
