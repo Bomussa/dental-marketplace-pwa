@@ -1,0 +1,12 @@
+revoke insert, update, delete on table public.accounting_journal_lines from anon, authenticated;
+revoke insert, update, delete on table public.accounting_journals from anon, authenticated;
+revoke insert, update, delete on table public.booking_attendance_events from anon, authenticated;
+revoke insert on table public.clinics from authenticated;
+revoke insert, update, delete on table public.notification_delivery_attempts from anon, authenticated;
+revoke insert, update, delete on table public.notification_outbox from anon, authenticated;
+revoke insert, update, delete on table public.offer_revisions from anon, authenticated;
+revoke insert, update, delete on table public.patient_profiles from authenticated;
+revoke insert, update, delete on table public.report_exports from anon, authenticated;
+revoke insert, update, delete on table public.settlement_periods from anon, authenticated;
+revoke insert, update, delete on table public.support_conversations from anon, authenticated;
+revoke insert, update, delete on table public.support_messages from anon, authenticated;
