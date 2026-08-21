@@ -120,12 +120,17 @@ export async function POST(request: Request) {
 
   if (challenge.status !== "pending") return json({ error: "أرسل رمز تحقق جديدًا لهذا الملف." }, 400);
 
-  const allowed = await consumeRateLimit({
-    scope: "phone_verification_confirm",
-    subject: `${userId}:${input.patient_profile_id}`,
-    maxRequests: 5,
-    windowSeconds: 10 * 60,
-  }).catch(() => false);
+  let allowed: boolean;
+  try {
+    allowed = await consumeRateLimit({
+      scope: "phone_verification_confirm",
+      subject: `${userId}:${input.patient_profile_id}`,
+      maxRequests: 5,
+      windowSeconds: 10 * 60,
+    });
+  } catch {
+    return json({ error: "خدمة حماية التحقق غير متاحة مؤقتًا." }, 503);
+  }
   if (!allowed) {
     return json({ error: "تجاوزت الحد المسموح لمحاولات الرمز. أرسل رمزًا جديدًا لاحقًا." }, 429, { "retry-after": "600" });
   }

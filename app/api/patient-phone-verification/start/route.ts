@@ -53,10 +53,16 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
-  const [accountAllowed, phoneAllowed] = await Promise.all([
-    consumeRateLimit({ scope: "phone_verification_start", subject: userId, maxRequests: 3, windowSeconds: 60 * 60 }),
-    consumeRateLimit({ scope: "phone_verification_start", subject: input.phone, maxRequests: 3, windowSeconds: 60 * 60 }),
-  ]).catch(() => [false, false]);
+  let accountAllowed: boolean;
+  let phoneAllowed: boolean;
+  try {
+    [accountAllowed, phoneAllowed] = await Promise.all([
+      consumeRateLimit({ scope: "phone_verification_start", subject: userId, maxRequests: 3, windowSeconds: 60 * 60 }),
+      consumeRateLimit({ scope: "phone_verification_start", subject: input.phone, maxRequests: 3, windowSeconds: 60 * 60 }),
+    ]);
+  } catch {
+    return NextResponse.json({ error: "خدمة حماية التحقق غير متاحة مؤقتًا." }, { status: 503, headers: { "cache-control": "no-store" } });
+  }
   if (!accountAllowed || !phoneAllowed) {
     return NextResponse.json({ error: "تجاوزت الحد المسموح لإرسال الرمز. حاول لاحقًا." }, { status: 429, headers: { "retry-after": "3600", "cache-control": "no-store" } });
   }
