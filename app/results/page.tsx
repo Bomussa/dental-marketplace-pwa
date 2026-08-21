@@ -6,6 +6,7 @@ import { priceLabel } from "@/lib/price";
 import { Badge, Card } from "@/components/ui";
 import { BookButton } from "@/components/book-button";
 import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
+import { withOperationalTimeout } from "@/lib/operations.server";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { ArrowUpLeftIcon, ClockIcon, LocationIcon, RouteIcon, ShieldCheckIcon, SlidersIcon, StarIcon } from "@/components/icons";
 import { ResultsLiveRefresh } from "@/components/results-live-refresh";
@@ -52,7 +53,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const userId = claimsData?.claims?.sub;
   const supabase = await getServerSupabaseClient();
   const { data: patientProfileData } = userId
-    ? await supabase.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender").is("archived_at", null).order("created_at", { ascending: true })
+    ? await withOperationalTimeout(supabase.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender").is("archived_at", null).order("created_at", { ascending: true })).catch(() => ({ data: [] }))
     : { data: [] };
   const patientProfiles = patientProfileData ?? [];
   const whenLabel = when === "today" ? t["search.today"] : when === "tomorrow" ? t["search.tomorrow"] : t["search.earliest"];

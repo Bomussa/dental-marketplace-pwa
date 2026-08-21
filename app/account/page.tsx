@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
+import { withOperationalTimeout } from "@/lib/operations.server";
 import { getLocale } from "@/lib/i18n";
 import { accountNationality, accountNationalityOptions, accountRelationship, accountStatus, getAccountCopy } from "@/lib/account-copy";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
@@ -38,7 +39,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const hasLoginCredentialsPromise = (async () => {
     try {
       const admin = createAdminClient();
-      const { data: usernameRow } = await admin.from("account_usernames").select("user_id").eq("user_id", userId).is("disabled_at", null).maybeSingle();
+      const { data: usernameRow } = await withOperationalTimeout(admin.from("account_usernames").select("user_id").eq("user_id", userId).is("disabled_at", null).maybeSingle());
       return Boolean(usernameRow);
     } catch {
       return true;
@@ -47,10 +48,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   const [hasLoginCredentials, { data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }] = await Promise.all([
     hasLoginCredentialsPromise,
-    supabase.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle(),
-    supabase.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").order("created_at", { ascending: false }).limit(20),
-    supabase.from("reviews").select("booking_id,status,rating").eq("patient_id", userId),
-    supabase.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender,created_at").is("archived_at", null).order("created_at", { ascending: true }),
+    withOperationalTimeout(supabase.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle()).catch(() => ({ data: null })),
+    withOperationalTimeout(supabase.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
+    withOperationalTimeout(supabase.from("reviews").select("booking_id,status,rating").eq("patient_id", userId)).catch(() => ({ data: null })),
+    withOperationalTimeout(supabase.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender,created_at").is("archived_at", null).order("created_at", { ascending: true })).catch(() => ({ data: null })),
   ]);
 
   const bookings = (bookingData ?? []) as BookingRow[];

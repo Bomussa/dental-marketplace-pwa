@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { clinicActivityReport, OPERATIONAL_RPC_TIMEOUT_MS, type ActivityReportGranularity } from "@/lib/operations.server";
+import { clinicActivityReport, OPERATIONAL_RPC_TIMEOUT_MS, type ActivityReportGranularity, withOperationalTimeout } from "@/lib/operations.server";
 import { getLocale } from "@/lib/i18n";
 import { isIsoCalendarDate } from "@/lib/validation";
 import { accountNationality } from "@/lib/account-copy";
@@ -56,7 +56,7 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
   const { data: claimsData, error } = await getServerAuthClaims();
   const userId = claimsData?.claims?.sub;
   if (error || !userId) redirect("/login?next=/clinic");
-  const { data: membershipData } = await supabase.from("clinic_memberships").select("clinic_id,branch_id,role,status").eq("status", "active");
+  const { data: membershipData } = await withOperationalTimeout(supabase.from("clinic_memberships").select("clinic_id,branch_id,role,status").eq("status", "active"));
   const memberships = (membershipData ?? []) as Membership[];
 
   if (!memberships.length) return <main className="workspace-shell mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-20"><Card className="p-7 sm:p-9"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-[#0B5CAD]"><BuildingIcon size={24} /></span><p className="mt-5 text-xs font-black uppercase tracking-[.16em] text-[#084884]">{copy.joinKicker}</p><h1 className="mt-2 text-3xl font-black tracking-tight">{copy.joinTitle}</h1><p className="mt-3 text-sm font-medium leading-7 text-slate-500">{copy.joinCopy}</p><div className="mt-5 flex items-start gap-2 rounded-2xl bg-blue-50 p-4 text-xs font-bold leading-5 text-blue-800"><ShieldCheckIcon size={17} className="mt-0.5 shrink-0" />{copy.joinNotice}</div><form action={applyClinic} className="mt-6 grid gap-4"><label className="grid gap-2 text-sm font-extrabold">{copy.legalName}<Input name="legal_name" required /></label><label className="grid gap-2 text-sm font-extrabold">{copy.displayName}<Input name="display_name" required /></label><Button className="gap-2"><CheckIcon size={17} />{copy.submitApplication}</Button></form></Card></main>;
@@ -64,20 +64,20 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
   const clinicIds = [...new Set(memberships.map((membership) => membership.clinic_id))];
   const selectedClinicId = params.clinic && clinicIds.includes(params.clinic) ? params.clinic : clinicIds[0];
   const [{ data: clinicData }, { data: branchData }] = await Promise.all([
-    supabase.from("clinics").select("id,display_name,status").eq("id", selectedClinicId).limit(1),
-    supabase.from("branches").select("id,clinic_id,name,area,status").eq("clinic_id", selectedClinicId).order("created_at"),
+    withOperationalTimeout(supabase.from("clinics").select("id,display_name,status").eq("id", selectedClinicId).limit(1)),
+    withOperationalTimeout(supabase.from("branches").select("id,clinic_id,name,area,status").eq("clinic_id", selectedClinicId).order("created_at")),
   ]);
   const clinics = (clinicData ?? []) as Clinic[];
   const branches = (branchData ?? []) as Branch[];
   const branchIds = branches.map((branch) => branch.id);
   const empty = Promise.resolve({ data: [] as never[] });
   const [{ data: offerData }, { data: slotData }, { data: variantData }, { data: bookingData }, { data: practitionerData }, { data: notificationData }] = await Promise.all([
-    branchIds.length ? supabase.from("branch_service_offers").select("id,branch_id,variant_id,price_type,min_minor,max_minor,duration_minutes,status,last_verified_at,price_scope,included_items,excluded_items,visit_count,follow_up_terms,notes").in("branch_id", branchIds).order("created_at", { ascending: false }).limit(50) : empty,
-    branchIds.length ? supabase.from("availability_slots").select("id,branch_id,variant_id,start_at,end_at,status").in("branch_id", branchIds).order("start_at").limit(50) : empty,
-    supabase.from("treatment_variants").select("id,name_ar,name_en").eq("active", true).order("name_ar"),
-    branchIds.length ? supabase.from("bookings").select("id,booking_code,start_at,status,branch_id,patient_profile_id,offer_snapshot").in("branch_id", branchIds).order("start_at").limit(50) : empty,
-    supabase.from("practitioners").select("id,display_name,active,license_ref,clinic_id").eq("clinic_id", selectedClinicId).limit(50),
-    supabase.from("notification_outbox").select("id,event_type,created_at,status,payload").eq("recipient_user_id", userId).eq("event_type", "booking_requested").order("created_at", { ascending: false }).limit(6),
+    branchIds.length ? withOperationalTimeout(supabase.from("branch_service_offers").select("id,branch_id,variant_id,price_type,min_minor,max_minor,duration_minutes,status,last_verified_at,price_scope,included_items,excluded_items,visit_count,follow_up_terms,notes").in("branch_id", branchIds).order("created_at", { ascending: false }).limit(50)) : empty,
+    branchIds.length ? withOperationalTimeout(supabase.from("availability_slots").select("id,branch_id,variant_id,start_at,end_at,status").in("branch_id", branchIds).order("start_at").limit(50)) : empty,
+    withOperationalTimeout(supabase.from("treatment_variants").select("id,name_ar,name_en").eq("active", true).order("name_ar")),
+    branchIds.length ? withOperationalTimeout(supabase.from("bookings").select("id,booking_code,start_at,status,branch_id,patient_profile_id,offer_snapshot").in("branch_id", branchIds).order("start_at").limit(50)) : empty,
+    withOperationalTimeout(supabase.from("practitioners").select("id,display_name,active,license_ref,clinic_id").eq("clinic_id", selectedClinicId).limit(50)),
+    withOperationalTimeout(supabase.from("notification_outbox").select("id,event_type,created_at,status,payload").eq("recipient_user_id", userId).eq("event_type", "booking_requested").order("created_at", { ascending: false }).limit(6)),
   ]);
   const selectedClinic = clinics[0];
   const offers = (offerData ?? []) as Offer[];
@@ -105,7 +105,7 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
     ? supabase.rpc("clinic_booking_patient_details", { p_booking_ids: bookingIds }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS))
     : Promise.resolve({ data: [] as BookingPatientDetails[] });
   const attendancePromise = bookingIds.length
-    ? supabase.from("booking_attendance_events").select("*").in("booking_id", bookingIds)
+    ? withOperationalTimeout(supabase.from("booking_attendance_events").select("*").in("booking_id", bookingIds))
     : Promise.resolve({ data: [] as AttendanceEvent[], error: null });
   const activityReportPromise = canManageClinicStructure
     ? clinicActivityReport({ clinicId: selectedClinicId, periodStart: activityStart, periodEnd: activityEnd, granularity: activityGranularityValue }).then(parseActivityReport).catch(() => null)
