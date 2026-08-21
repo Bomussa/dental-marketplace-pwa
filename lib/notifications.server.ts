@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Json } from "@/lib/database.types";
+import { withOperationalTimeout } from "@/lib/operations.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Locale } from "@/lib/i18n";
 
@@ -19,7 +20,7 @@ type EnqueueNotificationInput = {
 
 export async function enqueueNotification(input: EnqueueNotificationInput) {
   const admin = createAdminClient();
-  const { data: template, error: templateError } = await admin
+  const { data: template, error: templateError } = await withOperationalTimeout(admin
     .from("notification_templates")
     .select("id")
     .eq("template_key", input.eventType)
@@ -28,11 +29,11 @@ export async function enqueueNotification(input: EnqueueNotificationInput) {
     .eq("status", "active")
     .order("version", { ascending: false })
     .limit(1)
-    .maybeSingle();
+    .maybeSingle());
   if (templateError) throw new Error(templateError.code);
 
   const dedupeKey = `${input.eventType}:${input.eventId}:${input.recipientUserId}:${input.channel}:${input.locale}`;
-  const { error } = await admin.from("notification_outbox").upsert({
+  const { error } = await withOperationalTimeout(admin.from("notification_outbox").upsert({
     recipient_user_id: input.recipientUserId,
     template_id: template?.id ?? null,
     event_type: input.eventType,
@@ -43,7 +44,7 @@ export async function enqueueNotification(input: EnqueueNotificationInput) {
     dedupe_key: dedupeKey,
     status: "pending",
     created_by: input.createdBy ?? null,
-  }, { onConflict: "dedupe_key", ignoreDuplicates: true });
+  }, { onConflict: "dedupe_key", ignoreDuplicates: true }));
   if (error) throw new Error(error.code);
 }
 
@@ -67,12 +68,12 @@ export async function enqueueBookingConfirmedNotifications(input: {
     createdBy: input.patientUserId,
   });
 
-  const { data: clinicMembers, error } = await admin
+  const { data: clinicMembers, error } = await withOperationalTimeout(admin
     .from("clinic_memberships")
     .select("user_id")
     .eq("clinic_id", input.clinicId)
     .eq("status", "active")
-    .in("role", ["owner", "manager", "receptionist"]);
+    .in("role", ["owner", "manager", "receptionist"]));
   if (error) throw new Error(error.code);
 
   for (const member of clinicMembers ?? []) {
