@@ -7,7 +7,7 @@ import {
   MAX_CHOICE_EVENTS_PER_WINDOW,
   readChoiceRequestTextWithinLimit,
 } from "@/lib/choice-event-guard";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, withOperationalTimeout } from "@/lib/operations.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { choiceEventSchema } from "@/lib/validation";
 
@@ -62,10 +62,15 @@ export async function POST(request: Request) {
     return json({ error: "choice_event_not_recorded" }, 503);
   }
 
-  const { error } = await admin.from("customer_choice_events").insert(parsed.data);
-  if (error?.code === "23505") return json({ ok: true, duplicate: true }, 200);
-  if (error) {
-    console.error("choice_event_insert_failed", { code: error.code });
+  let insertError: { code?: string } | null;
+  try {
+    ({ error: insertError } = await withOperationalTimeout(admin.from("customer_choice_events").insert(parsed.data)));
+  } catch {
+    return json({ error: "choice_event_not_recorded" }, 503);
+  }
+  if (insertError?.code === "23505") return json({ ok: true, duplicate: true }, 200);
+  if (insertError) {
+    console.error("choice_event_insert_failed", { code: insertError.code });
     return json({ error: "choice_event_not_recorded" }, 503);
   }
 

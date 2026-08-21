@@ -8,7 +8,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { supportMessageSchema } from "@/lib/validation";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, withOperationalTimeout } from "@/lib/operations.server";
 import { requestSupportModelAnswer } from "@/lib/support-model.server";
 
 const MEDICAL_OR_EMERGENCY = /(?:ألم شديد|نزيف|تورم|عدوى|طارئ|emergency|severe pain|bleeding|swelling|infection)/i;
@@ -29,6 +29,7 @@ function safetyReply(locale: "ar" | "en", category: SafetyCategory) {
 }
 
 export async function POST(request: Request) {
+  try {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
@@ -86,14 +87,16 @@ export async function POST(request: Request) {
   let configuredApiKey = "";
 
   if (category === "standard") {
-    const { data: articles, error: articleError } = await admin
-      .from("support_knowledge_articles")
-      .select("slug,title,body_markdown,category")
-      .eq("locale", parsed.data.locale)
-      .eq("audience", "public")
-      .eq("status", "approved")
-      .order("updated_at", { ascending: false })
-      .limit(8);
+    const { data: articles, error: articleError } = await withOperationalTimeout(
+      admin
+        .from("support_knowledge_articles")
+        .select("slug,title,body_markdown,category")
+        .eq("locale", parsed.data.locale)
+        .eq("audience", "public")
+        .eq("status", "approved")
+        .order("updated_at", { ascending: false })
+        .limit(8),
+    );
     if (articleError) return NextResponse.json({ error: "KNOWLEDGE_UNAVAILABLE" }, { status: 503 });
 
     approvedArticles = (articles ?? []) as KnowledgeArticle[];
@@ -112,23 +115,26 @@ export async function POST(request: Request) {
 
   let conversationId = parsed.data.conversation_id;
   if (conversationId) {
-    const { data: existingConversation, error } = await admin.from("support_conversations").select("id,status").eq("id", conversationId).eq("user_id", userId).maybeSingle();
+    const { data: existingConversation, error } = await withOperationalTimeout(admin.from("support_conversations").select("id,status").eq("id", conversationId).eq("user_id", userId).maybeSingle());
     if (error) return NextResponse.json({ error: "CONVERSATION_UNAVAILABLE" }, { status: 503 });
     if (!existingConversation || existingConversation.status !== "open") return NextResponse.json({ error: "CONVERSATION_NOT_OPEN" }, { status: 409 });
   } else {
-    const { data: createdConversation, error } = await admin.from("support_conversations").insert({ user_id: userId, locale: parsed.data.locale, status: "open", safety_category: "standard" }).select("id").single();
+    const { data: createdConversation, error } = await withOperationalTimeout(admin.from("support_conversations").insert({ user_id: userId, locale: parsed.data.locale, status: "open", safety_category: "standard" }).select("id").single());
     if (error || !createdConversation) return NextResponse.json({ error: "CONVERSATION_UNAVAILABLE" }, { status: 503 });
     conversationId = createdConversation.id;
   }
+  const resolvedConversationId = conversationId;
+  if (!resolvedConversationId) return NextResponse.json({ error: "CONVERSATION_UNAVAILABLE" }, { status: 503 });
 
-  const { error: userMessageError } = await admin.from("support_messages").insert({ conversation_id: conversationId, role: "user", content: parsed.data.message, safety_category: category, sources: [] });
+  const { error: userMessageError } = await withOperationalTimeout(admin.from("support_messages").insert({ conversation_id: resolvedConversationId, role: "user", content: parsed.data.message, safety_category: category, sources: [] }));
   if (userMessageError) return NextResponse.json({ error: "MESSAGE_NOT_RECORDED" }, { status: 503 });
 
   let answer = "";
   let sourceTitles: string[] = [];
   if (category !== "standard") {
     answer = safetyReply(parsed.data.locale, category);
-    await admin.from("support_conversations").update({ safety_category: category, escalation_reason: category === "emergency" ? "medical_emergency_keyword" : "medical_question" }).eq("id", conversationId);
+    const { error: safetyUpdateError } = await withOperationalTimeout(admin.from("support_conversations").update({ safety_category: category, escalation_reason: category === "emergency" ? "medical_emergency_keyword" : "medical_question" }).eq("id", resolvedConversationId));
+    if (safetyUpdateError) return NextResponse.json({ error: "CONVERSATION_UNAVAILABLE" }, { status: 503 });
   } else {
     const knowledge = approvedArticles.map((article) => `# ${article.title}\n${article.body_markdown.slice(0, 1800)}`).join("\n\n");
     sourceTitles = approvedArticles.map((article) => article.title);
@@ -155,16 +161,20 @@ export async function POST(request: Request) {
   }
 
   const sources: Json = sourceTitles.map((title) => ({ title }));
-  const { error: assistantMessageError } = await admin.from("support_messages").insert({
-    conversation_id: conversationId,
+  const { error: assistantMessageError } = await withOperationalTimeout(admin.from("support_messages").insert({
+    conversation_id: resolvedConversationId,
     role: "assistant",
     content: answer,
     policy_version: "support-governance-v1",
     safety_category: category,
     confidence: category === "standard" ? 0.7 : 1,
     sources,
-  });
+  }));
   if (assistantMessageError) return NextResponse.json({ error: "RESPONSE_NOT_RECORDED" }, { status: 503 });
 
-  return NextResponse.json({ conversation_id: conversationId, answer, safety_category: category, sources: sourceTitles }, { status: 200, headers: { "cache-control": "no-store" } });
+  return NextResponse.json({ conversation_id: resolvedConversationId, answer, safety_category: category, sources: sourceTitles }, { status: 200, headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    console.error("support_storage_or_timeout_failed", { code: error instanceof Error ? error.message : "UNKNOWN" });
+    return NextResponse.json({ error: "SUPPORT_UNAVAILABLE" }, { status: 503, headers: { "cache-control": "no-store" } });
+  }
 }

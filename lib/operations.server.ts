@@ -6,6 +6,22 @@ import { createClient } from "@/lib/supabase/server";
 
 export const OPERATIONAL_RPC_TIMEOUT_MS = 15_000;
 
+export function withOperationalTimeout<T>(operation: PromiseLike<T>, timeoutMs = OPERATIONAL_RPC_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("OPERATION_TIMEOUT")), timeoutMs);
+    void operation.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 async function verifiedActor() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();

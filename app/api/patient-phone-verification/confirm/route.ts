@@ -5,7 +5,7 @@ import {
   readPublicWriteRequestTextWithinLimit,
 } from "@/lib/public-write-request-guard";
 import { confirmPhoneVerification, PhoneVerificationProviderError, PhoneVerificationUnavailableError } from "@/lib/phone-verification.server";
-import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
+import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 import { patientPhoneVerificationConfirmSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -136,7 +136,12 @@ export async function POST(request: Request) {
   }
 
   if (new Date(challenge.expires_at) <= new Date() || challenge.attempt_count >= 5) {
-    await admin.from("patient_phone_verification_challenges").update({ status: "expired" }).eq("id", challenge.id).eq("status", "pending");
+    try {
+      const { error: expiryError } = await withOperationalTimeout(admin.from("patient_phone_verification_challenges").update({ status: "expired" }).eq("id", challenge.id).eq("status", "pending"));
+      if (expiryError) return json({ error: "خدمة التحقق غير متاحة مؤقتًا." }, 503);
+    } catch {
+      return json({ error: "خدمة التحقق غير متاحة مؤقتًا." }, 503);
+    }
     return json({ error: "انتهت صلاحية الرمز. أرسل رمزًا جديدًا." }, 400);
   }
 

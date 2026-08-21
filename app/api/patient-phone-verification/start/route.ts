@@ -6,7 +6,7 @@ import {
   readPublicWriteRequestTextWithinLimit,
 } from "@/lib/public-write-request-guard";
 import { ensurePhoneVerificationAvailable, PhoneVerificationProviderError, PhoneVerificationUnavailableError, startPhoneVerification } from "@/lib/phone-verification.server";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, withOperationalTimeout } from "@/lib/operations.server";
 import { patientPhoneVerificationStartSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 const MAX_PHONE_VERIFICATION_START_BYTES = 8 * 1024;
 
 export async function POST(request: Request) {
+  try {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
@@ -80,22 +81,26 @@ export async function POST(request: Request) {
   let profileId = input.patient_profile_id;
   let existingPhone: string | null = null;
   if (profileId) {
-    const { data: existing, error } = await admin
-      .from("patient_profiles")
-      .select("id,phone")
-      .eq("id", profileId)
-      .eq("account_id", userId)
-      .is("archived_at", null)
-      .maybeSingle();
+    const { data: existing, error } = await withOperationalTimeout(
+      admin
+        .from("patient_profiles")
+        .select("id,phone")
+        .eq("id", profileId)
+        .eq("account_id", userId)
+        .is("archived_at", null)
+        .maybeSingle(),
+    );
     if (error) return NextResponse.json({ error: "تعذر الوصول إلى ملف المريض." }, { status: 503 });
     if (!existing) return NextResponse.json({ error: "ملف المريض غير متاح لهذا الحساب." }, { status: 403 });
     existingPhone = existing.phone;
 
-    const { error: updateError } = await admin
-      .from("patient_profiles")
-      .update({ ...profilePayload, phone_verified_at: existingPhone === input.phone ? undefined : null })
-      .eq("id", profileId)
-      .eq("account_id", userId);
+    const { error: updateError } = await withOperationalTimeout(
+      admin
+        .from("patient_profiles")
+        .update({ ...profilePayload, phone_verified_at: existingPhone === input.phone ? undefined : null })
+        .eq("id", profileId)
+        .eq("account_id", userId),
+    );
     if (updateError) {
       if (updateError.code === "23505") {
         return NextResponse.json({ error: "تحقق من بيانات المريض ورقم الهاتف." }, { status: 400, headers: { "cache-control": "no-store" } });
@@ -103,11 +108,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "تعذر حفظ بيانات المريض." }, { status: 503 });
     }
   } else {
-    const { data: created, error } = await admin
-      .from("patient_profiles")
-      .insert({ account_id: userId, ...profilePayload })
-      .select("id")
-      .single();
+    const { data: created, error } = await withOperationalTimeout(
+      admin
+        .from("patient_profiles")
+        .insert({ account_id: userId, ...profilePayload })
+        .select("id")
+        .single(),
+    );
     if (error || !created) {
       if (error?.code === "23505") {
         return NextResponse.json({ error: "تحقق من بيانات المريض ورقم الهاتف." }, { status: 400, headers: { "cache-control": "no-store" } });
@@ -131,20 +138,27 @@ export async function POST(request: Request) {
 
   const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
   const challengeHash = createHash("sha256").update(`${profileId}:${randomUUID()}`).digest("hex");
-  await admin
-    .from("patient_phone_verification_challenges")
-    .update({ status: "cancelled", consumed_at: new Date().toISOString() })
-    .eq("patient_profile_id", profileId)
-    .eq("account_id", userId)
-    .eq("status", "pending");
-  const { error: challengeError } = await admin.from("patient_phone_verification_challenges").insert({
+  const { error: cancellationError } = await withOperationalTimeout(
+    admin
+      .from("patient_phone_verification_challenges")
+      .update({ status: "cancelled", consumed_at: new Date().toISOString() })
+      .eq("patient_profile_id", profileId)
+      .eq("account_id", userId)
+      .eq("status", "pending"),
+  );
+  if (cancellationError) return NextResponse.json({ error: "تعذر حفظ جلسة التحقق. أرسل رمزًا جديدًا." }, { status: 503 });
+  const { error: challengeError } = await withOperationalTimeout(admin.from("patient_phone_verification_challenges").insert({
     account_id: userId,
     patient_profile_id: profileId,
     phone: input.phone,
     code_hash: challengeHash,
     expires_at: expiresAt,
-  });
+  }));
   if (challengeError) return NextResponse.json({ error: "تم إرسال الرمز، لكن تعذر حفظ جلسة التحقق. أرسل رمزًا جديدًا." }, { status: 503 });
 
   return NextResponse.json({ patient_profile_id: profileId, phone: input.phone, expires_at: expiresAt }, { status: 201 });
+  } catch (error) {
+    console.error("phone_verification_start_storage_or_timeout_failed", { code: error instanceof Error ? error.message : "UNKNOWN" });
+    return NextResponse.json({ error: "خدمة التحقق غير متاحة مؤقتًا." }, { status: 503, headers: { "cache-control": "no-store" } });
+  }
 }
