@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const rpcResponses: Array<{ data: unknown; error: { code?: string } | null; status: number }> = [];
-const rpcMock = vi.fn((functionName: string, args: Record<string, unknown>) => ({
-  abortSignal: vi.fn(async () => {
-    const next = rpcResponses.shift();
-    if (!next) throw new Error("missing mocked RPC response");
-    return next;
-  }),
-  then: undefined,
-}));
+const rpcMock = vi.fn((functionName: string, args: Record<string, unknown>) => {
+  void functionName;
+  void args;
+  return {
+    abortSignal: vi.fn(async () => {
+      const next = rpcResponses.shift();
+      if (!next) throw new Error("missing mocked RPC response");
+      return next;
+    }),
+    then: undefined,
+  };
+});
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ rpc: rpcMock }),
