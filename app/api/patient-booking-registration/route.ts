@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { provisionPatientBookingAccount } from "@/lib/account-auth.server";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, withOperationalTimeout } from "@/lib/operations.server";
 import {
   publicWriteRequestBodyIsTooLarge,
   publicWriteRequestClientKey,
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error: sessionError } = await supabase.auth.signInWithPassword({ email: input.email, password: input.password });
+  const { error: sessionError } = await withOperationalTimeout(supabase.auth.signInWithPassword({ email: input.email, password: input.password })).catch(() => ({ error: { message: "OPERATION_TIMEOUT" } }));
   if (sessionError) {
     return json({ error: "تم إنشاء الحساب، لكن تعذر فتح الجلسة. سجّل الدخول ثم أكمل طلب الحجز." }, 503);
   }
