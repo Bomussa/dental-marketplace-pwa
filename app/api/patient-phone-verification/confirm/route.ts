@@ -12,33 +12,6 @@ import { createClient } from "@/lib/supabase/server";
 
 const MAX_PHONE_VERIFICATION_CONFIRM_BYTES = 2 * 1024;
 
-type PhoneVerificationCompletion = {
-  profile_id: string;
-  verified_at: string;
-};
-
-type PhoneVerificationRpcError = {
-  code?: string;
-};
-
-type PhoneVerificationRpcRequest = PromiseLike<{
-  data: PhoneVerificationCompletion[] | null;
-  error: PhoneVerificationRpcError | null;
-}> & {
-  abortSignal(signal: AbortSignal): PhoneVerificationRpcRequest;
-};
-
-type PhoneVerificationRpcClient = {
-  rpc: (
-    fn: "complete_patient_phone_verification_server",
-    args: {
-      p_actor_id: string;
-      p_challenge_id: string;
-      p_patient_profile_id: string;
-    },
-  ) => PhoneVerificationRpcRequest;
-};
-
 function json(body: unknown, status = 200, headers?: HeadersInit) {
   return NextResponse.json(body, { status, headers: { "cache-control": "no-store", ...headers } });
 }
@@ -49,10 +22,7 @@ async function finalizePhoneVerification(
   challengeId: string,
   patientProfileId: string,
 ) {
-  // The RPC was added by the migration in this release. Keep this narrow contract local
-  // so the rest of the generated Database type remains unchanged until its next full refresh.
-  const rpcClient = admin as unknown as PhoneVerificationRpcClient;
-  const { data, error } = await rpcClient.rpc("complete_patient_phone_verification_server", {
+  const { data, error } = await admin.rpc("complete_patient_phone_verification_server", {
     p_actor_id: userId,
     p_challenge_id: challengeId,
     p_patient_profile_id: patientProfileId,

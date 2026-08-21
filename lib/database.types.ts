@@ -2486,6 +2486,17 @@ export type Database = {
           patient_relationship: string
         }[]
       }
+      complete_patient_phone_verification_server: {
+        Args: {
+          p_actor_id: string
+          p_challenge_id: string
+          p_patient_profile_id: string
+        }
+        Returns: {
+          profile_id: string
+          verified_at: string
+        }[]
+      }
       consume_rate_limit_server: {
         Args: {
           p_limit: number
