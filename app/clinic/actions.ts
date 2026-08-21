@@ -72,14 +72,16 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
   const actorId = actorClaims?.claims?.sub;
   if (actorClaimsError || !actorId) redirect("/login?next=/clinic");
 
-  const { data: ownerMembership, error: ownerMembershipError } = await supabase
-    .from("clinic_memberships")
-    .select("id")
-    .eq("clinic_id", parsed.data.clinic_id)
-    .eq("user_id", actorId)
-    .eq("role", "owner")
-    .eq("status", "active")
-    .maybeSingle();
+  const { data: ownerMembership, error: ownerMembershipError } = await withOperationalTimeout(
+    supabase
+      .from("clinic_memberships")
+      .select("id")
+      .eq("clinic_id", parsed.data.clinic_id)
+      .eq("user_id", actorId)
+      .eq("role", "owner")
+      .eq("status", "active")
+      .maybeSingle(),
+  ).catch(() => actionFailure("createClinicOperatorAccount", new Error("SERVICE_UNAVAILABLE")));
   if (ownerMembershipError || !ownerMembership) {
     actionFailure("createClinicOperatorAccount", new Error("FORBIDDEN"));
   }
@@ -91,12 +93,12 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
     actionFailure("createClinicOperatorAccount", new Error("SERVICE_UNAVAILABLE"));
   }
 
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
+  const { data: created, error: createError } = await withOperationalTimeout(admin.auth.admin.createUser({
     email: parsed.data.email,
     password: parsed.data.password,
     email_confirm: true,
     user_metadata: { account_kind: "clinic_operator" },
-  });
+  })).catch(() => ({ data: { user: null }, error: { code: "OPERATION_TIMEOUT", message: "OPERATION_TIMEOUT" } }));
 
   if (createError || !created.user) {
     const code = `${createError?.code ?? ""} ${createError?.message ?? ""}`.toLowerCase();
@@ -113,7 +115,7 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
     if (error) throw new Error(error.code || "OPERATION_FAILED");
     revalidatePath("/clinic");
   } catch (error) {
-    await admin.auth.admin.deleteUser(created.user.id);
+    await withOperationalTimeout(admin.auth.admin.deleteUser(created.user.id)).catch(() => undefined);
     actionFailure("createClinicOperatorAccount", error);
   }
 }

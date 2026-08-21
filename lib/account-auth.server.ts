@@ -1,5 +1,6 @@
 import "server-only";
 
+import { withOperationalTimeout } from "@/lib/operations.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { z } from "zod";
 import type { patientBookingRegistrationSchema } from "@/lib/validation";
@@ -18,24 +19,35 @@ function conflictCode(error: unknown): string {
 }
 
 async function cleanupProvisionedPatientAccount(userId: string) {
-  const admin = createAdminClient();
-  await admin.from("account_usernames").delete().eq("user_id", userId);
-  await admin.from("patient_profiles").delete().eq("account_id", userId);
-  await admin.auth.admin.deleteUser(userId);
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return;
+  }
+  await withOperationalTimeout(admin.from("account_usernames").delete().eq("user_id", userId)).catch(() => undefined);
+  await withOperationalTimeout(admin.from("patient_profiles").delete().eq("account_id", userId)).catch(() => undefined);
+  await withOperationalTimeout(admin.auth.admin.deleteUser(userId)).catch(() => undefined);
 }
 
 export async function emailForUsername(username: string): Promise<string | null> {
-  const admin = createAdminClient();
-  const { data: usernameRow, error: usernameError } = await admin
-    .from("account_usernames")
-    .select("user_id")
-    .eq("username", username)
-    .is("disabled_at", null)
-    .maybeSingle();
+  try {
+    const admin = createAdminClient();
+    const { data: usernameRow, error: usernameError } = await withOperationalTimeout(
+      admin
+        .from("account_usernames")
+        .select("user_id")
+        .eq("username", username)
+        .is("disabled_at", null)
+        .maybeSingle(),
+    );
 
-  const { data: userResult, error: userError } = await admin.auth.admin.getUserById(usernameRow?.user_id ?? DECOY_USER_ID);
-  if (usernameError || !usernameRow || userError || !userResult.user?.email || userResult.user.banned_until) return null;
-  return userResult.user.email;
+    const { data: userResult, error: userError } = await withOperationalTimeout(admin.auth.admin.getUserById(usernameRow?.user_id ?? DECOY_USER_ID));
+    if (usernameError || !usernameRow || userError || !userResult.user?.email || userResult.user.banned_until) return null;
+    return userResult.user.email;
+  } catch {
+    return null;
+  }
 }
 
 export async function provisionPatientBookingAccount(input: PatientRegistration): Promise<ProvisionResult> {
@@ -46,12 +58,12 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
     return { ok: false, code: "unavailable" };
   }
 
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
+  const { data: created, error: createError } = await withOperationalTimeout(admin.auth.admin.createUser({
     email: input.email,
     password: input.password,
     email_confirm: true,
     user_metadata: { display_name: input.display_name, account_kind: "patient" },
-  });
+  })).catch(() => ({ data: { user: null }, error: { code: "OPERATION_TIMEOUT" } }));
 
   if (createError || !created.user) {
     return { ok: false, code: conflictCode(createError).includes("already") ? "email_taken" : "unavailable" };
@@ -59,7 +71,7 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
 
   const userId = created.user.id;
   try {
-    const { error: usernameError } = await admin.from("account_usernames").insert({ user_id: userId, username: input.username });
+    const { error: usernameError } = await withOperationalTimeout(admin.from("account_usernames").insert({ user_id: userId, username: input.username }));
     if (usernameError) {
       await cleanupProvisionedPatientAccount(userId);
       return { ok: false, code: conflictCode(usernameError).includes("account_usernames") || usernameError.code === "23505" ? "username_taken" : "unavailable" };
@@ -76,14 +88,16 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
       gender: input.gender ?? null,
       phone_verified_at: null,
     };
-    const { data: existingProfile, error: existingProfileError } = await admin
-      .from("patient_profiles")
-      .update(profilePayload)
-      .eq("account_id", userId)
-      .eq("relationship", "self")
-      .is("archived_at", null)
-      .select("id")
-      .maybeSingle();
+    const { data: existingProfile, error: existingProfileError } = await withOperationalTimeout(
+      admin
+        .from("patient_profiles")
+        .update(profilePayload)
+        .eq("account_id", userId)
+        .eq("relationship", "self")
+        .is("archived_at", null)
+        .select("id")
+        .maybeSingle(),
+    );
 
     if (existingProfileError) {
       await cleanupProvisionedPatientAccount(userId);
@@ -92,11 +106,13 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
 
     if (existingProfile) return { ok: true, userId, patientProfileId: existingProfile.id };
 
-    const { data: insertedProfile, error: insertProfileError } = await admin
-      .from("patient_profiles")
-      .insert(profilePayload)
-      .select("id")
-      .single();
+    const { data: insertedProfile, error: insertProfileError } = await withOperationalTimeout(
+      admin
+        .from("patient_profiles")
+        .insert(profilePayload)
+        .select("id")
+        .single(),
+    );
     if (insertProfileError || !insertedProfile) {
       await cleanupProvisionedPatientAccount(userId);
       return { ok: false, code: insertProfileError?.code === "23505" ? "national_id_taken" : "unavailable" };
