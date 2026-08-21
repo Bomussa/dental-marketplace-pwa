@@ -79,6 +79,8 @@ describe("validation", () => {
     expect(passwordLoginSchema.safeParse({ username: "a", password: "anything", next: "https://unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "//unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/\\unsafe.example" }).success).toBe(false);
+    expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%2F%2Funsafe.example" }).success).toBe(false);
+    expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%5Cunsafe.example" }).success).toBe(false);
   });
 
   it("validates activity report windows and supported aggregation safely", () => {

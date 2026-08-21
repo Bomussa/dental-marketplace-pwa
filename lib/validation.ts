@@ -301,8 +301,17 @@ export const patientProfileUpsertSchema = patientProfileSchema.extend({
 export const usernameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/, "اسم المستخدم يجب أن يتكون من 3 إلى 32 حرفًا أو رقمًا، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
 export const passwordSchema = z.string().min(12, "كلمة المرور يجب ألا تقل عن 12 حرفًا").max(128).refine((value) => /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value), "كلمة المرور تحتاج حرفًا صغيرًا وكبيرًا ورقمًا واحدًا على الأقل");
 
+function isSafeInternalRedirectPath(value: string) {
+  try {
+    const decoded = decodeURIComponent(value);
+    return decoded.startsWith("/") && !decoded.startsWith("//") && !decoded.includes("\\");
+  } catch {
+    return false;
+  }
+}
+
 const internalRedirectPathSchema = z.string().startsWith("/").max(300).refine(
-  (value) => !value.startsWith("//") && !value.startsWith("/\\"),
+  isSafeInternalRedirectPath,
   "وجهة إعادة التوجيه يجب أن تبقى داخل التطبيق",
 );
 
