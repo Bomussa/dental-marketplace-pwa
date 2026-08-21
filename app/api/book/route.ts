@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { bookingSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
 import {
   publicWriteRequestBodyIsTooLarge,
   publicWriteRequestOriginIsAllowed,
@@ -69,14 +69,15 @@ export async function POST(request: Request) {
     p_offer_id: parsed.data.offer_id,
     p_idempotency_key: parsed.data.idempotency_key,
     p_patient_profile_id: parsed.data.patient_profile_id,
-  });
+  }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
   if (error) {
     const conflict = error.code === "P0001" || error.code === "23505" || /already|bookable|eligible|shorter/i.test(error.message);
     const forbidden = error.code === "42501" || /profile.*account|not available/i.test(error.message);
     const incompleteProfile = error.code === "22023" && /complete and phone verified/i.test(error.message);
     const invalid = error.code === "22023" || /patient profile is required/i.test(error.message);
-    const status = forbidden ? 403 : conflict ? 409 : invalid ? 400 : 500;
-    const message = forbidden ? "لا يمكنك الحجز بهذا الملف." : conflict ? "الموعد لم يعد متاحًا. حدّث النتائج." : incompleteProfile ? "أكمل بيانات المريض وتحقق من رقم الهاتف قبل الحجز." : invalid ? "اختر الشخص الذي تريد الحجز له." : "تعذر إنشاء الحجز";
+    const unavailable = /abort|timeout|network/i.test(error.message);
+    const status = forbidden ? 403 : conflict ? 409 : invalid ? 400 : unavailable ? 503 : 500;
+    const message = forbidden ? "لا يمكنك الحجز بهذا الملف." : conflict ? "الموعد لم يعد متاحًا. حدّث النتائج." : incompleteProfile ? "أكمل بيانات المريض وتحقق من رقم الهاتف قبل الحجز." : invalid ? "اختر الشخص الذي تريد الحجز له." : unavailable ? "خدمة الحجز غير متاحة مؤقتًا. أعد المحاولة لاحقًا." : "تعذر إنشاء الحجز";
     return json({ error: message }, status);
   }
 

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { serverOperationsConfigured } from "@/lib/server-readiness";
+import { OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
 
 const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const originalSecret = process.env.SUPABASE_SECRET_KEY;
@@ -15,6 +16,10 @@ afterEach(() => {
 });
 
 describe("serverOperationsConfigured", () => {
+  it("keeps operational RPC calls bounded by a 15-second timeout", () => {
+    expect(OPERATIONAL_RPC_TIMEOUT_MS).toBe(15_000);
+  });
+
   it("requires a Supabase URL and a server-only secret", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
     delete process.env.SUPABASE_SECRET_KEY;

@@ -4,6 +4,8 @@ import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+export const OPERATIONAL_RPC_TIMEOUT_MS = 15_000;
+
 async function verifiedActor() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
@@ -21,7 +23,7 @@ async function callOperationalRpc<T extends keyof import("@/lib/database.types")
   args: import("@/lib/database.types").Database["public"]["Functions"][T]["Args"],
 ) {
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc(functionName, args);
+  const { data, error } = await admin.rpc(functionName, args).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
   if (error) throw new Error(error.code || "OPERATION_FAILED");
   return data;
 }
@@ -31,14 +33,18 @@ type ServerRpcResult = {
   error: { code?: string } | null;
 };
 
-type ServerRpc = (functionName: string, args: Record<string, unknown>) => PromiseLike<ServerRpcResult>;
+type ServerRpcRequest = PromiseLike<ServerRpcResult> & {
+  abortSignal(signal: AbortSignal): ServerRpcRequest;
+};
+
+type ServerRpc = (functionName: string, args: Record<string, unknown>) => ServerRpcRequest;
 
 async function callServerRpc(functionName: string, args: Record<string, unknown>) {
   const admin = createAdminClient();
   // Keep newly-added server-only RPCs usable immediately after a migration even
   // before the checked-in generated Database type file is refreshed.
   const rpc = admin.rpc.bind(admin) as unknown as ServerRpc;
-  const { data, error } = await rpc(functionName, args);
+  const { data, error } = await rpc(functionName, args).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
   if (error) throw new Error(error.code || "OPERATION_FAILED");
   return data;
 }
