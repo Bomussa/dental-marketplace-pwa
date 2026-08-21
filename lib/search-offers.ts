@@ -1,3 +1,4 @@
+import { OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import type { SearchOffer } from "@/lib/models";
 
@@ -89,7 +90,7 @@ export async function searchLiveOffers(input: LiveSearchInput) {
       p_lat: input.lat ?? undefined,
       p_lng: input.lng ?? undefined,
       p_radius_km: input.radius,
-    }),
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS)),
   ]);
 
   const allOffers = (data ?? []) as SearchOffer[];

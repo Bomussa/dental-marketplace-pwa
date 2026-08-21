@@ -189,12 +189,13 @@ export const attendanceReversalSchema = z.object({
   reason: z.string().trim().min(3).max(500),
 });
 
+export function isIsoCalendarDate(value: string) {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return /^[1-9]\d{3}-\d{2}-\d{2}$/.test(value) && Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
 const isoDate = z.string()
-  .regex(/^[1-9]\d{3}-\d{2}-\d{2}$/)
-  .refine((value) => {
-    const parsed = new Date(`${value}T00:00:00.000Z`);
-    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-  }, { message: "تاريخ غير صالح" });
+  .refine(isIsoCalendarDate, { message: "تاريخ غير صالح" });
 export const settlementPeriodSchema = z.object({
   clinic_id: uuid,
   period_start: isoDate,

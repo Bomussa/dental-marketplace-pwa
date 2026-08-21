@@ -2,8 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { clinicActivityReport, type ActivityReportGranularity } from "@/lib/operations.server";
+import { clinicActivityReport, OPERATIONAL_RPC_TIMEOUT_MS, type ActivityReportGranularity } from "@/lib/operations.server";
 import { getLocale } from "@/lib/i18n";
+import { isIsoCalendarDate } from "@/lib/validation";
 import { accountNationality } from "@/lib/account-copy";
 import { clinicPriceType, clinicRole, clinicStatus, getClinicCopy } from "@/lib/clinic-copy";
 import { effectiveClinicRole } from "@/lib/clinic-role-display";
@@ -34,7 +35,7 @@ function qatarDate(daysOffset = 0) {
 }
 
 function validDate(value: string | undefined, fallback: string) {
-  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
+  return value && isIsoCalendarDate(value) ? value : fallback;
 }
 
 function activityGranularity(value: string | undefined): ActivityReportGranularity {
@@ -101,7 +102,7 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
   const canManageOperatorAccounts = selectedClinic?.status === "active" && memberships.some((membership) => membership.clinic_id === selectedClinicId && membership.role === "owner" && membership.status === "active");
 
   const patientDetailsPromise = bookingIds.length
-    ? supabase.rpc("clinic_booking_patient_details", { p_booking_ids: bookingIds })
+    ? supabase.rpc("clinic_booking_patient_details", { p_booking_ids: bookingIds }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS))
     : Promise.resolve({ data: [] as BookingPatientDetails[] });
   const attendancePromise = bookingIds.length
     ? supabase.from("booking_attendance_events").select("*").in("booking_id", bookingIds)
@@ -110,7 +111,7 @@ export default async function ClinicPage({ searchParams }: { searchParams: Promi
     ? clinicActivityReport({ clinicId: selectedClinicId, periodStart: activityStart, periodEnd: activityEnd, granularity: activityGranularityValue }).then(parseActivityReport).catch(() => null)
     : Promise.resolve(null);
   const operatorAccountsPromise = canManageOperatorAccounts
-    ? createAdminClient().rpc("list_clinic_operator_accounts_server", { p_actor_id: userId, p_clinic_id: selectedClinicId })
+    ? createAdminClient().rpc("list_clinic_operator_accounts_server", { p_actor_id: userId, p_clinic_id: selectedClinicId }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS))
     : Promise.resolve({ data: [] as ClinicOperatorAccount[] });
   const [
     { data: patientDetailsData },

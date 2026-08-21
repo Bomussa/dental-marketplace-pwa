@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { financialReportSummary, platformActivityReport, type ActivityReportGranularity } from "@/lib/operations.server";
+import { financialReportSummary, OPERATIONAL_RPC_TIMEOUT_MS, platformActivityReport, type ActivityReportGranularity } from "@/lib/operations.server";
 import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
 import { getLocale, type Locale } from "@/lib/i18n";
+import { isIsoCalendarDate } from "@/lib/validation";
 import { adminPriceType, adminStatus, getAdminCopy } from "@/lib/admin-copy";
 import { AdminChoiceAnalytics } from "@/components/admin-choice-analytics";
 import { AdminLiveRefresh } from "@/components/admin-analytics-live-refresh";
@@ -38,7 +39,7 @@ function qatarDate(daysOffset = 0) {
 }
 
 function validDate(value: string | undefined, fallback: string) {
-  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
+  return value && isIsoCalendarDate(value) ? value : fallback;
 }
 
 function activityGranularity(value: string | undefined): ActivityReportGranularity {
@@ -117,7 +118,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     supabase.from("treatment_variants").select("id,catalog_id,variant_key,name_ar,name_en,attributes,active,updated_at").order("variant_key").limit(200),
     supabase.from("branch_service_offers").select("id,branch_id,variant_id,price_type,min_minor,max_minor,duration_minutes,status,updated_at,price_scope,included_items,excluded_items,visit_count,follow_up_terms,notes").order("updated_at", { ascending: false }).limit(80),
     supabase.from("availability_slots").select("id,branch_id,variant_id,start_at,end_at,status,updated_at").order("start_at").limit(80),
-    supabase.rpc("admin_customer_choice_analytics", { p_days: days }),
+    supabase.rpc("admin_customer_choice_analytics", { p_days: days }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS)),
   ]);
 
   const clinicRows = clinics ?? [];

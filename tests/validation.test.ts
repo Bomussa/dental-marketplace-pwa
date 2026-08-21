@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, financialReportSchema, notificationTemplateSchema, offerSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
+import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, financialReportSchema, isIsoCalendarDate, notificationTemplateSchema, offerSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -94,6 +94,12 @@ describe("validation", () => {
     expect(financialReportSchema.safeParse(input).success).toBe(true);
     expect(financialReportSchema.safeParse({ ...input, period_start: "2026-02-30" }).success).toBe(false);
     expect(financialReportSchema.safeParse({ ...input, period_start: "2020-01-01", period_end: "2026-01-01" }).success).toBe(false);
+  });
+
+  it("shares strict calendar-date validation with dashboard query inputs", () => {
+    expect(isIsoCalendarDate("2024-02-29")).toBe(true);
+    expect(isIsoCalendarDate("2026-02-30")).toBe(false);
+    expect(isIsoCalendarDate("2026-2-03")).toBe(false);
   });
 
   it("requires secure credentials when the owner provisions either clinic operator account", () => {
