@@ -132,3 +132,7 @@ for (const level of requestedLevels) {
 }
 
 console.log(JSON.stringify(report, null, 2));
+
+if (report.rounds.some((round) => round.failed > 0)) {
+  process.exitCode = 1;
+}
