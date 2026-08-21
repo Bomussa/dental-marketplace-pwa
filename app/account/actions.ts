@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
+import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { passwordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, usernameSchema, uuid } from "@/lib/validation";
@@ -64,17 +64,17 @@ export async function activateLoginCredentials(formData: FormData) {
 
   const { userId } = await requireUser();
   const admin = requireAdmin(() => credentialsActionError("unavailable"));
-  const { data: existing, error: existingError } = await admin.from("account_usernames").select("user_id").eq("user_id", userId).maybeSingle();
+  const { data: existing, error: existingError } = await withOperationalTimeout(admin.from("account_usernames").select("user_id").eq("user_id", userId).maybeSingle()).catch(() => credentialsActionError("unavailable"));
   if (existingError) return credentialsActionError("unavailable");
   if (existing) return credentialsActionError("invalid");
 
-  const { error: usernameError } = await admin.from("account_usernames").insert({ user_id: userId, username: parsed.data.username });
+  const { error: usernameError } = await withOperationalTimeout(admin.from("account_usernames").insert({ user_id: userId, username: parsed.data.username })).catch(() => credentialsActionError("unavailable"));
   if (usernameError?.code === "23505") return credentialsActionError("username_taken");
   if (usernameError) return credentialsActionError("unavailable");
 
-  const { error: passwordError } = await admin.auth.admin.updateUserById(userId, { password: parsed.data.password });
+  const { error: passwordError } = await withOperationalTimeout(admin.auth.admin.updateUserById(userId, { password: parsed.data.password })).catch(() => credentialsActionError("unavailable"));
   if (passwordError) {
-    await admin.from("account_usernames").delete().eq("user_id", userId);
+    await withOperationalTimeout(admin.from("account_usernames").delete().eq("user_id", userId)).catch(() => undefined);
     return credentialsActionError("unavailable");
   }
 
@@ -99,18 +99,20 @@ export async function createPatientProfile(formData: FormData) {
   const admin = requireAdmin(() => profileActionError("unavailable"));
 
   if (input.relationship === "self") {
-    const { data: selfProfile, error } = await admin
-      .from("patient_profiles")
-      .select("id")
-      .eq("account_id", userId)
-      .eq("relationship", "self")
-      .is("archived_at", null)
-      .maybeSingle();
+    const { data: selfProfile, error } = await withOperationalTimeout(
+      admin
+        .from("patient_profiles")
+        .select("id")
+        .eq("account_id", userId)
+        .eq("relationship", "self")
+        .is("archived_at", null)
+        .maybeSingle(),
+    ).catch(() => profileActionError("unavailable"));
     if (error) return profileActionError("unavailable");
     if (selfProfile) return profileActionError("self_exists");
   }
 
-  const { error } = await admin.from("patient_profiles").insert({
+  const { error } = await withOperationalTimeout(admin.from("patient_profiles").insert({
     account_id: userId,
     display_name: input.display_name,
     relationship: input.relationship,
@@ -120,7 +122,7 @@ export async function createPatientProfile(formData: FormData) {
     phone: input.phone,
     phone_verified_at: null,
     gender: input.gender ?? null,
-  });
+  })).catch(() => profileActionError("unavailable"));
   if (error?.code === "23505") return profileActionError("invalid");
   if (error) return profileActionError("unavailable");
 
@@ -135,21 +137,25 @@ export async function archivePatientProfile(formData: FormData) {
 
   const { userId } = await requireUser();
   const admin = requireAdmin(() => profileActionError("unavailable"));
-  const { data: profile, error: readError } = await admin
-    .from("patient_profiles")
-    .select("id,relationship")
-    .eq("id", input.patient_profile_id)
-    .eq("account_id", userId)
-    .is("archived_at", null)
-    .maybeSingle();
+  const { data: profile, error: readError } = await withOperationalTimeout(
+    admin
+      .from("patient_profiles")
+      .select("id,relationship")
+      .eq("id", input.patient_profile_id)
+      .eq("account_id", userId)
+      .is("archived_at", null)
+      .maybeSingle(),
+  ).catch(() => profileActionError("unavailable"));
   if (readError || !profile) return profileActionError("invalid");
   if (profile.relationship === "self") return profileActionError("cannot_archive_self");
 
-  const { error } = await admin
-    .from("patient_profiles")
-    .update({ archived_at: new Date().toISOString() })
-    .eq("id", profile.id)
-    .eq("account_id", userId);
+  const { error } = await withOperationalTimeout(
+    admin
+      .from("patient_profiles")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", profile.id)
+      .eq("account_id", userId),
+  ).catch(() => profileActionError("unavailable"));
   if (error) return profileActionError("unavailable");
 
   revalidatePath("/account");
@@ -183,15 +189,17 @@ export async function submitReview(formData: FormData) {
   if (!parsed.success) return reviewActionError("invalid");
 
   const { supabase, userId } = await requireUser();
-  const { data: booking, error: bookingError } = await supabase
-    .from("bookings")
-    .select("id,clinic_id,practitioner_id,status")
-    .eq("id", parsed.data.booking_id)
-    .maybeSingle();
+  const { data: booking, error: bookingError } = await withOperationalTimeout(
+    supabase
+      .from("bookings")
+      .select("id,clinic_id,practitioner_id,status")
+      .eq("id", parsed.data.booking_id)
+      .maybeSingle(),
+  ).catch(() => reviewActionError("unavailable"));
   if (bookingError) return reviewActionError("unavailable");
   if (!booking || booking.status !== "completed") return reviewActionError("not_eligible");
 
-  const { error } = await supabase.from("reviews").insert({
+  const { error } = await withOperationalTimeout(supabase.from("reviews").insert({
     booking_id: booking.id,
     patient_id: userId,
     clinic_id: booking.clinic_id,
@@ -199,7 +207,7 @@ export async function submitReview(formData: FormData) {
     rating: parsed.data.rating,
     review_text: parsed.data.review_text || null,
     status: "pending",
-  });
+  })).catch(() => reviewActionError("unavailable"));
   if (error) {
     if (error.code === "23505") return reviewActionError("duplicate");
     if (error.code === "42501") return reviewActionError("forbidden");
