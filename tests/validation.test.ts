@@ -80,6 +80,7 @@ describe("validation", () => {
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "//unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/\\unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%2F%2Funsafe.example" }).success).toBe(false);
+    expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%252F%252Funsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%5Cunsafe.example" }).success).toBe(false);
   });
 

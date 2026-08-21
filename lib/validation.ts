@@ -303,7 +303,12 @@ export const passwordSchema = z.string().min(12, "كلمة المرور يجب �
 
 export function isSafeInternalRedirectPath(value: string) {
   try {
-    const decoded = decodeURIComponent(value);
+    let decoded = value;
+    for (let pass = 0; pass < 8; pass += 1) {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    }
     return decoded.startsWith("/") && !decoded.startsWith("//") && !decoded.includes("\\");
   } catch {
     return false;
