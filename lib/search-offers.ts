@@ -1,4 +1,4 @@
-import { OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
+import { OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import type { SearchOffer } from "@/lib/models";
 
@@ -84,7 +84,7 @@ function qatarDate(date: Date) {
 export async function searchLiveOffers(input: LiveSearchInput) {
   const supabase = await createClient();
   const [{ data: variant }, { data, error }] = await Promise.all([
-    supabase.from("treatment_variants").select("name_ar,name_en").eq("id", input.variant).single(),
+    withOperationalTimeout(supabase.from("treatment_variants").select("name_ar,name_en").eq("id", input.variant).single()),
     supabase.rpc("search_dental_offers", {
       p_variant_id: input.variant,
       p_lat: input.lat ?? undefined,

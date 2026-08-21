@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { financialReportSummary, OPERATIONAL_RPC_TIMEOUT_MS, platformActivityReport, type ActivityReportGranularity } from "@/lib/operations.server";
+import { financialReportSummary, OPERATIONAL_RPC_TIMEOUT_MS, platformActivityReport, type ActivityReportGranularity, withOperationalTimeout } from "@/lib/operations.server";
 import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
 import { getLocale, type Locale } from "@/lib/i18n";
 import { isIsoCalendarDate } from "@/lib/validation";
@@ -102,7 +102,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     { data: adminOffers },
     { data: adminSlots },
     analyticsResult,
-  ] = await Promise.all([
+  ] = await withOperationalTimeout(Promise.all([
     supabase.from("clinics").select("id,display_name,legal_name,status,created_at").order("created_at", { ascending: false }).limit(50),
     supabase.from("branches").select("id,clinic_id,name,status,area").order("created_at", { ascending: false }).limit(100),
     supabase.from("practitioners").select("id,clinic_id,display_name,active,license_ref").limit(100),
@@ -119,7 +119,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     supabase.from("branch_service_offers").select("id,branch_id,variant_id,price_type,min_minor,max_minor,duration_minutes,status,updated_at,price_scope,included_items,excluded_items,visit_count,follow_up_terms,notes").order("updated_at", { ascending: false }).limit(80),
     supabase.from("availability_slots").select("id,branch_id,variant_id,start_at,end_at,status,updated_at").order("start_at").limit(80),
     supabase.rpc("admin_customer_choice_analytics", { p_days: days }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS)),
-  ]);
+  ]));
 
   const clinicRows = clinics ?? [];
   const branchNameById = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));

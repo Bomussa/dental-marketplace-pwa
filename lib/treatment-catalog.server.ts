@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import type { Treatment, TreatmentVariant } from "@/lib/models";
 import type { Database } from "@/lib/database.types";
+import { withOperationalTimeout } from "@/lib/operations.server";
 
 export const ACTIVE_TREATMENT_CATALOG_TAG = "active-treatment-catalog";
 
@@ -21,8 +22,8 @@ const readActiveTreatmentCatalog = unstable_cache(
   async () => {
     const supabase = createPublicCatalogClient();
     const [{ data: treatments, error: treatmentsError }, { data: variants, error: variantsError }] = await Promise.all([
-      supabase.from("treatment_catalog").select("id,code,category,name_ar,name_en").eq("active", true).order("category").order("name_ar"),
-      supabase.from("treatment_variants").select("id,catalog_id,variant_key,name_ar,name_en").eq("active", true).order("name_ar"),
+      withOperationalTimeout(supabase.from("treatment_catalog").select("id,code,category,name_ar,name_en").eq("active", true).order("category").order("name_ar")),
+      withOperationalTimeout(supabase.from("treatment_variants").select("id,catalog_id,variant_key,name_ar,name_en").eq("active", true).order("name_ar")),
     ]);
 
     return {
