@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { passwordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, usernameSchema, uuid } from "@/lib/validation";
@@ -165,7 +165,7 @@ export async function cancelBooking(formData: FormData) {
   const { error } = await admin.rpc("cancel_booking_server", {
     p_actor_id: userId,
     p_booking_id: parsed.data.booking_id,
-  });
+  }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
 
   if (error) {
     if (error.code === "42501") return bookingActionError("forbidden");

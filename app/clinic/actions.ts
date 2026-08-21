@@ -6,7 +6,7 @@ import { z } from "zod";
 import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
-import { changeClinicBookingStatus, checkInBooking, requestOfferRevision, reverseAttendance } from "@/lib/operations.server";
+import { changeClinicBookingStatus, checkInBooking, OPERATIONAL_RPC_TIMEOUT_MS, requestOfferRevision, reverseAttendance } from "@/lib/operations.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -54,7 +54,7 @@ export async function applyClinic(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("applyClinic");
   const supabase = await requireUser();
   try {
-    const { data, error } = await supabase.rpc("create_clinic_application", { p_legal_name: parsed.data.legal_name, p_display_name: parsed.data.display_name });
+    const { data, error } = await supabase.rpc("create_clinic_application", { p_legal_name: parsed.data.legal_name, p_display_name: parsed.data.display_name }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
     if (error) throw new Error(error.code);
     if (typeof data !== "string") throw new Error("OPERATION_FAILED");
     revalidatePath("/clinic");
@@ -109,7 +109,7 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
       p_clinic_id: parsed.data.clinic_id,
       p_user_id: created.user.id,
       p_username: parsed.data.username,
-    });
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
     if (error) throw new Error(error.code || "OPERATION_FAILED");
     revalidatePath("/clinic");
   } catch (error) {
@@ -131,7 +131,7 @@ export async function revokeClinicOperatorAccount(formData: FormData): Promise<v
     const { error } = await admin.rpc("revoke_clinic_operator_account_server", {
       p_actor_id: actorId,
       p_operator_account_id: parsed.data.operator_account_id,
-    });
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
     if (error) throw new Error(error.code || "OPERATION_FAILED");
     revalidatePath("/clinic");
   } catch (error) {
@@ -151,7 +151,7 @@ export async function createBranch(formData: FormData): Promise<void> {
       p_address_line: parsed.data.address_line || undefined,
       p_lat: parsed.data.lat === "" || parsed.data.lat === undefined ? undefined : parsed.data.lat,
       p_lng: parsed.data.lng === "" || parsed.data.lng === undefined ? undefined : parsed.data.lng,
-    });
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
     if (error) throw new Error(error.code);
     if (typeof data !== "string") throw new Error("OPERATION_FAILED");
     revalidatePath("/clinic");

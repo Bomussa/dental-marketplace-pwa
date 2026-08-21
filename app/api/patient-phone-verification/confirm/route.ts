@@ -5,7 +5,7 @@ import {
   readPublicWriteRequestTextWithinLimit,
 } from "@/lib/public-write-request-guard";
 import { confirmPhoneVerification, PhoneVerificationProviderError, PhoneVerificationUnavailableError } from "@/lib/phone-verification.server";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
 import { patientPhoneVerificationConfirmSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -21,6 +21,13 @@ type PhoneVerificationRpcError = {
   code?: string;
 };
 
+type PhoneVerificationRpcRequest = PromiseLike<{
+  data: PhoneVerificationCompletion[] | null;
+  error: PhoneVerificationRpcError | null;
+}> & {
+  abortSignal(signal: AbortSignal): PhoneVerificationRpcRequest;
+};
+
 type PhoneVerificationRpcClient = {
   rpc: (
     fn: "complete_patient_phone_verification_server",
@@ -29,10 +36,7 @@ type PhoneVerificationRpcClient = {
       p_challenge_id: string;
       p_patient_profile_id: string;
     },
-  ) => PromiseLike<{
-    data: PhoneVerificationCompletion[] | null;
-    error: PhoneVerificationRpcError | null;
-  }>;
+  ) => PhoneVerificationRpcRequest;
 };
 
 function json(body: unknown, status = 200, headers?: HeadersInit) {
@@ -52,7 +56,7 @@ async function finalizePhoneVerification(
     p_actor_id: userId,
     p_challenge_id: challengeId,
     p_patient_profile_id: patientProfileId,
-  });
+  }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
   const completed = data?.[0] ?? null;
   if (error || !completed?.profile_id || !completed?.verified_at) return { completed: null, error };
   return { completed, error: null };
