@@ -9,7 +9,15 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { data } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null }));
-  if (data?.claims) await withOperationalTimeout(supabase.auth.signOut()).catch(() => undefined);
+  const claimsResult = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => null);
+  if (claimsResult === null) {
+    return NextResponse.json({ error: "signout_unavailable" }, { status: 503, headers: { "cache-control": "no-store" } });
+  }
+  if (claimsResult.data?.claims) {
+    const signOutResult = await withOperationalTimeout(supabase.auth.signOut()).catch(() => null);
+    if (signOutResult === null || signOutResult.error) {
+      return NextResponse.json({ error: "signout_unavailable" }, { status: 503, headers: { "cache-control": "no-store" } });
+    }
+  }
   return NextResponse.redirect(new URL("/", request.url), { status: 303 });
 }
