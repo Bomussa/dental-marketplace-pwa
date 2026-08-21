@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const OPERATIONAL_RPC_TIMEOUT_MS = 15_000;
+const DEVICE_INSTALLATION_UNAUTHORIZED_RETRY_DELAY_MS = 100;
 
 export function withOperationalTimeout<T>(operation: PromiseLike<T>, timeoutMs = OPERATIONAL_RPC_TIMEOUT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -47,6 +48,7 @@ async function callOperationalRpc<T extends keyof import("@/lib/database.types")
 type ServerRpcResult = {
   data: unknown;
   error: { code?: string } | null;
+  status: number;
 };
 
 type ServerRpcRequest = PromiseLike<ServerRpcResult> & {
@@ -55,14 +57,43 @@ type ServerRpcRequest = PromiseLike<ServerRpcResult> & {
 
 type ServerRpc = (functionName: string, args: Record<string, unknown>) => ServerRpcRequest;
 
-async function callServerRpc(functionName: string, args: Record<string, unknown>) {
+async function serverRpcResult(functionName: string, args: Record<string, unknown>) {
   const admin = createAdminClient();
   // Keep newly-added server-only RPCs usable immediately after a migration even
   // before the checked-in generated Database type file is refreshed.
   const rpc = admin.rpc.bind(admin) as unknown as ServerRpc;
-  const { data, error } = await rpc(functionName, args).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+  return rpc(functionName, args).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+}
+
+async function callServerRpc(functionName: string, args: Record<string, unknown>) {
+  const { data, error } = await serverRpcResult(functionName, args);
   if (error) throw new Error(error.code || "OPERATION_FAILED");
   return data;
+}
+
+async function callServerRpcWithSingleUnauthorizedRetry(functionName: string, args: Record<string, unknown>) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = await serverRpcResult(functionName, args);
+    if (!result.error) return result.data;
+
+    // A 401 is rejected before the RPC reaches Postgres. Retrying it once with a
+    // fresh admin client is therefore safe for this idempotent registration path
+    // and specifically covers the transient gateway rejection observed in production.
+    if (result.status === 401 && attempt === 0) {
+      await new Promise((resolve) => setTimeout(resolve, DEVICE_INSTALLATION_UNAUTHORIZED_RETRY_DELAY_MS));
+      continue;
+    }
+
+    throw new Error(result.error.code || `HTTP_${result.status}`);
+  }
+
+  throw new Error("OPERATION_FAILED");
+}
+
+function rateLimitSubjectKey(scope: string, subject: string) {
+  const normalized = subject.trim();
+  if (!normalized) throw new Error("RATE_LIMIT_SUBJECT_INVALID");
+  return createHash("sha256").update(`${scope}:${normalized}`).digest("hex");
 }
 
 export async function consumeRateLimit(input: {
@@ -71,9 +102,7 @@ export async function consumeRateLimit(input: {
   maxRequests: number;
   windowSeconds: number;
 }) {
-  const subject = input.subject.trim();
-  if (!subject) throw new Error("RATE_LIMIT_SUBJECT_INVALID");
-  const subjectKey = createHash("sha256").update(`${input.scope}:${subject}`).digest("hex");
+  const subjectKey = rateLimitSubjectKey(input.scope, input.subject);
   const allowed = await callOperationalRpc("consume_rate_limit_server", {
     p_scope: input.scope,
     p_subject_key: subjectKey,
@@ -101,6 +130,34 @@ export async function registerDeviceInstallation(input: {
     p_device_class: input.deviceClass,
     p_app_version: input.appVersion ?? null,
   });
+}
+
+export type DeviceInstallationRegistrationResult = "ok" | "client_rate_limited" | "installation_rate_limited";
+
+export async function registerDeviceInstallationGuarded(input: {
+  accountId: string | null;
+  installationId: string;
+  clientSubject: string;
+  deviceLabel?: string;
+  platform?: string;
+  browser?: string;
+  deviceClass: "mobile" | "tablet" | "desktop" | "unknown";
+  appVersion?: string;
+}): Promise<DeviceInstallationRegistrationResult> {
+  const result = await callServerRpcWithSingleUnauthorizedRetry("register_device_installation_guarded_server", {
+    p_account_id: input.accountId,
+    p_installation_id: input.installationId,
+    p_device_label: input.deviceLabel ?? null,
+    p_platform: input.platform ?? null,
+    p_browser: input.browser ?? null,
+    p_device_class: input.deviceClass,
+    p_app_version: input.appVersion ?? null,
+    p_client_subject_key: rateLimitSubjectKey("device_installation", `client:${input.clientSubject}`),
+    p_installation_subject_key: rateLimitSubjectKey("device_installation", `installation:${input.installationId}`),
+  });
+
+  if (result === "ok" || result === "client_rate_limited" || result === "installation_rate_limited") return result;
+  throw new Error("DEVICE_INSTALLATION_RESULT_INVALID");
 }
 
 export async function requestOfferRevision(input: {
@@ -164,13 +221,7 @@ export async function changeClinicBookingStatus(input: {
   });
 }
 
-export async function createSettlementPeriod(input: {
-  clinicId: string;
-  periodStart: string;
-  periodEnd: string;
-  periodKind: "weekly" | "monthly" | "annual" | "manual";
-  notes?: string;
-}) {
+export async function createSettlementPeriod(input: { clinicId: string; periodStart: string; periodEnd: string; periodKind: "weekly" | "monthly" | "annual" | "manual"; notes?: string }) {
   const actorId = await verifiedActor();
   return callOperationalRpc("create_settlement_period_server", {
     p_actor_id: actorId,
@@ -182,12 +233,7 @@ export async function createSettlementPeriod(input: {
   });
 }
 
-export async function verifyAndActivateSubject(input: {
-  subjectType: "clinic" | "branch" | "practitioner";
-  subjectId: string;
-  source: string;
-  identifier?: string;
-}) {
+export async function verifyAndActivateSubject(input: { subjectType: "clinic" | "branch" | "practitioner"; subjectId: string; source: string; identifier?: string }) {
   const actorId = await verifiedActor();
   return callServerRpc("verify_and_activate_server", {
     p_actor_id: actorId,
@@ -210,11 +256,7 @@ export async function financialReportSummary(input: { clinicId: string; periodSt
 
 export type ActivityReportGranularity = "hourly" | "daily" | "weekly" | "monthly";
 
-export async function platformActivityReport(input: {
-  periodStart: string;
-  periodEnd: string;
-  granularity: ActivityReportGranularity;
-}) {
+export async function platformActivityReport(input: { periodStart: string; periodEnd: string; granularity: ActivityReportGranularity }) {
   const actorId = await verifiedActor();
   return callOperationalRpc("platform_activity_report_server", {
     p_actor_id: actorId,
@@ -224,12 +266,7 @@ export async function platformActivityReport(input: {
   });
 }
 
-export async function clinicActivityReport(input: {
-  clinicId: string;
-  periodStart: string;
-  periodEnd: string;
-  granularity: ActivityReportGranularity;
-}) {
+export async function clinicActivityReport(input: { clinicId: string; periodStart: string; periodEnd: string; granularity: ActivityReportGranularity }) {
   const actorId = await verifiedActor();
   return callOperationalRpc("clinic_activity_report_server", {
     p_actor_id: actorId,
