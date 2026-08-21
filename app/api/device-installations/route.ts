@@ -7,13 +7,11 @@ import {
 } from "@/lib/public-write-request-guard";
 import { createClient } from "@/lib/supabase/server";
 import { deviceInstallationSchema } from "@/lib/validation";
-import { consumeRateLimit, registerDeviceInstallation, withOperationalTimeout } from "@/lib/operations.server";
+import { registerDeviceInstallationGuarded, withOperationalTimeout } from "@/lib/operations.server";
 
 const MAX_DEVICE_INSTALLATION_BYTES = 4 * 1024;
-const DEVICE_INSTALLATION_CLIENT_WINDOW_SECONDS = 60;
-const MAX_DEVICE_INSTALLATIONS_PER_CLIENT_WINDOW = 20;
-const DEVICE_INSTALLATION_ID_WINDOW_SECONDS = 60 * 60;
-const MAX_DEVICE_INSTALLATIONS_PER_ID_WINDOW = 60;
+const DEVICE_INSTALLATION_CLIENT_RETRY_AFTER_SECONDS = 60;
+const DEVICE_INSTALLATION_ID_RETRY_AFTER_SECONDS = 60 * 60;
 
 function json(body: unknown, status: number, headers?: HeadersInit) {
   return NextResponse.json(body, {
@@ -41,44 +39,16 @@ export async function POST(request: Request) {
   const parsed = deviceInstallationSchema.safeParse(body);
   if (!parsed.success) return json({ error: "بيانات التثبيت غير صالحة" }, 400);
 
-  let clientRateAllowed;
-  let installationRateAllowed;
-  try {
-    [clientRateAllowed, installationRateAllowed] = await Promise.all([
-      consumeRateLimit({
-        scope: "device_installation",
-        subject: `client:${publicWriteRequestClientKey(request)}`,
-        maxRequests: MAX_DEVICE_INSTALLATIONS_PER_CLIENT_WINDOW,
-        windowSeconds: DEVICE_INSTALLATION_CLIENT_WINDOW_SECONDS,
-      }),
-      consumeRateLimit({
-        scope: "device_installation",
-        subject: `installation:${parsed.data.installation_id}`,
-        maxRequests: MAX_DEVICE_INSTALLATIONS_PER_ID_WINDOW,
-        windowSeconds: DEVICE_INSTALLATION_ID_WINDOW_SECONDS,
-      }),
-    ]);
-  } catch {
-    return json({ error: "خدمة حماية التثبيت غير متاحة مؤقتًا" }, 503);
-  }
-
-  if (!clientRateAllowed || !installationRateAllowed) {
-    const retryAfter = !clientRateAllowed ? DEVICE_INSTALLATION_CLIENT_WINDOW_SECONDS : DEVICE_INSTALLATION_ID_WINDOW_SECONDS;
-    return json(
-      { error: "تم تجاوز عدد محاولات التثبيت المسموح به مؤقتًا." },
-      429,
-      { "retry-after": String(retryAfter) },
-    );
-  }
-
   const supabase = await createClient();
   const { data: claimsData } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null }));
   const accountId = typeof claimsData?.claims?.sub === "string" ? claimsData.claims.sub : null;
 
+  let result;
   try {
-    await registerDeviceInstallation({
+    result = await registerDeviceInstallationGuarded({
       accountId,
       installationId: parsed.data.installation_id,
+      clientSubject: publicWriteRequestClientKey(request),
       deviceLabel: parsed.data.device_label,
       platform: parsed.data.platform,
       browser: parsed.data.browser,
@@ -86,8 +56,24 @@ export async function POST(request: Request) {
       appVersion: parsed.data.app_version,
     });
   } catch (error) {
-    console.error("device_installation_upsert_failed", { code: error instanceof Error ? error.message : "UNKNOWN" });
+    console.error("device_installation_registration_failed", { code: error instanceof Error ? error.message : "UNKNOWN" });
     return json({ error: "تعذر تحديث التثبيت" }, 503);
+  }
+
+  if (result === "client_rate_limited") {
+    return json(
+      { error: "تم تجاوز عدد محاولات التثبيت المسموح به مؤقتًا." },
+      429,
+      { "retry-after": String(DEVICE_INSTALLATION_CLIENT_RETRY_AFTER_SECONDS) },
+    );
+  }
+
+  if (result === "installation_rate_limited") {
+    return json(
+      { error: "تم تجاوز عدد محاولات التثبيت المسموح به مؤقتًا." },
+      429,
+      { "retry-after": String(DEVICE_INSTALLATION_ID_RETRY_AFTER_SECONDS) },
+    );
   }
 
   return json({ ok: true }, 200);
