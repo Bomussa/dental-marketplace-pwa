@@ -10,7 +10,7 @@ import { passwordSchema, patientProfileArchiveSchema, patientProfileSchema, revi
 
 async function requireUser() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims());
   if (error || !data?.claims?.sub) redirect("/login?next=/account");
   return { supabase, userId: data.claims.sub };
 }

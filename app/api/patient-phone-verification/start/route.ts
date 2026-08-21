@@ -16,7 +16,7 @@ const MAX_PHONE_VERIFICATION_START_BYTES = 8 * 1024;
 export async function POST(request: Request) {
   try {
   const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null, error: new Error("OPERATION_TIMEOUT") }));
   const userId = claimsData?.claims?.sub;
   if (claimsError || !userId) return NextResponse.json({ error: "يلزم تسجيل الدخول قبل التحقق من الهاتف." }, { status: 401 });
 

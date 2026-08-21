@@ -64,7 +64,7 @@ async function finalizePhoneVerification(
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null, error: new Error("OPERATION_TIMEOUT") }));
   const userId = claimsData?.claims?.sub;
   if (claimsError || !userId) return json({ error: "يلزم تسجيل الدخول قبل تأكيد الرمز." }, 401);
 

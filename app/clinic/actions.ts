@@ -27,7 +27,7 @@ import {
 
 async function requireUser() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims());
   if (error || !data?.claims?.sub) redirect("/login?next=/clinic");
   return supabase;
 }
@@ -68,7 +68,7 @@ export async function createClinicOperatorAccount(formData: FormData): Promise<v
   if (!parsed.success) validationFailure("createClinicOperatorAccount");
 
   const supabase = await requireUser();
-  const { data: actorClaims, error: actorClaimsError } = await supabase.auth.getClaims();
+  const { data: actorClaims, error: actorClaimsError } = await withOperationalTimeout(supabase.auth.getClaims());
   const actorId = actorClaims?.claims?.sub;
   if (actorClaimsError || !actorId) redirect("/login?next=/clinic");
 
@@ -124,7 +124,7 @@ export async function revokeClinicOperatorAccount(formData: FormData): Promise<v
   const parsed = clinicOperatorAccountIdSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) validationFailure("revokeClinicOperatorAccount");
   const supabase = await requireUser();
-  const { data: actorClaims, error: actorClaimsError } = await supabase.auth.getClaims();
+  const { data: actorClaims, error: actorClaimsError } = await withOperationalTimeout(supabase.auth.getClaims());
   const actorId = actorClaims?.claims?.sub;
   if (actorClaimsError || !actorId) redirect("/login?next=/clinic");
 

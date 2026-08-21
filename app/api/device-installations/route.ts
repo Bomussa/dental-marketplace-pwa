@@ -7,7 +7,7 @@ import {
 } from "@/lib/public-write-request-guard";
 import { createClient } from "@/lib/supabase/server";
 import { deviceInstallationSchema } from "@/lib/validation";
-import { consumeRateLimit, registerDeviceInstallation } from "@/lib/operations.server";
+import { consumeRateLimit, registerDeviceInstallation, withOperationalTimeout } from "@/lib/operations.server";
 
 const MAX_DEVICE_INSTALLATION_BYTES = 4 * 1024;
 const DEVICE_INSTALLATION_CLIENT_WINDOW_SECONDS = 60;
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
+  const { data: claimsData } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null }));
   const accountId = typeof claimsData?.claims?.sub === "string" ? claimsData.claims.sub : null;
 
   try {

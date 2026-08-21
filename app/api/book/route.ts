@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { bookingSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS } from "@/lib/operations.server";
+import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 import {
   publicWriteRequestBodyIsTooLarge,
   publicWriteRequestOriginIsAllowed,
@@ -17,7 +17,7 @@ function json(body: unknown, status: number, headers?: HeadersInit) {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null, error: new Error("OPERATION_TIMEOUT") }));
   const userId = claimsData?.claims?.sub;
   if (claimsError || !userId) return json({ error: "يلزم تسجيل الدخول قبل الحجز" }, 401);
 

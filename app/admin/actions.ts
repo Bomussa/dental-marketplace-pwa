@@ -14,7 +14,7 @@ import { adminOfferUpdateSchema, adminSlotUpdateSchema, featureFlagUpdateSchema,
 
 async function requireAdmin() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims());
   const meta = (data?.claims?.app_metadata ?? {}) as Record<string, unknown>;
   if (error || !data?.claims?.sub || meta.platform_admin !== true) redirect("/");
   return supabase;
@@ -174,7 +174,7 @@ export async function updateAdminOffer(formData: FormData): Promise<void> {
   const supabase = await requireAdmin();
   try {
     const money = priceInputsToMinor(parsed.data.price_type, formData.get("min_qar"), formData.get("max_qar"));
-    const { data: claims } = await supabase.auth.getClaims();
+    const { data: claims } = await withOperationalTimeout(supabase.auth.getClaims());
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
     const result = await withOperationalTimeout(supabase.from("branch_service_offers").update({
@@ -251,7 +251,7 @@ export async function createSupportKnowledgeArticle(formData: FormData): Promise
   if (!parsed.success) validationFailure("createSupportKnowledgeArticle");
   const supabase = await requireAdmin();
   try {
-    const { data: claims } = await supabase.auth.getClaims();
+    const { data: claims } = await withOperationalTimeout(supabase.auth.getClaims());
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
     const result = await withOperationalTimeout(supabase.from("support_knowledge_articles").insert({ ...parsed.data, status: "draft", created_by: actorId }).select("id").single());
@@ -267,7 +267,7 @@ export async function approveSupportKnowledgeArticle(formData: FormData): Promis
   if (!parsed.success) validationFailure("approveSupportKnowledgeArticle");
   const supabase = await requireAdmin();
   try {
-    const { data: claims } = await supabase.auth.getClaims();
+    const { data: claims } = await withOperationalTimeout(supabase.auth.getClaims());
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
     const result = await withOperationalTimeout(supabase.from("support_knowledge_articles").update({ status: "approved", approved_by: actorId, approved_at: new Date().toISOString() }).eq("id", parsed.data.id).eq("status", "draft").select("id").maybeSingle());
@@ -296,7 +296,7 @@ export async function createNotificationTemplate(formData: FormData): Promise<vo
   if (!parsed.success) validationFailure("createNotificationTemplate");
   const supabase = await requireAdmin();
   try {
-    const { data: claims } = await supabase.auth.getClaims();
+    const { data: claims } = await withOperationalTimeout(supabase.auth.getClaims());
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
     const result = await withOperationalTimeout(supabase.from("notification_templates").insert({ ...parsed.data, subject: parsed.data.subject || null, status: "draft", created_by: actorId }).select("id").single());

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { financialReportSummary } from "@/lib/operations.server";
+import { financialReportSummary, withOperationalTimeout } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { financialReportSchema } from "@/lib/validation";
 
@@ -10,7 +10,7 @@ function csvCell(value: string | number) {
 
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null, error: new Error("OPERATION_TIMEOUT") }));
   const meta = (data?.claims?.app_metadata ?? {}) as Record<string, unknown>;
   if (error || !data?.claims?.sub || meta.platform_admin !== true) {
     return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });

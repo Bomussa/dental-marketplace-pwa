@@ -31,7 +31,7 @@ function safetyReply(locale: "ar" | "en", category: SafetyCategory) {
 export async function POST(request: Request) {
   try {
   const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null, error: new Error("OPERATION_TIMEOUT") }));
   const userId = claimsData?.claims?.sub;
   if (claimsError || typeof userId !== "string") return NextResponse.json({ error: "AUTH_REQUIRED" }, { status: 401 });
 

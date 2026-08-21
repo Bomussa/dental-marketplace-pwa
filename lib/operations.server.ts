@@ -24,7 +24,7 @@ export function withOperationalTimeout<T>(operation: PromiseLike<T>, timeoutMs =
 
 async function verifiedActor() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims());
   const actorId = data?.claims?.sub;
 
   if (error || typeof actorId !== "string") {
