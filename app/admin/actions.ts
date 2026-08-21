@@ -4,7 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
-import { createSettlementPeriod, reviewOfferRevision, verifyAndActivateSubject } from "@/lib/operations.server";
+import { createSettlementPeriod, reviewOfferRevision, verifyAndActivateSubject, withOperationalTimeout } from "@/lib/operations.server";
 import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { createClient } from "@/lib/supabase/server";
@@ -79,7 +79,7 @@ export async function updateFeatureFlag(formData: FormData): Promise<void> {
   const supabase = await requireAdmin();
   try {
     const config = parseJsonObject(parsed.data.config_json);
-    const result = await supabase.from("feature_flags").update({ enabled: parsed.data.enabled, config, updated_at: new Date().toISOString() }).eq("key", parsed.data.key).select("key").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("feature_flags").update({ enabled: parsed.data.enabled, config, updated_at: new Date().toISOString() }).eq("key", parsed.data.key).select("key").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidateDisplaySurfaces();
   } catch (error) {
@@ -92,7 +92,7 @@ export async function createTreatmentCatalog(formData: FormData): Promise<void> 
   if (!parsed.success) validationFailure("createTreatmentCatalog");
   const supabase = await requireAdmin();
   try {
-    const result = await supabase.from("treatment_catalog").insert(parsed.data).select("id").single();
+    const result = await withOperationalTimeout(supabase.from("treatment_catalog").insert(parsed.data).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidateTreatmentCatalogSurfaces();
   } catch (error) {
@@ -106,7 +106,7 @@ export async function updateTreatmentCatalog(formData: FormData): Promise<void> 
   const supabase = await requireAdmin();
   try {
     const { id, ...changes } = parsed.data;
-    const result = await supabase.from("treatment_catalog").update(changes).eq("id", id).select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("treatment_catalog").update(changes).eq("id", id).select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidateTreatmentCatalogSurfaces();
   } catch (error) {
@@ -121,7 +121,7 @@ export async function createTreatmentVariant(formData: FormData): Promise<void> 
   try {
     const { attributes_json: attributesJson, ...values } = parsed.data;
     const attributes = parseJsonObject(attributesJson);
-    const result = await supabase.from("treatment_variants").insert({ ...values, attributes }).select("id").single();
+    const result = await withOperationalTimeout(supabase.from("treatment_variants").insert({ ...values, attributes }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidateTreatmentCatalogSurfaces();
   } catch (error) {
@@ -144,7 +144,7 @@ export async function updateTreatmentVariant(formData: FormData): Promise<void> 
       active: parsed.data.active,
       attributes,
     };
-    const result = await supabase.from("treatment_variants").update(changes).eq("id", id).select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("treatment_variants").update(changes).eq("id", id).select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidateTreatmentCatalogSurfaces();
   } catch (error) {
@@ -177,7 +177,7 @@ export async function updateAdminOffer(formData: FormData): Promise<void> {
     const { data: claims } = await supabase.auth.getClaims();
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
-    const result = await supabase.from("branch_service_offers").update({
+    const result = await withOperationalTimeout(supabase.from("branch_service_offers").update({
       price_type: parsed.data.price_type,
       min_minor: money.minMinor,
       max_minor: money.maxMinor,
@@ -191,7 +191,7 @@ export async function updateAdminOffer(formData: FormData): Promise<void> {
       notes,
       last_verified_at: new Date().toISOString(),
       verified_by: actorId,
-    }).eq("id", parsed.data.id).select("id").maybeSingle();
+    }).eq("id", parsed.data.id).select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidateDisplaySurfaces();
   } catch (error) {
@@ -204,12 +204,12 @@ export async function updateAdminSlot(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("updateAdminSlot");
   const supabase = await requireAdmin();
   try {
-    const result = await supabase.from("availability_slots").update({
+    const result = await withOperationalTimeout(supabase.from("availability_slots").update({
       start_at: normalizeQatarDateTime(parsed.data.start_at),
       end_at: normalizeQatarDateTime(parsed.data.end_at),
       status: parsed.data.status,
       freshness_at: new Date().toISOString(),
-    }).eq("id", parsed.data.id).select("id").maybeSingle();
+    }).eq("id", parsed.data.id).select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidateDisplaySurfaces();
   } catch (error) {
@@ -222,7 +222,7 @@ export async function moderateReview(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("moderateReview");
   const supabase = await requireAdmin();
   try {
-    const result = await supabase.from("reviews").update({ status: parsed.data.status }).eq("id", parsed.data.id).select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("reviews").update({ status: parsed.data.status }).eq("id", parsed.data.id).select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
@@ -254,7 +254,7 @@ export async function createSupportKnowledgeArticle(formData: FormData): Promise
     const { data: claims } = await supabase.auth.getClaims();
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
-    const result = await supabase.from("support_knowledge_articles").insert({ ...parsed.data, status: "draft", created_by: actorId }).select("id").single();
+    const result = await withOperationalTimeout(supabase.from("support_knowledge_articles").insert({ ...parsed.data, status: "draft", created_by: actorId }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
@@ -270,7 +270,7 @@ export async function approveSupportKnowledgeArticle(formData: FormData): Promis
     const { data: claims } = await supabase.auth.getClaims();
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
-    const result = await supabase.from("support_knowledge_articles").update({ status: "approved", approved_by: actorId, approved_at: new Date().toISOString() }).eq("id", parsed.data.id).eq("status", "draft").select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("support_knowledge_articles").update({ status: "approved", approved_by: actorId, approved_at: new Date().toISOString() }).eq("id", parsed.data.id).eq("status", "draft").select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
@@ -283,7 +283,7 @@ export async function archiveSupportKnowledgeArticle(formData: FormData): Promis
   if (!parsed.success) validationFailure("archiveSupportKnowledgeArticle");
   const supabase = await requireAdmin();
   try {
-    const result = await supabase.from("support_knowledge_articles").update({ status: "archived" }).eq("id", parsed.data.id).neq("status", "archived").select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("support_knowledge_articles").update({ status: "archived" }).eq("id", parsed.data.id).neq("status", "archived").select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
@@ -299,7 +299,7 @@ export async function createNotificationTemplate(formData: FormData): Promise<vo
     const { data: claims } = await supabase.auth.getClaims();
     const actorId = claims?.claims?.sub;
     if (typeof actorId !== "string") throw new Error("AUTH_REQUIRED");
-    const result = await supabase.from("notification_templates").insert({ ...parsed.data, subject: parsed.data.subject || null, status: "draft", created_by: actorId }).select("id").single();
+    const result = await withOperationalTimeout(supabase.from("notification_templates").insert({ ...parsed.data, subject: parsed.data.subject || null, status: "draft", created_by: actorId }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {
@@ -312,7 +312,7 @@ export async function activateNotificationTemplate(formData: FormData): Promise<
   if (!parsed.success) validationFailure("activateNotificationTemplate");
   const supabase = await requireAdmin();
   try {
-    const result = await supabase.from("notification_templates").update({ status: "active" }).eq("id", parsed.data.id).eq("status", "draft").select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("notification_templates").update({ status: "active" }).eq("id", parsed.data.id).eq("status", "draft").select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/admin");
   } catch (error) {

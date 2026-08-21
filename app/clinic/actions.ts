@@ -6,7 +6,7 @@ import { z } from "zod";
 import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
-import { changeClinicBookingStatus, checkInBooking, OPERATIONAL_RPC_TIMEOUT_MS, requestOfferRevision, reverseAttendance } from "@/lib/operations.server";
+import { changeClinicBookingStatus, checkInBooking, OPERATIONAL_RPC_TIMEOUT_MS, requestOfferRevision, reverseAttendance, withOperationalTimeout } from "@/lib/operations.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -165,10 +165,10 @@ export async function setDailyHours(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("setDailyHours");
   const supabase = await requireUser();
   try {
-    const { data, error } = await supabase.from("branch_hours").upsert(
+    const { data, error } = await withOperationalTimeout(supabase.from("branch_hours").upsert(
       Array.from({ length: 7 }, (_, weekday) => ({ branch_id: parsed.data.branch_id, weekday, open_time: parsed.data.open_time, close_time: parsed.data.close_time, is_closed: false })),
       { onConflict: "branch_id,weekday" },
-    ).select("branch_id,weekday");
+    ).select("branch_id,weekday"));
     if (error) throw new Error(error.code);
     if (!data || data.length !== 7) throw new Error("OPERATION_FAILED");
     revalidatePath("/clinic");
@@ -182,7 +182,7 @@ export async function createPractitioner(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("createPractitioner");
   const supabase = await requireUser();
   try {
-    const result = await supabase.from("practitioners").insert({ clinic_id: parsed.data.clinic_id, display_name: parsed.data.display_name, license_ref: parsed.data.license_ref || null, active: false }).select("id").single();
+    const result = await withOperationalTimeout(supabase.from("practitioners").insert({ clinic_id: parsed.data.clinic_id, display_name: parsed.data.display_name, license_ref: parsed.data.license_ref || null, active: false }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {
@@ -221,7 +221,7 @@ export async function createOffer(formData: FormData): Promise<void> {
   const supabase = await requireUser();
   try {
     const p = parsed.data;
-    const result = await supabase.from("branch_service_offers").insert({
+    const result = await withOperationalTimeout(supabase.from("branch_service_offers").insert({
       branch_id: p.branch_id,
       variant_id: p.variant_id,
       price_type: p.price_type,
@@ -235,7 +235,7 @@ export async function createOffer(formData: FormData): Promise<void> {
       follow_up_terms: followUpTerms,
       notes,
       status: "draft",
-    }).select("id").single();
+    }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {
@@ -277,7 +277,7 @@ export async function publishOffer(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("publishOffer");
   const supabase = await requireUser();
   try {
-    const result = await supabase.from("branch_service_offers").update({ status: "active", clinic_attested_at: new Date().toISOString() }).eq("id", parsed.data.id).select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("branch_service_offers").update({ status: "active", clinic_attested_at: new Date().toISOString() }).eq("id", parsed.data.id).select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {
@@ -290,7 +290,7 @@ export async function createSlot(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("createSlot");
   const supabase = await requireUser();
   try {
-    const result = await supabase.from("availability_slots").insert({ branch_id: parsed.data.branch_id, variant_id: parsed.data.variant_id, start_at: normalizeQatarDateTime(parsed.data.start_at), end_at: normalizeQatarDateTime(parsed.data.end_at), status: "draft" }).select("id").single();
+    const result = await withOperationalTimeout(supabase.from("availability_slots").insert({ branch_id: parsed.data.branch_id, variant_id: parsed.data.variant_id, start_at: normalizeQatarDateTime(parsed.data.start_at), end_at: normalizeQatarDateTime(parsed.data.end_at), status: "draft" }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {
@@ -303,7 +303,7 @@ export async function publishSlot(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("publishSlot");
   const supabase = await requireUser();
   try {
-    const result = await supabase.from("availability_slots").update({ status: "published", freshness_at: new Date().toISOString() }).eq("id", parsed.data.id).select("id").maybeSingle();
+    const result = await withOperationalTimeout(supabase.from("availability_slots").update({ status: "published", freshness_at: new Date().toISOString() }).eq("id", parsed.data.id).select("id").maybeSingle());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {
