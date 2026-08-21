@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { emailForUsername } from "@/lib/account-auth.server";
-import { consumeRateLimit } from "@/lib/operations.server";
+import { consumeRateLimit, withOperationalTimeout } from "@/lib/operations.server";
 import { publicWriteHeadersClientKey } from "@/lib/public-write-request-guard";
 import { passwordLoginSchema } from "@/lib/validation";
 import { createClient } from "@/lib/supabase/server";
@@ -51,10 +51,10 @@ export async function loginWithPassword(formData: FormData) {
   try {
     const email = await emailForUsername(parsed.data.username);
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await withOperationalTimeout(supabase.auth.signInWithPassword({
       email: email ?? DECOY_LOGIN_EMAIL,
       password: parsed.data.password,
-    });
+    })).catch(() => ({ error: { message: "OPERATION_TIMEOUT" } }));
     if (!email || error) redirect("/login?error=invalid_credentials");
   } catch {
     redirect("/login?error=invalid_credentials");
