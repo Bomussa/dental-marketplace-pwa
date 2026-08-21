@@ -189,7 +189,12 @@ export const attendanceReversalSchema = z.object({
   reason: z.string().trim().min(3).max(500),
 });
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const isoDate = z.string()
+  .regex(/^[1-9]\d{3}-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const parsed = new Date(`${value}T00:00:00.000Z`);
+    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  }, { message: "تاريخ غير صالح" });
 export const settlementPeriodSchema = z.object({
   clinic_id: uuid,
   period_start: isoDate,
@@ -202,7 +207,16 @@ export const financialReportSchema = z.object({
   clinic_id: uuid,
   period_start: isoDate,
   period_end: isoDate,
-}).refine((value) => value.period_end >= value.period_start, { path: ["period_end"], message: "نهاية التقرير يجب أن تكون بعد بدايته" });
+}).superRefine((value, context) => {
+  if (value.period_end < value.period_start) {
+    context.addIssue({ code: "custom", path: ["period_end"], message: "نهاية التقرير يجب أن تكون بعد بدايته" });
+    return;
+  }
+  const spanDays = Math.floor((Date.parse(`${value.period_end}T00:00:00Z`) - Date.parse(`${value.period_start}T00:00:00Z`)) / 86_400_000) + 1;
+  if (spanDays > 1_826) {
+    context.addIssue({ code: "custom", path: ["period_end"], message: "نطاق التقرير أطول من الحد المسموح" });
+  }
+});
 
 export const activityReportSchema = z.object({
   clinic_id: uuid.optional(),

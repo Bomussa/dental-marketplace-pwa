@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, notificationTemplateSchema, offerSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
+import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, financialReportSchema, notificationTemplateSchema, offerSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -87,6 +87,13 @@ describe("validation", () => {
     expect(activityReportSchema.safeParse({ period_start: "2026-01-01", period_end: "2026-12-31", granularity: "daily" }).success).toBe(true);
     expect(activityReportSchema.safeParse({ period_start: "2026-12-31", period_end: "2026-01-01", granularity: "monthly" }).success).toBe(false);
     expect(activityReportSchema.safeParse({ period_start: "2026-01-01", period_end: "2026-01-31", granularity: "minute" }).success).toBe(false);
+  });
+
+  it("bounds financial report windows and rejects impossible calendar dates", () => {
+    const input = { clinic_id: offerId, period_start: "2025-01-01", period_end: "2025-12-31" };
+    expect(financialReportSchema.safeParse(input).success).toBe(true);
+    expect(financialReportSchema.safeParse({ ...input, period_start: "2026-02-30" }).success).toBe(false);
+    expect(financialReportSchema.safeParse({ ...input, period_start: "2020-01-01", period_end: "2026-01-01" }).success).toBe(false);
   });
 
   it("requires secure credentials when the owner provisions either clinic operator account", () => {
