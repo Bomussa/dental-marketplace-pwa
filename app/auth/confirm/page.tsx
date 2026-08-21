@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isSafeInternalRedirectPath } from "@/lib/validation";
 
 function safeNext(candidate: string | null) {
-  return candidate && candidate.startsWith("/") && !candidate.startsWith("//") && !candidate.startsWith("/\\")
-    ? candidate
-    : "/account";
+  return candidate && isSafeInternalRedirectPath(candidate) ? candidate : "/account";
 }
 
 export default function AuthConfirmPage() {
