@@ -81,12 +81,12 @@ export default async function HomePage() {
           <div className="max-w-2xl"><p className="text-xs font-black uppercase tracking-[.2em] text-[#0c7188]">{t["home.decision.kicker"]}</p><h2 className="mt-3 text-3xl font-black tracking-[-.035em] text-[#0a2d5b] sm:text-4xl">{t["home.decision.title"]}</h2></div>
           <div className="mt-9 grid gap-5 md:grid-cols-3">
             {[
-              [RouteIcon,t["home.feature.precise.title"],t["home.feature.precise.copy"],"from-cyan-400 to-blue-600"],
-              [ShieldCheckIcon,t["home.feature.verified.title"],t["home.feature.verified.copy"],"from-emerald-400 to-teal-600"],
-              [CalendarIcon,t["home.feature.booking.title"],t["home.feature.booking.copy"],"from-violet-400 to-indigo-600"],
-            ].map(([Icon,title,copy,gradient], index) => {
+              [RouteIcon,t["home.feature.precise.title"],t["home.feature.precise.copy"]],
+              [ShieldCheckIcon,t["home.feature.verified.title"],t["home.feature.verified.copy"]],
+              [CalendarIcon,t["home.feature.booking.title"],t["home.feature.booking.copy"]],
+            ].map(([Icon,title,copy], index) => {
               const FeatureIcon = Icon as typeof RouteIcon;
-              return <Card key={String(title)} className="feature-card lift p-7"><span className={`grid h-12 w-12 place-items-center rounded-[18px] bg-gradient-to-br ${String(gradient)} text-white shadow-[0_14px_28px_-14px_rgba(16,90,168,.65)]`}><FeatureIcon size={22}/></span><span className="feature-card__index">0{index + 1}</span><h3 className="mt-6 text-lg font-black text-[#092b56]">{String(title)}</h3><p className="mt-2 text-sm font-medium leading-7 text-slate-500">{String(copy)}</p></Card>;
+              return <Card key={String(title)} className="feature-card lift p-7"><span className="feature-card__icon grid h-12 w-12 place-items-center rounded-[18px]"><FeatureIcon size={22}/></span><span className="feature-card__index">0{index + 1}</span><h3 className="mt-6 text-lg font-black text-[#092b56]">{String(title)}</h3><p className="mt-2 text-sm font-medium leading-7 text-slate-500">{String(copy)}</p></Card>;
             })}
           </div>
         </div>

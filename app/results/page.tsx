@@ -61,7 +61,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="workspace-shell relative mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-12">
-      <div className="surface-aurora mb-8 flex flex-wrap items-end justify-between gap-5 rounded-[36px] p-7 text-white sm:p-10">
+      <div className="results-hero mb-8 flex flex-wrap items-end justify-between gap-5 rounded-[28px] p-7 text-white sm:p-10">
         <div>
           <p className="relative text-[.78rem] font-black uppercase tracking-[.18em] text-cyan-100">{t["results.kicker"]}</p>
           <h1 className="relative mt-3 text-4xl font-black tracking-[-.045em] text-white sm:text-5xl">{variantName ?? t["results.fallbackTitle"]}</h1>
@@ -72,7 +72,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         </Link>
       </div>
 
-      <div className="surface-aurora mb-7 flex flex-wrap items-center gap-2.5 rounded-[26px] px-5 py-3.5 text-[.84rem] font-extrabold text-blue-50/95">
+      <div className="results-context mb-7 flex flex-wrap items-center gap-2.5 rounded-[18px] px-5 py-3.5 text-[.84rem] font-extrabold text-blue-50/95">
         <SlidersIcon size={17} className="text-[#83f1d5]" />
         <span>{whenLabel}</span><span className="text-white/35">•</span>
         <span>{replaceTokens(t["results.sortedBy"], { sort: sortLabel })}</span><span className="text-white/35">•</span>
@@ -95,7 +95,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="grid h-8 min-w-8 place-items-center rounded-full bg-[linear-gradient(135deg,#0e62c9,#0aa59f)] px-2 text-[11px] font-black text-white shadow-[0_9px_18px_-10px_rgba(4,101,184,.7)]">{index + 1}</span>
+                        <span className="result-rank grid h-8 min-w-8 place-items-center rounded-full px-2 text-[11px] font-black text-white">{index + 1}</span>
                         {offer.last_verified_at && <Badge tone="blue"><span className="inline-flex items-center gap-1"><ShieldCheckIcon size={13} />{t["results.verified"]}</span></Badge>}
                         <Badge tone={offer.open_now ? "green" : "slate"}>{offer.open_now ? t["results.openNow"] : t["results.closedNow"]}</Badge>
                       </div>
@@ -106,15 +106,15 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                   </div>
 
                   <div className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="rounded-2xl border border-[#0e699e]/[.08] bg-[linear-gradient(135deg,rgba(239,251,250,.96),rgba(239,246,255,.94))] p-3.5"><div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><ClockIcon size={14} />{t["results.duration"]}</div><div className="mt-1 text-sm font-black">{replaceTokens(t["results.minutes"], { minutes: offer.duration_minutes })}</div></div>
-                    <div className="rounded-2xl border border-[#0e699e]/[.08] bg-[linear-gradient(135deg,rgba(239,251,250,.96),rgba(239,246,255,.94))] p-3.5"><div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><LocationIcon size={14} />{t["results.distance"]}</div><div className="mt-1 text-sm font-black">{offer.distance_km == null ? t["results.distanceUnavailable"] : replaceTokens(t["results.distanceValue"], { distance: offer.distance_km.toFixed(1) })}</div></div>
-                    <div className="rounded-2xl bg-slate-50/90 p-3.5 sm:col-span-2 lg:col-span-1"><div className="text-[11px] font-bold text-slate-500">{t["results.lastVerified"]}</div><div className="mt-1 text-sm font-black">{offer.last_verified_at ? dateFormatter.format(new Date(offer.last_verified_at)) : t["results.notRecorded"]}</div></div>
+                    <div className="result-fact rounded-2xl p-3.5"><div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><ClockIcon size={14} />{t["results.duration"]}</div><div className="mt-1 text-sm font-black">{replaceTokens(t["results.minutes"], { minutes: offer.duration_minutes })}</div></div>
+                    <div className="result-fact rounded-2xl p-3.5"><div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><LocationIcon size={14} />{t["results.distance"]}</div><div className="mt-1 text-sm font-black">{offer.distance_km == null ? t["results.distanceUnavailable"] : replaceTokens(t["results.distanceValue"], { distance: offer.distance_km.toFixed(1) })}</div></div>
+                    <div className="result-fact result-fact--quiet rounded-2xl p-3.5 sm:col-span-2 lg:col-span-1"><div className="text-[11px] font-bold text-slate-500">{t["results.lastVerified"]}</div><div className="mt-1 text-sm font-black">{offer.last_verified_at ? dateFormatter.format(new Date(offer.last_verified_at)) : t["results.notRecorded"]}</div></div>
                   </div>
                   <PriceScopeSummary offer={offer} locale={locale} />
-                  {offer.branch_latitude != null && offer.branch_longitude != null ? <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${offer.branch_latitude},${offer.branch_longitude}`)}`} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-[#0b71a2]/15 bg-white px-4 text-xs font-black text-[#084884] transition hover:-translate-y-0.5 hover:border-[#0b71a2]/35 hover:bg-cyan-50"><RouteIcon size={16}/>{t["results.directions"]}</a> : <p className="mt-4 text-xs font-bold text-slate-400">{t["results.directionsUnavailable"]}</p>}
+                  {offer.branch_latitude != null && offer.branch_longitude != null ? <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${offer.branch_latitude},${offer.branch_longitude}`)}`} target="_blank" rel="noreferrer" className="result-directions mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-xs font-black"><RouteIcon size={16}/>{t["results.directions"]}</a> : <p className="mt-4 text-xs font-bold text-slate-400">{t["results.directionsUnavailable"]}</p>}
                 </div>
 
-                <aside className="border-t border-[#0d6f99]/10 bg-[linear-gradient(150deg,rgba(226,251,247,.98),rgba(230,239,255,.96))] p-6 sm:p-7 lg:border-s lg:border-t-0">
+                <aside className="result-pricing border-t p-6 sm:p-7 lg:border-s lg:border-t-0">
                   <div className="text-xs font-extrabold text-slate-500">{t["results.advertisedPrice"]}</div><div className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950">{priceLabel(offer.price_type, offer.min_minor, offer.max_minor, locale)}</div>
                   <div className="mt-5 text-xs font-extrabold text-slate-500">{t["results.nearestAppointment"]}</div><div className="mt-2 min-h-10 text-[.98rem] font-black leading-7">{offer.earliest_slot_at ? dateTimeFormatter.format(new Date(offer.earliest_slot_at)) : t["results.noAppointment"]}</div>
                   <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} patientProfiles={patientProfiles} isAuthenticated={Boolean(userId)} /> : <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">{t["results.comparisonOnly"]}</div>}</div>
