@@ -19,6 +19,13 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
   const [geoState, setGeoState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const availableVariants = useMemo(() => variants.filter((v) => v.catalog_id === treatmentId), [variants, treatmentId]);
   const effectiveVariant = variantId || availableVariants[0]?.id || "";
+  const quickTreatments = treatments.slice(0, 6);
+
+  function selectTreatment(nextTreatmentId: string) {
+    setTreatmentId(nextTreatmentId);
+    setVariantId("");
+    trackChoice({ event_name: "treatment_selected", treatment_id: nextTreatmentId });
+  }
 
   function locate() {
     trackChoice({ event_name: "location_requested", treatment_id: treatmentId || undefined, variant_id: effectiveVariant || undefined });
@@ -54,10 +61,18 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
 
   return (
     <form action="/results" onSubmit={submitSearch} className="grid gap-4" aria-label={t["search.aria"]}>
+      <fieldset className="mobile-treatment-rail" aria-label={t["home.browseTreatments"]}>
+        <legend className="sr-only">{t["home.browseTreatments"]}</legend>
+        {quickTreatments.map((treatment) => {
+          const selected = treatment.id === treatmentId;
+          const treatmentName = locale === "ar" ? treatment.name_ar : treatment.name_en;
+          return <button key={treatment.id} type="button" className={`mobile-treatment-rail__item ${selected ? "mobile-treatment-rail__item--active" : ""}`} aria-pressed={selected} onClick={() => selectTreatment(treatment.id)}><span className="mobile-treatment-rail__icon"><ToothIcon size={19} /></span><span>{treatmentName}</span></button>;
+        })}
+      </fieldset>
       <div className="comparison-form grid gap-3 p-3 sm:p-3.5 lg:grid-cols-[1.03fr_1.16fr_.78fr_.72fr_.8fr_auto] lg:items-stretch">
         <label className="comparison-field">
           <span className="comparison-field__label"><span className="comparison-field__icon"><ToothIcon size={17}/></span>{t["search.treatment"]}</span>
-          <select name="treatment" value={treatmentId} onChange={(e) => { const next = e.target.value; setTreatmentId(next); setVariantId(""); trackChoice({ event_name: "treatment_selected", treatment_id: next }); }} required className="comparison-field__select">
+          <select name="treatment" value={treatmentId} onChange={(e) => selectTreatment(e.target.value)} required className="comparison-field__select">
             {treatments.map((treatment) => <option key={treatment.id} value={treatment.id}>{locale === "ar" ? treatment.name_ar : treatment.name_en}</option>)}
           </select>
         </label>
