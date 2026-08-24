@@ -22,12 +22,12 @@ export async function SiteHeader() {
           <BrandLockup brandName={t["brand.name"]} systemName={t["brand.systemName"]} compact />
         </Link>
         <nav className="flex shrink-0 items-center gap-1.5 text-[.94rem] font-extrabold text-blue-50" aria-label={t["nav.home"]}>
-          <Link href="/clinic" className="inline-flex min-h-11 items-center gap-2 rounded-full px-3.5 transition hover:bg-white/12 hover:text-white">
+          <Link href="/clinic" aria-label={t["nav.clinics"]} className="inline-flex min-h-11 items-center gap-2 rounded-full px-3.5 transition hover:bg-white/12 hover:text-white">
             <BuildingIcon size={17}/><span className="hidden md:inline">{t["nav.clinics"]}</span>
           </Link>
-          {isAdmin && <Link href="/admin" className="inline-flex min-h-11 items-center rounded-full px-3.5 transition hover:bg-white/12 hover:text-white">{t["nav.admin"]}</Link>}
+          {isAdmin && <Link href="/admin" aria-label={t["nav.admin"]} className="inline-flex min-h-11 items-center rounded-full px-3.5 transition hover:bg-white/12 hover:text-white">{t["nav.admin"]}</Link>}
           <LocaleToggle locale={locale} label={t["nav.language"]} ariaLabel={t["nav.languageLabel"]} />
-          <Link href={signedIn ? "/account" : "/login"} className="ms-1 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/16 bg-white/16 px-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.22)] transition hover:-translate-y-0.5 hover:bg-white/22 hover:shadow-[0_11px_24px_-10px_rgba(0,0,0,.45)]">
+          <Link href={signedIn ? "/account" : "/login"} aria-label={signedIn ? t["nav.account"] : t["nav.login"]} className="ms-1 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/16 bg-white/16 px-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.22)] transition hover:-translate-y-0.5 hover:bg-white/22 hover:shadow-[0_11px_24px_-10px_rgba(0,0,0,.45)]">
             <UserIcon size={17}/><span className="hidden md:inline">{signedIn ? t["nav.account"] : t["nav.login"]}</span>
           </Link>
         </nav>
