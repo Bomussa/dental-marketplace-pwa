@@ -154,6 +154,21 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
           </div>
         </article>
       )}
+      {!featuredOffer && (
+        <article className="reference-match-card reference-match-card--empty" aria-labelledby="reference-match-empty-title">
+          <div className="reference-match-card__glow" aria-hidden="true" />
+          <div className="reference-match-card__copy">
+            <p>{isArabic ? "مطابقة تعتمد على بيانات العيادات الفعلية" : "Matching based on real clinic data"}</p>
+            <h2 id="reference-match-empty-title">{isArabic ? "ابدأ مقارنة علاجك بثقة" : "Start your treatment comparison with confidence"}</h2>
+            <span>{variantName || treatmentName || (isArabic ? "اختر نوع العلاج لعرض الخيارات المتاحة" : "Choose a treatment type to see available options")}</span>
+            <a href={resultHref} className="reference-match-card__cta">{isArabic ? "استكشف الخيارات المتاحة" : "Explore available options"}<span aria-hidden="true">←</span></a>
+          </div>
+          <div className="reference-match-card__seal" aria-label={isArabic ? "ابدأ المقارنة" : "Start comparison"}>
+            <ToothIcon size={28} />
+            <strong>{isArabic ? "ابحث" : "Search"}</strong>
+          </div>
+        </article>
+      )}
 
       <div className="reference-search__query">
         <label className="reference-search__treatment">
