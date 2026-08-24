@@ -77,12 +77,13 @@ flowchart LR
 |---|---|---|
 | `/` | عام | البحث والمقارنة وملخص الكتالوج والمساعد. |
 | `/results` | عام | نتائج النوع العلاجي الدقيق؛ يحترم الوقت، نطاق البحث، ومسافة اختيارية. |
-| `/login` | عام | الدخول باسم المستخدم وكلمة المرور، مع `next` داخلي آمن وإتاحة تفعيل بيانات الدخول للحسابات السابقة عبر صفحة الحساب. |
+| `/login` | عام | الدخول باسم المستخدم وكلمة المرور، أو التسجيل الذاتي الآمن للمريض بالبيانات الموحدة؛ يقبل `next` داخليًا آمنًا فقط. |
 | `/auth/confirm` | مستخدم مصدّق عبر تدفق خارجي قديم | تأكيد رمز جلسة مستلم وإعادة التوجيه؛ ليس مسار تسجيل الدخول الاعتيادي. |
 | `/auth/signout` | مستخدم مصدّق | إنهاء جلسة Supabase عبر `POST` من الأصل نفسه فقط؛ يرفض الأصل الخارجي قبل لمس الجلسة. |
 | `/account` | المريض | ملفات المرضى التابعة، الحجوزات، الإلغاء، والمراجعات. |
-| `/clinic` | أعضاء المركز | الفروع والساعات والممارسون والعروض والمواعيد وعمليات الحجز. |
-| `/admin` | مدير المنصة فقط | الكتالوج، العروض، المواعيد، المراجعات، المعرفة، الإشعارات، التحليلات، والتسويات. |
+| `/clinic` | أعضاء المركز | الفروع والساعات والممارسون والعروض والمواعيد وعمليات الحجز، وفق العضوية والصلاحية. |
+| `/clinic/bookings` | العميل التشغيلي المقيد | حجوزات الفروع التي يملك لها عضوية receptionist نشطة فقط؛ يعرض بيانات المريض اللازمة للتشغيل عبر RPC مقيّد، ولا يتيح سطح العيادة العام أو الحساب أو الإدارة. |
+| `/admin` | مدير المنصة فقط | الكتالوج، العروض، المواعيد، المراجعات، المعرفة، الإشعارات، التحليلات، والتسويات. يظهر قسم إدارة المستخدمين فقط عند وجود claimَي المدير الأعلى. |
 | `/operation-error` | عام | عرض رسائل فشل تشغيلية آمنة. |
 | `/manifest.webmanifest` و`/pwa/icon/[size]` | PWA | تعريف التطبيق وأيقوناته. |
 
@@ -99,7 +100,7 @@ flowchart LR
 | `/api/device-installations` | `POST` | اختياري | `installation_id`, معلومات الجهاز والمنصة والإصدار | Upsert خادمي مع حد 60/ساعة/تثبيت. |
 | `/api/patient-phone-verification/start` | `POST` | مطلوب | بيانات المريض والرقم و`patient_profile_id?` | ينشئ/يحدّث الملف، يرسل OTP عبر المحول، ويحفظ challenge صالحًا 10 دقائق؛ حد 3/ساعة للحساب والرقم. |
 | `/api/patient-phone-verification/confirm` | `POST` | مطلوب | `patient_profile_id`, `code` | يؤكد OTP، يحدّث `phone_verified_at` ويستهلك challenge؛ حد 5/10 دقائق. |
-| `/api/support` | `POST` | مطلوب | `message`, `locale`, `conversation_id?` | دعم محكوم بقاعدة معرفة معتمدة؛ يمنع التشخيص ويصعّد كلمات الطوارئ؛ حد 30/ساعة. |
+| `/api/support` | `POST` | اختياري | `message`, `locale`, `conversation_id?` | للزائر إجابة عامة بلا كتابة محادثة (10/15 دقيقة/عميل)؛ للمستخدم المصادق محادثة خاصة محفوظة (30/ساعة). يمنع التشخيص ويصعّد كلمات الطوارئ، ويستخدم fallback محليًا آمنًا عند غياب مقالة approved أو خدمة النموذج. |
 | `/api/admin/reports/csv` | `GET` | مدير فقط | نطاق تقرير مصدق | تصدير تقارير تشغيلية/مالية عبر طبقة الإدارة. |
 | `/api/admin/reports/activity-csv` | `GET` | مدير المنصة فقط | `start`, `end`, `granularity` | يستدعي ملخص النشاط على نطاق المنصة ويصدر CSV؛ لا يتيح للعيادة تصدير بيانات المنصة. |
 
@@ -121,7 +122,9 @@ flowchart LR
 | الحجز | `book_slot_server` يتحقق من الممثل والملف والموعد والعرض ويستخدم `idempotency_key`؛ يعيد كود الحجز وحالته من معاملة واحدة. |
 | دور المركز | `effectiveClinicRole` يحسب الدور الفعلي من عضوية العيادة؛ لا تعتمد الواجهة وحدها كحاجز صلاحيات. |
 | حد المعدل | `consume_rate_limit_server` يطبق نوافذ وحدودًا لكل مجال: حجز، دعم، OTP، تثبيت جهاز، أو telemetry. |
-| المساعد | الكلمات الدالة على حالة طبية/طارئة تعطي رد سلامة ثابتًا، ولا تستدعي النموذج. الحالة القياسية تستخدم مقالات معرفة approved/public للغة المطلوبة فقط. |
+| المساعد | الكلمات الدالة على حالة طبية/طارئة تعطي رد سلامة ثابتًا، ولا تستدعي النموذج. الحالة القياسية تستخدم مقالات approved/public عند توفرها، وإلا fallback محليًا غير تشخيصي لا يخترع أسعارًا أو مواعيد أو سياسة. |
+| وصول العميل التشغيلي | الحساب ذو `account_kind=clinic_operator` و`access_scope=clinic_bookings_only` لا يعرض إلا `/clinic/bookings`. يفرض PostgreSQL/RLS وRPC العضوية receptionist النشطة والفرع المخصص؛ Proxy مجرد حاجز تجربة مستخدم إضافي. |
+| المدير الأعلى | يتطلب claimَي `app_metadata.platform_admin=true` و`app_metadata.platform_super_admin=true`. وحده ينشئ حساب مريض أو عميل حجوزات، ويوقف العميل تشغيليًا عبر سجل تدقيق بدل الحذف المباشر. |
 | التحديث اللحظي | مكونات realtime تعيد جلب البيانات عند تغير الجداول السطحية المصرح بها؛ سياسة RLS هي الحكم النهائي لما يراه كل دور. |
 
 ## 7. قاعدة البيانات: الجداول
@@ -144,7 +147,7 @@ flowchart LR
 |---|---|
 | البحث والتسعير | `search_dental_offers`, `is_valid_price_scope`, `is_price_scope_publishable`, `enforce_public_offer_price_scope` (trigger). |
 | الحجز | `book_slot`, `book_slot_server`, `cancel_booking_server`, `change_booking_status_server`, `clinic_booking_patient_details`. |
-| التشغيل والحوكمة | `consume_rate_limit_server`, `register_device_installation_server`, `verify_and_activate_server`, `create_clinic_application`, `create_branch_application`. |
+| التشغيل والحوكمة | `consume_rate_limit_server`, `register_device_installation_server`, `verify_and_activate_server`, `create_clinic_application`, `create_branch_application`, `provision_operational_client_account_server`, `list_operational_client_accounts_server`, `revoke_operational_client_account_server`. |
 | مراجعة السعر والحضور | `request_offer_revision`, `request_offer_revision_server`, `review_offer_revision`, `review_offer_revision_server`, `record_booking_check_in`, `record_booking_check_in_server`, `reverse_booking_attendance`, `reverse_booking_attendance_server`. |
 | التسوية والتقارير | `create_settlement_period`, `create_settlement_period_server`, `financial_report_summary`, `financial_report_summary_server`, `admin_customer_choice_analytics`, `activity_report_summary`, `activity_report_summary_server`. |
 | ملفات المرضى | `handle_new_account_patient_profile` (trigger). |
@@ -167,8 +170,10 @@ flowchart LR
 | السطح | ما يديره | الحد الفاصل |
 |---|---|---|
 | العيادة | طلب الانضمام، الفروع، ساعات العمل، الممارسون، المسودات، العروض، المواعيد، طلب تعديل السعر، الحضور وحالة الحجز. | عضوية العيادة وRLS ومصفوفة انتقالات الحجز. |
+| العميل التشغيلي | يرى فقط شاشة حجوزات الفرع المخصص وبيانات المريض الضرورية للعملية، ويغيّر الحالة ضمن الإجراءات المعتمدة. | `access_scope=clinic_bookings_only`، عضوية receptionist نشطة ومحددة بفرع، وRLS/RPC؛ لا تعتمد الحماية على الإخفاء أو التحويل. |
 | الإدارة | اعتماد وتنشيط المراكز/الفروع، الحوكمة، الكتالوج والأنواع، feature flags، عروض/مواعيد عامة، مراجعات، معرفة الدعم، قوالب الإشعار، تقارير وتسويات. | `app_metadata.platform_admin` ثم التحقق داخل العمليات الخادمية والقاعدة. |
-| المريض | ملفه وملفات التابعين والحجوزات والمراجعات. | ملكية الحساب، ملف غير مؤرشف، وهاتف موثق قبل الحجز. |
+| المدير الأعلى | كل ما يملكه مدير المنصة، وإنشاء حسابات المرضى والعملاء التشغيليين وإيقاف العملاء مع أثر تدقيقي. | claimان: `platform_admin` و`platform_super_admin`، ثم إجراءات خادمية وRPC service-role فقط. |
+| المريض | البحث والمقارنة العامة، ملفه وملفات التابعين والحجوزات والمراجعات. | ملكية الحساب، ملف غير مؤرشف، وهاتف موثق قبل الحجز. |
 
 ## 9. طبقة Supabase والتحديث اللحظي
 
@@ -190,7 +195,8 @@ flowchart LR
 | حارس الكتابة العامة | `lib/public-write-request-guard.ts` يفرض الأصل نفسه وحجم الجسم قبل الكتابة في الحجز وتسجيل المريض وOTP والدعم وتثبيت الجهاز والتحليلات. |
 | التعديل الحرج | سياسات PostgreSQL تسحب التعديل العميل المباشر للحجوزات ودعم العملاء وتغيير حالة المراجعة؛ الإجراءات الخادمية المقيّدة هي المسار التشغيلي المعتمد. |
 | Telemetry | `/api/choices` يرفض الأصل غير المسموح، الجسم الكبير، والفيض؛ الإدخال المباشر من المتصفح إلى الجدول مسحوب. |
-| الدعم | رد أمان للحالات الطبية/الطارئة، ومعرفة approved فقط، ولا تشخيص أو توصية علاجية. |
+| الدعم | رد أمان للحالات الطبية/الطارئة، ولا تشخيص أو توصية علاجية. يجيب الزائر بلا تسجيل ومن دون كتابة محادثة؛ تبقى المحادثة المحفوظة والبيانات الخاصة للمستخدم المصادق فقط. |
+| إدارة المستخدمين | لا تُحفظ كلمة المرور أو تُعاد من الواجهة أو السجل. إنشاء الحسابات أعلى امتيازًا محمي بالـclaims، وإيقاف العميل يلغي الوصول والعضوية/اسم المستخدم تشغيليًا ويحفظ الأثر بدل حذف بيانات الحجز أو المريض. |
 | CSP وPWA | اختبارات E2E تتحقق من CSP وعدم تحويل فشل API offline إلى HTML مخزّن. |
 
 ## 11. متغيرات البيئة والأسرار
@@ -229,7 +235,8 @@ app/
   api/search/route.ts                   api/support/route.ts
   apple-icon.tsx                        auth/confirm/page.tsx
   auth/signout/route.ts                 clinic/actions.ts
-  clinic/page.tsx                       globals.css
+  clinic/page.tsx                       clinic/bookings/page.tsx
+  globals.css
   icon.tsx                              layout.tsx
   login/actions.ts                      login/page.tsx
   manifest.ts                           operation-error/page.tsx
@@ -246,7 +253,8 @@ components/
   price-scope-fields.tsx                price-scope-summary.tsx
   print-report-button.tsx               results-live-refresh.tsx
   search-form.tsx                       site-header.tsx
-  support-chat.tsx                      ui.tsx
+  support-chat.tsx                      super-admin-user-management.tsx
+  ui.tsx
 lib/
   account-copy.ts                       admin-copy.ts
   booking-intent.client.ts              choice-event-guard.ts
@@ -344,7 +352,10 @@ tests/
 20260819063000_explicitly_deny_operator_account_table_access.sql
 20260819070000_scale_critical_search_and_operator_indexes.sql
 20260819080000_activity_report_rpc.sql
-20260819140000_server_only_critical_mutation_policies.sql
+  20260819140000_server_only_critical_mutation_policies.sql
+  20260824231500_super_admin_operational_client_v1.sql
+  20260824232500_super_admin_operational_client_management_v1.sql
+
 ```
 
 </details>
@@ -372,8 +383,8 @@ npm run dev
 
 ## 14. الاختبار والمراقبة
 
-- بوابة الجودة الحالية: **64 اختبار وحدة** و**52 اختبار متصفح** ناجحة، إضافة إلى TypeScript وESLint وبناء إنتاجي ضمن `npm run verify`.
-- [`tests/e2e/home.spec.ts`](tests/e2e/home.spec.ts) واختبارات المتصفح المرتبطة تغطي البحث العربي/الإنجليزي، النوع الدقيق، التفضيل الزمني، نطاق 25 كم، رفض تفضيل موعد غير صالح، الدخول باسم المستخدم وكلمة المرور، المسارات المحمية، health، حارس القراءة العامة المباشرة لكل كيانات DEV، CSP، PWA وعدم الاتصال، وحماية تصدير النشاط.
+- تسجل تقارير التحقق المؤرخة نتيجة كل تشغيل فعلي؛ لا يثبت README عداد اختبارات أو ادعاء جاهزية من دون سجل البيئة والوقت والنتيجة. يشمل التحقق الحالي TypeScript وESLint وVitest وبناء الإنتاج واختبارات المتصفح ذات الصلة.
+- [`tests/e2e/home.spec.ts`](tests/e2e/home.spec.ts) واختبارات المتصفح المرتبطة تغطي البحث العربي/الإنجليزي، النوع الدقيق، التفضيل الزمني، نطاق 25 كم، رفض تفضيل موعد غير صالح، الدخول والتسجيل، فصل المسارات المحمية، دعم الزائر بلا جلسة، health، حارس القراءة العامة المباشرة لكل كيانات DEV، CSP، PWA وعدم الاتصال، وحماية تصدير النشاط.
 - اختبارات الوحدة تفحص تحويل المال، validation وعقد البحث، فرز التوازن المستقل، نموذج كشف النشاط، idempotency intent، حارس telemetry والكتابة العامة، أدوار العيادة، الترجمة، server operations، OTP adapter، وservice worker.
 - [`supabase/tests/acceptance.sql`](supabase/tests/acceptance.sql) يضم مجسات قبول قاعدة البيانات.
 - [`scripts/safe-load-test.mjs`](scripts/safe-load-test.mjs) للاختبارات المحلية غير الهدمية فقط؛ لا تنفّذ حملاً على الإنتاج أو تنشئ حجوزات واقعية من دون تفويض واضح وخطة اختبار مخصصة.

@@ -4,13 +4,15 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { operationFailureCode, operationFailureUrl } from "@/lib/operation-feedback";
-import { createSettlementPeriod, reviewOfferRevision, verifyAndActivateSubject, withOperationalTimeout } from "@/lib/operations.server";
+import { createSettlementPeriod, OPERATIONAL_RPC_TIMEOUT_MS, reviewOfferRevision, verifyAndActivateSubject, withOperationalTimeout } from "@/lib/operations.server";
 import { normalizedOfferFormData, priceInputsToMinor } from "@/lib/money-input";
 import { priceScopeFromFormData, priceScopeItemsFromFormData, priceScopeNotesFromFormData, priceScopeVisitCountFromFormData, type PriceScope } from "@/lib/price-scope";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { provisionPatientBookingAccount } from "@/lib/account-auth.server";
 import { ACTIVE_TREATMENT_CATALOG_TAG } from "@/lib/treatment-catalog.server";
 import type { Json } from "@/lib/database.types";
-import { adminOfferUpdateSchema, adminSlotUpdateSchema, featureFlagUpdateSchema, normalizeQatarDateTime, notificationTemplateSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, treatmentCatalogSchema, treatmentCatalogUpdateSchema, treatmentVariantSchema, treatmentVariantUpdateSchema, uuid, verificationSchema } from "@/lib/validation";
+import { adminOfferUpdateSchema, adminSlotUpdateSchema, clinicOperatorAccountIdSchema, featureFlagUpdateSchema, normalizeQatarDateTime, notificationTemplateSchema, operationalClientAccountSchema, patientBookingRegistrationSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, treatmentCatalogSchema, treatmentCatalogUpdateSchema, treatmentVariantSchema, treatmentVariantUpdateSchema, uuid, verificationSchema } from "@/lib/validation";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -18,6 +20,15 @@ async function requireAdmin() {
   const meta = (data?.claims?.app_metadata ?? {}) as Record<string, unknown>;
   if (error || !data?.claims?.sub || meta.platform_admin !== true) redirect("/");
   return supabase;
+}
+
+async function requireSuperAdmin() {
+  const supabase = await createClient();
+  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims());
+  const meta = (data?.claims?.app_metadata ?? {}) as Record<string, unknown>;
+  const actorId = data?.claims?.sub;
+  if (error || !actorId || meta.platform_admin !== true || meta.platform_super_admin !== true) redirect("/");
+  return actorId;
 }
 
 function validationFailure(action: string): never {
@@ -330,4 +341,78 @@ export async function createSettlement(formData: FormData): Promise<void> {
   } catch (error) {
     adminActionFailure("createSettlement", error);
   }
+}
+
+export async function createPatientAccount(formData: FormData): Promise<void> {
+  const parsed = patientBookingRegistrationSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("createPatientAccount");
+  await requireSuperAdmin();
+
+  const result = await provisionPatientBookingAccount(parsed.data);
+  if (!result.ok) adminActionFailure("createPatientAccount", new Error(result.code.toUpperCase()));
+  revalidatePath("/admin");
+  revalidatePath("/account");
+}
+
+export async function createOperationalClientAccount(formData: FormData): Promise<void> {
+  const parsed = operationalClientAccountSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("createOperationalClientAccount");
+  const actorId = await requireSuperAdmin();
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    adminActionFailure("createOperationalClientAccount", new Error("SERVICE_UNAVAILABLE"));
+  }
+
+  const { data: created, error: createError } = await withOperationalTimeout(admin.auth.admin.createUser({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    email_confirm: true,
+    app_metadata: { access_scope: "clinic_bookings_only" },
+    user_metadata: { account_kind: "clinic_operator", operational_client: true },
+  })).catch(() => ({ data: { user: null }, error: { code: "OPERATION_TIMEOUT", message: "OPERATION_TIMEOUT" } }));
+  if (createError || !created.user) {
+    const detail = `${createError?.code ?? ""} ${createError?.message ?? ""}`.toLowerCase();
+    adminActionFailure("createOperationalClientAccount", new Error(detail.includes("already") ? "ACCOUNT_EXISTS" : "OPERATION_FAILED"));
+  }
+
+  try {
+    const { error } = await admin.rpc("provision_operational_client_account_server", {
+      p_actor_id: actorId,
+      p_clinic_id: parsed.data.clinic_id,
+      p_branch_id: parsed.data.branch_id,
+      p_user_id: created.user.id,
+      p_username: parsed.data.username,
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+    if (error) throw new Error(error.code || "OPERATION_FAILED");
+  } catch (error) {
+    await withOperationalTimeout(admin.auth.admin.deleteUser(created.user.id)).catch(() => undefined);
+    adminActionFailure("createOperationalClientAccount", error);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/clinic");
+  revalidatePath("/clinic/bookings");
+}
+
+export async function revokeOperationalClientAccount(formData: FormData): Promise<void> {
+  const parsed = clinicOperatorAccountIdSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("revokeOperationalClientAccount");
+  const actorId = await requireSuperAdmin();
+
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.rpc("revoke_operational_client_account_server", {
+      p_actor_id: actorId,
+      p_operator_account_id: parsed.data.operator_account_id,
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+    if (error) throw new Error(error.code || "OPERATION_FAILED");
+  } catch (error) {
+    adminActionFailure("revokeOperationalClientAccount", error);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/clinic/bookings");
 }

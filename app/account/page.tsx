@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 type BookingRow = { id:string; booking_code:string; start_at:string; end_at:string; status:string; offer_snapshot:unknown; created_at:string };
 type ReviewRow = { booking_id:string; status:string; rating:number };
 type PatientProfileRow = { id:string; display_name:string; relationship:string; national_id:string | null; nationality:string | null; date_of_birth:string | null; phone:string | null; phone_verified_at:string | null; gender:string | null; created_at:string };
-type AccountSearchParams = { booking_error?: string; booking_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string; credentials_error?: string; credentials_success?: string };
+type AccountSearchParams = { booking_error?: string; booking_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string; credentials_error?: string; credentials_success?: string; registration_success?: string };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<AccountSearchParams> }) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
@@ -30,6 +30,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const reviewSuccessMessage = params.review_success === "submitted" ? copy.reviewSuccess : null;
   const credentialsErrorMessage = params.credentials_error ? copy.credentialsErrors[params.credentials_error] ?? null : null;
   const credentialsSuccessMessage = params.credentials_success === "activated" ? copy.credentialsSuccess : null;
+  const registrationSuccessMessage = params.registration_success === "created" ? (locale === "ar" ? "تم إنشاء حسابك بنجاح. يمكنك الآن إكمال ملفك وإدارة حجوزاتك من هنا." : "Your account was created successfully. You can now complete your profile and manage bookings here.") : null;
 
   const supabase = await getServerSupabaseClient();
   const { data: claimsData, error } = await getServerAuthClaims();
@@ -77,6 +78,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <div className="rounded-2xl bg-[linear-gradient(135deg,rgba(230,252,244,.95),rgba(228,247,255,.9))] p-4 ring-1 ring-emerald-100"><div className="text-2xl font-black text-emerald-700">{completed}</div><div className="mt-1 text-xs font-bold text-slate-500">{copy.completedVisits}</div></div>
         </div>
       </section>
+
+      {registrationSuccessMessage && <div role="status" className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{registrationSuccessMessage}</div>}
 
       {!hasLoginCredentials && <section className="mt-8"><Card className="p-5 sm:p-6"><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.credentialsKicker}</p><h2 className="mt-2 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.credentialsTitle}</h2><p className="mt-2 max-w-3xl text-sm font-medium leading-7 text-slate-500">{copy.credentialsCopy}</p>{credentialsErrorMessage && <div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{credentialsErrorMessage}</div>}{credentialsSuccessMessage && <div role="status" className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{credentialsSuccessMessage}</div>}<form action={activateLoginCredentials} className="mt-5 grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.username}<Input name="username" autoComplete="username" dir="ltr" minLength={3} maxLength={32} required /></label><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.password}<Input name="password" type="password" autoComplete="new-password" dir="ltr" minLength={12} maxLength={128} required /></label><div className="sm:col-span-2"><Button>{copy.activateCredentials}</Button></div></form></Card></section>}
 

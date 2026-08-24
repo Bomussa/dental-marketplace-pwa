@@ -132,8 +132,10 @@ test("password login page clearly requires a username and password", async ({ pa
   await page.goto("/login");
   await expect(page.getByRole("heading", { level: 1, name: "سجّل الدخول إلى حسابك" })).toBeVisible();
   await expect(page.getByRole("button", { name: "تسجيل الدخول" })).toBeVisible();
-  await expect(page.locator('input[name="username"]')).toBeVisible();
-  await expect(page.locator('input[type="password"]')).toHaveCount(1);
+  const loginForm = page.locator("form").filter({ has: page.getByRole("button", { name: "تسجيل الدخول" }) });
+  await expect(loginForm.locator('input[name="username"]')).toBeVisible();
+  await expect(loginForm.locator('input[type="password"]')).toHaveCount(1);
+  await expect(page.getByText("ليس لديك حساب؟ أنشئ حساب مريض")).toBeVisible();
 });
 
 test("language selection localizes the password login experience", async ({ page }) => {
@@ -145,22 +147,34 @@ test("language selection localizes the password login experience", async ({ page
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("heading", { level: 1, name: "Sign in to your account" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
-  await expect(page.locator('input[name="username"]')).toBeVisible();
+  const loginForm = page.locator("form").filter({ has: page.getByRole("button", { name: "Sign in" }) });
+  await expect(loginForm.locator('input[name="username"]')).toBeVisible();
+  await expect(page.getByText("New here? Create a patient account")).toBeVisible();
   await expect(page.getByText("سجّل الدخول إلى حسابك")).toHaveCount(0);
 });
 
-test("sensitive booking and support endpoints reject unauthenticated requests before any mutation", async ({ request }) => {
+test("guest support remains public within its rate limit while booking stays private", async ({ request }, testInfo) => {
+  const origin = "http://127.0.0.1:3000";
+  const guestClientIp = `198.18.${testInfo.project.name === "mobile-chrome" ? "1" : "2"}.${(Date.now() % 200) + 1}`;
   const [bookingResponse, supportResponse, registrationResponse] = await Promise.all([
     request.post("/api/book", { data: {} }),
-    request.post("/api/support", { data: {} }),
+    request.post("/api/support", {
+      headers: { origin, "x-forwarded-for": guestClientIp },
+      data: { locale: "ar", message: "كيف يمكنني حجز موعد؟" },
+    }),
     request.post("/api/patient-booking-registration", {
-      headers: { origin: "http://127.0.0.1:3000" },
+      headers: { origin },
       data: {},
     }),
   ]);
 
   expect(bookingResponse.status()).toBe(401);
-  expect(supportResponse.status()).toBe(401);
+  expect([200, 429]).toContain(supportResponse.status());
+  if (supportResponse.status() === 200) {
+    await expect(supportResponse.json()).resolves.toMatchObject({ access: "public", safety_category: "standard" });
+  } else {
+    await expect(supportResponse.json()).resolves.toMatchObject({ error: "RATE_LIMITED" });
+  }
   expect(registrationResponse.status()).toBe(400);
 });
 

@@ -2581,6 +2581,21 @@ export type Database = {
           username: string
         }[]
       }
+      list_operational_client_accounts_server: {
+        Args: { p_actor_id: string }
+        Returns: {
+          branch_id: string
+          branch_name: string
+          clinic_id: string
+          clinic_name: string
+          created_at: string
+          operator_account_id: string
+          revoked_at: string
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
       platform_activity_report_server: {
         Args: {
           p_actor_id: string
@@ -2603,12 +2618,36 @@ export type Database = {
         }
         Returns: string
       }
+      provision_operational_client_account_server: {
+        Args: {
+          p_actor_id: string
+          p_branch_id: string
+          p_clinic_id: string
+          p_user_id: string
+          p_username: string
+        }
+        Returns: string
+      }
       record_booking_check_in: {
         Args: { p_booking_id: string; p_reason?: string }
         Returns: string
       }
       record_booking_check_in_server: {
         Args: { p_actor_id: string; p_booking_id: string; p_reason?: string }
+        Returns: string
+      }
+      register_device_installation_guarded_server: {
+        Args: {
+          p_account_id: string
+          p_app_version: string
+          p_browser: string
+          p_client_subject_key: string
+          p_device_class: string
+          p_device_label: string
+          p_installation_id: string
+          p_installation_subject_key: string
+          p_platform: string
+        }
         Returns: string
       }
       register_device_installation_server: {
@@ -2672,6 +2711,10 @@ export type Database = {
         Returns: undefined
       }
       revoke_clinic_operator_account_server: {
+        Args: { p_actor_id: string; p_operator_account_id: string }
+        Returns: undefined
+      }
+      revoke_operational_client_account_server: {
         Args: { p_actor_id: string; p_operator_account_id: string }
         Returns: undefined
       }

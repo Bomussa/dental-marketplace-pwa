@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, financialReportSchema, isIsoCalendarDate, notificationTemplateSchema, offerSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
+import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, financialReportSchema, isIsoCalendarDate, notificationTemplateSchema, offerSchema, operationalClientAccountSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -108,6 +108,12 @@ describe("validation", () => {
   it("requires secure credentials when the owner provisions either clinic operator account", () => {
     expect(clinicOperatorAccountSchema.safeParse({ clinic_id: offerId, username: "clinic.manager1", email: "manager@example.test", password: "ClinicPass2026!" }).success).toBe(true);
     expect(clinicOperatorAccountSchema.safeParse({ clinic_id: offerId, username: "!!", email: "manager@example.test", password: "short" }).success).toBe(false);
+  });
+
+  it("requires a branch-scoped secure account for an operational bookings client", () => {
+    expect(operationalClientAccountSchema.safeParse({ clinic_id: offerId, branch_id: slotId, username: "booking.operator", email: "operator@example.test", password: "OperatorPass2026!" }).success).toBe(true);
+    expect(operationalClientAccountSchema.safeParse({ clinic_id: offerId, username: "booking.operator", email: "operator@example.test", password: "OperatorPass2026!" }).success).toBe(false);
+    expect(operationalClientAccountSchema.safeParse({ clinic_id: offerId, branch_id: "invalid", username: "booking.operator", email: "operator@example.test", password: "OperatorPass2026!" }).success).toBe(false);
   });
 
   it("accepts a complete search event", () => {

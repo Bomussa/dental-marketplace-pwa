@@ -11,6 +11,8 @@ import { ActivityReportCard } from "@/components/activity-report-card";
 import { PrintReportButton } from "@/components/print-report-button";
 import { PriceScopeFields } from "@/components/price-scope-fields";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
+import { SuperAdminUserManagement } from "@/components/super-admin-user-management";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { BuildingIcon, CheckIcon, ShieldCheckIcon, SlidersIcon, StarIcon, WalletIcon } from "@/components/icons";
 import { parseCustomerChoiceAnalytics } from "@/lib/customer-choice-analytics";
 import { activityReportLabel, getActivityReportCopy, parseActivityReport } from "@/lib/activity-report";
@@ -83,6 +85,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const { data: claimsData, error } = await getServerAuthClaims();
   const meta = (claimsData?.claims?.app_metadata ?? {}) as Record<string, unknown>;
   if (error || !claimsData?.claims?.sub || meta.platform_admin !== true) redirect("/");
+  const isSuperAdmin = meta.platform_super_admin === true;
 
   const activityReportPromise = platformActivityReport({ periodStart: activityStart, periodEnd: activityEnd, granularity: activityGranularityValue }).then(parseActivityReport).catch(() => null);
   const [
@@ -137,6 +140,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ? financialReportSummary({ clinicId: selectedClinicId, periodStart: reportStart, periodEnd: reportEnd }).then((response) => ({ report: isFinancialReport(response) ? response : null, unavailable: false })).catch(() => ({ report: null, unavailable: true }))
     : Promise.resolve({ report: null, unavailable: false });
   const [{ report, unavailable: reportUnavailable }, activityReport] = await Promise.all([financialReportPromise, activityReportPromise]);
+  const operationalClients = isSuperAdmin ? await (async () => {
+    try {
+      const admin = createAdminClient();
+      const { data, error: operationalClientsError } = await admin.rpc("list_operational_client_accounts_server", { p_actor_id: claimsData.claims.sub }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+      return operationalClientsError ? null : data;
+    } catch {
+      return null;
+    }
+  })() : null;
 
   return (
     <main className="workspace-shell mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12">
@@ -146,6 +158,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </section>
 
       {analytics ? <AdminChoiceAnalytics analytics={analytics} days={days} locale={locale} /> : <Card className="mt-7 border border-red-200 bg-red-50/70 p-5 text-red-800"><div className="font-black">{copy.analyticsUnavailable}</div><p className="mt-2 text-sm font-medium">{copy.analyticsUnavailableCopy}</p></Card>}
+
+      {isSuperAdmin && <SuperAdminUserManagement clinics={clinicRows.map((clinic) => ({ id: clinic.id, display_name: clinic.display_name }))} branches={(branches ?? []).map((branch) => ({ id: branch.id, clinic_id: branch.clinic_id, name: branch.name, area: branch.area, status: branch.status }))} operationalClients={operationalClients} />}
 
       <section className="mt-7 grid gap-6 lg:grid-cols-[1.25fr_.75fr]">
         <Card className="p-5 sm:p-6"><div className="flex items-center gap-2"><BuildingIcon size={19} className="text-[#0B5CAD]"/><h2 className="font-black">{copy.pendingItems}</h2></div><div className="mt-4 space-y-3">{pendingSubjects.length ? pendingSubjects.map((subject) => <form key={`${subject.type}-${subject.id}`} action={verifyAndActivate} className="rounded-[22px] bg-slate-50/80 p-4 ring-1 ring-slate-200/60"><input type="hidden" name="subject_type" value={subject.type}/><input type="hidden" name="subject_id" value={subject.id}/><div className="flex items-center justify-between gap-3"><div><div className="font-black">{subject.label}</div><div className="mt-1 text-xs font-bold text-slate-500">{subject.type === "clinic" ? copy.sourceClinic : subject.type === "branch" ? copy.sourceBranch : copy.sourcePractitioner}</div></div><Badge tone="amber">{copy.pending}</Badge></div><div className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]"><Input name="source" required placeholder={copy.verifySource}/><Input name="identifier" placeholder={copy.licenceReference}/><Button className="gap-2"><CheckIcon size={17}/>{copy.verifyActivate}</Button></div></form>) : <div className="rounded-2xl bg-emerald-50 p-5 text-sm font-bold text-emerald-800">{copy.noPendingItems}</div>}</div></Card>

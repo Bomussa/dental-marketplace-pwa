@@ -340,6 +340,10 @@ export const clinicOperatorAccountSchema = z.object({
   password: passwordSchema,
 });
 
+export const operationalClientAccountSchema = clinicOperatorAccountSchema.extend({
+  branch_id: uuid,
+});
+
 export const clinicOperatorAccountIdSchema = z.object({
   operator_account_id: uuid,
 });
