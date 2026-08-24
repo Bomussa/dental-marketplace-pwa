@@ -227,7 +227,7 @@
 
 | الملف |
 |---|
-| [`public/brand/mmc-mms-asnani-qatar-official-logo.png`](../public/brand/mmc-mms-asnani-qatar-official-logo.png) |
+| [شعار MMC-MMS الرسمي — تخزين مشروع دائم](/manus-storage/mmc-mms-asnani-qatar-official-logo_0168eaef.png) |
 | [`public/offline.html`](../public/offline.html) |
 | [`public/sw.js`](../public/sw.js) |
 | [`public/visuals/clinical-aurora-hero.webp`](../public/visuals/clinical-aurora-hero.webp) |
