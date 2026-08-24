@@ -574,3 +574,9 @@ div.relative.overflow-hidden.rounded-\[20px\].border,
   .mobile-dock__item--primary:focus-visible { outline-color: #f0e6d2; outline-offset: 3px; }
   .mobile-dock__item--active::before { top: .1rem; }
 }
+
+
+@media (max-width: 639px) {
+  .reference-treatment { min-height: 6.35rem; }
+  .reference-treatment b { display: block; overflow: visible; text-overflow: clip; white-space: normal; line-height: 1.38; }
+}
