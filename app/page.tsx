@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { getActiveTreatmentCatalog } from "@/lib/treatment-catalog.server";
@@ -7,6 +8,19 @@ import { Badge, Card } from "@/components/ui";
 import { CalendarIcon, RouteIcon, ShieldCheckIcon, SparklesIcon, WalletIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "مقارنة خدمات الأسنان والحجز في قطر",
+  description: "قارن خدمات الأسنان والتوفر واطلب الحجز لدى العيادات المشاركة في قطر.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    title: "مقارنة خدمات الأسنان والحجز في قطر | أسناني قطر",
+    description: "قارن خدمات الأسنان والتوفر واطلب الحجز لدى العيادات المشاركة في قطر.",
+    url: "/",
+    siteName: "أسناني قطر",
+  },
+};
 
 export default async function HomePage() {
   const cookieStore = await cookies();

@@ -12,6 +12,7 @@ const arabicFont = Noto_Sans_Arabic({ variable: "--font-arabic", subsets: ["arab
 const latinFont = Manrope({ variable: "--font-latin", subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.mmc-mms.com"),
   title: { default: "أسناني قطر", template: "%s | أسناني قطر" },
   description: "مقارنة أسعار خدمات الأسنان والتوفر والحجز لدى العيادات المشاركة في قطر.",
   applicationName: "أسناني قطر",

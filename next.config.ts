@@ -43,11 +43,22 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
 ];
 
+const nonIndexableHeaders = [
+  ...securityHeaders,
+  { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   allowedDevOrigins: ["localhost", "127.0.0.1"],
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      ...["/account/:path*", "/admin/:path*", "/api/:path*", "/auth/:path*", "/clinic/:path*", "/login/:path*", "/operation-error/:path*", "/results/:path*"].map((source) => ({
+        source,
+        headers: nonIndexableHeaders,
+      })),
+    ];
   },
   async rewrites() {
     return [
