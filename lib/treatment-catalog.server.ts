@@ -33,7 +33,7 @@ const readActiveTreatmentCatalog = unstable_cache(
     };
   },
   ["active-treatment-catalog-v1"],
-  { revalidate: 3600, tags: [ACTIVE_TREATMENT_CATALOG_TAG] },
+  { revalidate: 60, tags: [ACTIVE_TREATMENT_CATALOG_TAG] },
 );
 
 export function getActiveTreatmentCatalog() {
