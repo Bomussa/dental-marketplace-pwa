@@ -4,6 +4,9 @@ import { Counter, Rate, Trend } from "k6/metrics";
 import { boundedInteger, loadHeaders, safeJson, stagingTarget } from "./shared.js";
 
 const target = stagingTarget();
+if (target.targetEnvironment !== "staging") {
+  throw new Error("Booking flow may run only when TARGET_ENV=staging.");
+}
 if (__ENV.BOOKING_WRITE_CONFIRMATION !== "STAGING_TEST_DATA_ONLY") {
   throw new Error("BOOKING_WRITE_CONFIRMATION must be exactly 'STAGING_TEST_DATA_ONLY'.");
 }

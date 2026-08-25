@@ -20,27 +20,33 @@ export function boundedInteger(name, fallback, minimum, maximum) {
 
 export function stagingTarget() {
   const targetEnvironment = requiredEnv("TARGET_ENV");
-  if (targetEnvironment !== "staging") throw new Error("TARGET_ENV must be exactly 'staging'.");
+  if (targetEnvironment !== "staging") {
+    throw new Error("TARGET_ENV must be exactly 'staging'.");
+  }
   if (requiredEnv("LOAD_TEST_CONFIRMATION") !== "STAGING_ONLY") {
     throw new Error("LOAD_TEST_CONFIRMATION must be exactly 'STAGING_ONLY'.");
   }
 
-  const baseUrl = new URL(requiredEnv("BASE_URL"));
-  if (baseUrl.protocol !== "https:") throw new Error("BASE_URL must use HTTPS.");
-  if (PRODUCTION_HOSTS.has(baseUrl.hostname)) throw new Error("Production hostnames are blocked by this test suite.");
+  const baseUrl = requiredEnv("BASE_URL").replace(/\/$/, "");
+  const match = /^(https?):\/\/([^/?#]+)$/.exec(baseUrl);
+  if (!match) throw new Error("BASE_URL must be an absolute origin without a path, query, or fragment.");
+  const protocol = match[1];
+  const hostname = match[2].replace(/^\[|\]$/g, "").split(":")[0].toLowerCase();
+  if (PRODUCTION_HOSTS.has(hostname)) throw new Error("Production hostnames are blocked by this test suite.");
+  if (protocol !== "https") throw new Error("Staging BASE_URL must use HTTPS.");
 
   const runId = requiredEnv("RUN_ID");
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{7,79}$/.test(runId)) {
     throw new Error("RUN_ID must be 8-80 safe characters.");
   }
 
-  return { baseUrl: baseUrl.toString().replace(/\/$/, ""), origin: baseUrl.origin, runId };
+  return { baseUrl, origin: baseUrl, runId, targetEnvironment };
 }
 
 export function loadHeaders(target, extra = {}) {
   return {
     "x-load-test-run": target.runId,
-    "x-load-test-environment": "staging",
+    "x-load-test-environment": target.targetEnvironment,
     "user-agent": "dental-marketplace-k6-staging-load-test/1.0",
     ...extra,
   };

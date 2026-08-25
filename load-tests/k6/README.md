@@ -56,7 +56,7 @@ export TEST_SEARCH_LNG='51.5310'
 k6 run \
   -e BASE_URL -e TARGET_ENV -e LOAD_TEST_CONFIRMATION -e RUN_ID \
   -e TEST_VARIANT_ID -e TEST_SEARCH_LAT -e TEST_SEARCH_LNG \
-  -e SEARCH_MAX_RPS=20 -e SEARCH_PREALLOCATED_VUS=40 -e SEARCH_MAX_VUS=200 \
+  -e SEARCH_PROFILE=smoke -e SEARCH_MAX_RPS=20 -e SEARCH_PREALLOCATED_VUS=40 -e SEARCH_MAX_VUS=200 \
   --summary-export=artifacts/k6/search-smoke.json \
   load-tests/k6/search-flow.js
 ```
@@ -106,11 +106,17 @@ k6 run \
 
 يتوقف أي ramp إذا تجاوزت أخطاء 5xx غير المتوقعة 1% لمدة دقيقتين، أو تجاوز p99 8 ثوانٍ، أو ظهرت أخطاء اتصالات/CPU/IO مستمرة في Supabase، أو تجاوزت تكلفة الاختبار سقفها، أو ظهر أثر على الإنتاج. بعد تشغيل الحجز، يقارن عدد عداد `booking_created` بعدد الحجوزات الاختبارية المتوقعة، ويتحقق أن كل booking ينتمي إلى fixture وslot اختباريين، ثم يحذف بيانات التشغيل من Staging وفق إجراء التنظيف المعتمد.
 
+## حالة التحقق المجاني
+
+ثُبّت k6 من مصدره الرسمي في بيئة التنفيذ، وتحقق `k6 version` بنجاح. جرى تشغيل k6 فعليًا في وضع حراسة ضد نطاقي الإنتاج `mmc-mms.com` و`www.mmc-mms.com` لكل من سيناريو البحث والحجز، وتوقف كلاهما قبل أي طلب شبكي كما هو مقصود. كما حُمِّل كل سيناريو ببيئة Staging نظرية (`staging.example.test`) عبر `k6 inspect` من دون إرسال شبكة.
+
+لم يُجرَ اختبار search أو booking حي على Staging في الوضع المجاني، لأن المشروع المرجعي لا يملك فرع Staging، وإنشاء فرع معزول يتطلب موردًا مدفوعًا رفضه المالك. لا تستبدل هذه الحالة باختبار محلي أو إنتاجي: تبقى السيناريوهات مقيدة بـ`TARGET_ENV=staging` و`LOAD_TEST_CONFIRMATION=STAGING_ONLY`، ويظل الحجز محجوبًا حتى تتوفر بيئة Staging مجانية ومعزولة وfixtures وجلسات اختبار حقيقية.
+
 ## التحقق قبل التنفيذ
 
 نفذ هذه القائمة قبل أي اختبار حي:
 
-1. ثبّت k6 على مولدات الحمل؛ هذه البيئة الحالية تحققت من صياغة JavaScript فقط ولا تحتوي k6 runtime.
+1. ثبّت k6 على كل مولد حمل وتحقق من `k6 version`. كُشف k6 وتحقق من تشغيله في بيئة التنفيذ الحالية، لكن لا يبدأ حمل حي بلا Staging معزول.
 2. تأكد أن `BASE_URL` نطاق Staging HTTPS وليس نطاق الإنتاج، وأن متغيرات البوابات صحيحة.
 3. راجع fixtures: لا تكرار في `slot_id` أو `patient_profile_id` بين المولدات.
 4. تحقق أن كل cookie قصيرة العمر وتخص Staging، وأن ملف fixtures الخاص غير متتبع في Git.

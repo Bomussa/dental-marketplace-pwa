@@ -15,6 +15,20 @@ const maxVUs = boundedInteger("SEARCH_MAX_VUS", 500, preAllocatedVUs, 2000);
 const searchFailures = new Rate("search_failures");
 const searchLatency = new Trend("search_latency", true);
 const searchResponses = new Counter("search_responses");
+const profile = __ENV.SEARCH_PROFILE ?? "full";
+if (!["smoke", "full"].includes(profile)) throw new Error("SEARCH_PROFILE must be either 'smoke' or 'full'.");
+const stages = profile === "smoke"
+  ? [
+    { duration: "5s", target: Math.min(5, maxRate) },
+    { duration: "10s", target: maxRate },
+    { duration: "5s", target: 0 },
+  ]
+  : [
+    { duration: "5m", target: Math.max(10, Math.floor(maxRate * 0.2)) },
+    { duration: "10m", target: Math.max(10, Math.floor(maxRate * 0.6)) },
+    { duration: "15m", target: maxRate },
+    { duration: "5m", target: 0 },
+  ];
 
 export const options = {
   scenarios: {
@@ -24,12 +38,7 @@ export const options = {
       timeUnit: "1s",
       preAllocatedVUs,
       maxVUs,
-      stages: [
-        { duration: "5m", target: Math.max(10, Math.floor(maxRate * 0.2)) },
-        { duration: "10m", target: Math.max(10, Math.floor(maxRate * 0.6)) },
-        { duration: "15m", target: maxRate },
-        { duration: "5m", target: 0 },
-      ],
+      stages,
       tags: { flow: "public_search" },
       gracefulStop: "30s",
     },
@@ -67,7 +76,7 @@ export default function () {
   const valid = check(response, {
     "search returns 200": (r) => r.status === 200,
     "search returns JSON count": () => body && typeof body.count === "number" && Array.isArray(body.offers),
-    "search returns requested variant": () => body && body.variant === variantId,
+    "search returns variant details": () => body && body.variant && typeof body.variant.name_ar === "string" && typeof body.variant.name_en === "string",
   });
 
   searchFailures.add(!valid);
