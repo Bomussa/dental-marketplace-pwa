@@ -32,7 +32,7 @@ const readActiveTreatmentCatalog = unstable_cache(
       hasError: Boolean(treatmentsError || variantsError),
     };
   },
-  ["active-treatment-catalog-v1"],
+  ["active-treatment-catalog-v2"],
   { revalidate: 60, tags: [ACTIVE_TREATMENT_CATALOG_TAG] },
 );
 
