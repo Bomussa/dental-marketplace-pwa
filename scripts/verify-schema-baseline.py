@@ -111,12 +111,20 @@ def main() -> None:
     parser.add_argument("--snapshot-dir", required=True, type=Path)
     parser.add_argument("--grants-result", required=True, type=Path)
     parser.add_argument("--actual", required=True, type=Path)
+    parser.add_argument(
+        "--skip-grants",
+        action="store_true",
+        help="skip raw grant comparison when intentional post-baseline privilege hardening is applied",
+    )
     args = parser.parse_args()
     expected = extract_expected(args.snapshot_dir, args.grants_result)
     actual = json.loads(args.actual.read_text(encoding="utf-8"))
     actual["extensions"] = sorted(name for name in actual["extensions"] if name != "plpgsql")
     successful = True
-    for name in ("tables", "functions", "constraints", "rls_tables", "policies", "indexes", "triggers", "extensions", "grants"):
+    compared_names = ["tables", "functions", "constraints", "rls_tables", "policies", "indexes", "triggers", "extensions", "grants"]
+    if args.skip_grants:
+        compared_names.remove("grants")
+    for name in compared_names:
         ok, detail = compare(name, expected[name], sorted(actual[name]))
         print(("PASS " if ok else "FAIL ") + detail)
         successful = successful and ok
