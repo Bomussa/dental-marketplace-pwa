@@ -135,8 +135,7 @@ test("language switch persists an English product experience", async ({ page }) 
 });
 
 test("language switch also localizes the empty results experience", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "قارن الخيارات الآن" }).click();
+  await page.goto("/results?variant=ac3f6bfe-4698-4cee-8c45-22bb23ab7783&when=earliest&radius=10&sort=balanced");
   await expect(page.getByText("لا توجد خيارات مطابقة الآن")).toBeVisible();
 
   await switchToEnglish(page);
