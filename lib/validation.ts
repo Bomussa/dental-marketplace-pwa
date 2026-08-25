@@ -299,7 +299,13 @@ export const patientProfileUpsertSchema = patientProfileSchema.extend({
 });
 
 export const usernameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/, "اسم المستخدم يجب أن يتكون من 3 إلى 32 حرفًا أو رقمًا، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
-export const passwordSchema = z.string().min(12, "كلمة المرور يجب ألا تقل عن 12 حرفًا").max(128).refine((value) => /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value), "كلمة المرور تحتاج حرفًا صغيرًا وكبيرًا ورقمًا واحدًا على الأقل");
+export const passwordSchema = z.string()
+  .min(12, "كلمة المرور يجب ألا تقل عن 12 حرفًا")
+  .max(128)
+  .refine(
+    (value) => /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9\s]/.test(value),
+    "كلمة المرور تحتاج حرفًا صغيرًا وكبيرًا ورقمًا ورمزًا خاصًا واحدًا على الأقل",
+  );
 
 export function isSafeInternalRedirectPath(value: string) {
   try {

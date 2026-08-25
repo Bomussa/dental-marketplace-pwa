@@ -1,35 +1,23 @@
 import { NextResponse } from "next/server";
 import { withOperationalTimeout } from "@/lib/operations.server";
-import { serverOperationsConfigured } from "@/lib/server-readiness";
 import { createClient } from "@/lib/supabase/server";
+
+function healthResponse(ok: boolean, status: number) {
+  return NextResponse.json(
+    { ok, time: new Date().toISOString() },
+    { status, headers: { "cache-control": "no-store" } },
+  );
+}
 
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { count, error } = await withOperationalTimeout(
+    const { error } = await withOperationalTimeout(
       supabase.from("treatment_catalog").select("id", { count: "exact", head: true }).eq("active", true),
     );
-    if (error) {
-      return NextResponse.json(
-        { ok: false, database: false, server_operations: serverOperationsConfigured() },
-        { status: 503, headers: { "cache-control": "no-store" } },
-      );
-    }
 
-    return NextResponse.json(
-      {
-        ok: true,
-        database: true,
-        server_operations: serverOperationsConfigured(),
-        treatments: count ?? 0,
-        time: new Date().toISOString(),
-      },
-      { headers: { "cache-control": "no-store" } },
-    );
+    return healthResponse(!error, error ? 503 : 200);
   } catch {
-    return NextResponse.json(
-      { ok: false, database: false, server_operations: serverOperationsConfigured() },
-      { status: 503, headers: { "cache-control": "no-store" } },
-    );
+    return healthResponse(false, 503);
   }
 }

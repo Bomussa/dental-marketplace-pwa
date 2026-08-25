@@ -75,6 +75,7 @@ describe("validation", () => {
       expect(registration.data.phone).toBe("+97455123456");
     }
     expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة", relationship: "self", national_id: "28412345678", nationality: "QA", date_of_birth: "1992-04-15", phone: "+97455123456", username: "bad user", email: "not-an-email", password: "weakpassword" }).success).toBe(false);
+    expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة أحمد", relationship: "self", national_id: "28412345678", nationality: "QA", date_of_birth: "1992-04-15", phone: "+97455123456", username: "fatima.ahmed", email: "fatima@example.test", password: "SafePass2026x" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "Fatima.Ahmed", password: "anything", next: "/results" }).success).toBe(true);
     expect(passwordLoginSchema.safeParse({ username: "a", password: "anything", next: "https://unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "//unsafe.example" }).success).toBe(false);
