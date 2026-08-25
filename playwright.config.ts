@@ -4,6 +4,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 loadEnvConfig(process.cwd());
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
+const usesExternalBaseURL = Boolean(process.env.PLAYWRIGHT_BASE_URL);
 const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? "npm run start";
 const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_EXISTING_SERVER === "true";
 const localChromiumPath = "/usr/bin/chromium";
@@ -19,11 +21,11 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL,
     trace: "retain-on-failure",
     ...(executablePath ? { launchOptions: { executablePath } } : {}),
   },
-  webServer: { command: webServerCommand, url: "http://127.0.0.1:3000", reuseExistingServer, timeout: 180_000 },
+  webServer: usesExternalBaseURL ? undefined : { command: webServerCommand, url: "http://127.0.0.1:3000", reuseExistingServer, timeout: 180_000 },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
