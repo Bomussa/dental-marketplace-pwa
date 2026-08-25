@@ -44,10 +44,13 @@ export function stagingTarget() {
 }
 
 export function loadHeaders(target, extra = {}) {
+  const automationBypass = __ENV.VERCEL_AUTOMATION_BYPASS_SECRET?.trim();
+
   return {
     "x-load-test-run": target.runId,
     "x-load-test-environment": target.targetEnvironment,
     "user-agent": "dental-marketplace-k6-staging-load-test/1.0",
+    ...(automationBypass ? { "x-vercel-protection-bypass": automationBypass } : {}),
     ...extra,
   };
 }

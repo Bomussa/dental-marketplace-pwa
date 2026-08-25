@@ -55,19 +55,19 @@ const sorts = ["balanced", "price", "distance", "rating", "soonest"];
 const whenValues = ["earliest", "today", "tomorrow"];
 
 export default function () {
-  const params = new URLSearchParams({
-    variant: variantId,
-    radius: String(5 + ((__VU + __ITER) % 4) * 5),
-    sort: sorts[(__VU + __ITER) % sorts.length],
-    when: whenValues[(__VU + __ITER) % whenValues.length],
-  });
+  const params = [
+    ["variant", variantId],
+    ["radius", String(5 + ((__VU + __ITER) % 4) * 5)],
+    ["sort", sorts[(__VU + __ITER) % sorts.length]],
+    ["when", whenValues[(__VU + __ITER) % whenValues.length]],
+  ];
 
   if (__ENV.TEST_SEARCH_LAT && __ENV.TEST_SEARCH_LNG) {
-    params.set("lat", __ENV.TEST_SEARCH_LAT);
-    params.set("lng", __ENV.TEST_SEARCH_LNG);
+    params.push(["lat", __ENV.TEST_SEARCH_LAT], ["lng", __ENV.TEST_SEARCH_LNG]);
   }
 
-  const response = http.get(`${target.baseUrl}/api/search?${params.toString()}`, {
+  const query = params.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join("&");
+  const response = http.get(`${target.baseUrl}/api/search?${query}`, {
     headers: loadHeaders(target),
     tags: { route: "/api/search" },
     timeout: "15s",
