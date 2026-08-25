@@ -10,3 +10,6 @@ test-results
 *.log
 .DS_Store
 *.tsbuildinfo
+
+# Private k6 staging fixtures may contain short-lived test-session cookies.
+/load-tests/k6/fixtures/*.private.json

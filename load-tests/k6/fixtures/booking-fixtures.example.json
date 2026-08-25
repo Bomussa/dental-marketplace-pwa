@@ -1,0 +1,16 @@
+[
+  {
+    "fixture_id": "booking-001",
+    "cookie_env": "K6_BOOKING_COOKIE_001",
+    "offer_id": "REPLACE_WITH_STAGING_OFFER_UUID",
+    "slot_id": "REPLACE_WITH_UNIQUE_STAGING_SLOT_UUID",
+    "patient_profile_id": "REPLACE_WITH_STAGING_PATIENT_PROFILE_UUID"
+  },
+  {
+    "fixture_id": "booking-002",
+    "cookie_env": "K6_BOOKING_COOKIE_002",
+    "offer_id": "REPLACE_WITH_STAGING_OFFER_UUID",
+    "slot_id": "REPLACE_WITH_A_DIFFERENT_STAGING_SLOT_UUID",
+    "patient_profile_id": "REPLACE_WITH_A_DIFFERENT_STAGING_PATIENT_PROFILE_UUID"
+  }
+]
