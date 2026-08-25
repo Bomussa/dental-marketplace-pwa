@@ -1,13 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const isReadOnlyExternalTarget = process.env.PLAYWRIGHT_READ_ONLY_TARGET === "true";
-
-test.beforeEach(async ({ page }) => {
-  if (!isReadOnlyExternalTarget) return;
-  await page.route("**/api/device-installations", (route) => route.fulfill({ status: 204 }));
-  await page.route("**/api/choices", (route) => route.fulfill({ status: 204 }));
-});
-
 async function selectAlternativeTreatment(page: Page) {
   const form = page.getByRole("form", { name: "ابدأ مقارنة علاج الأسنان" });
   const treatment = form.locator('select[name="treatment"]');
