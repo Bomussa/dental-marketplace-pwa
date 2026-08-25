@@ -93,7 +93,7 @@ flowchart LR
 
 | النهاية | الطريقة | المصادقة | المدخلات الجوهرية | النتيجة والضمانات |
 |---|---|---|---|---|
-| `/api/health` | `GET` | لا | لا يوجد | حالة التطبيق، اتصال القاعدة، جاهزية عمليات الخادم، وعدد العلاجات. |
+| `/api/health` | `GET` | لا | لا يوجد | استجابة عامة مختصرة `{ ok, time }` فقط؛ لا تكشف اتصال القاعدة أو تفاصيل التشغيل أو عدادات الكتالوج. |
 | `/api/search` | `GET` | لا | `variant`, `lat?`, `lng?`, `radius?`, `when` | بحث non-cacheable؛ يتحقق من النوع والموقع والنطاق، ثم يعرض العروض المؤهلة فقط. |
 | `/api/book` | `POST` | مطلوب | `slot_id`, `offer_id`, `idempotency_key`, `patient_profile_id` | RPC ذري `book_slot_server`؛ حد 10 محاولات/ساعة/مستخدم؛ يعود بـ201 أو أخطاء 400/401/403/409/429/503. |
 | `/api/choices` | `POST` | اختياري | حدث اختيار مضبوط | أصل مسموح، حد حجم، 60 حدثًا/60 ثانية/عميل، إدخال مكرّر idempotent. |
@@ -188,6 +188,7 @@ flowchart LR
 | التحكم | التطبيق |
 |---|---|
 | RLS | مفعّل على جداول `public`؛ RLS وليس إخفاء عناصر الواجهة هو آلية فرض الوصول. |
+| تنفيذ RPC | `anon` يملك بحث الزوار ومساعد نطاق السعر غير الخادمي فقط؛ `authenticated` يملك دوال الواجهة المحددة فقط؛ كل الدوال ذات اللاحقة `_server` محصورة في `service_role`. تفصيل الإصدار في [`docs/CURRENT_PRODUCTION_STATUS.md`](docs/CURRENT_PRODUCTION_STATUS.md). |
 | الجلسات | Supabase Auth باسم المستخدم وكلمة المرور وcookies SSR؛ Proxy ينعش claims. يبقى `/auth/confirm` لتدفقات رمز الجلسة الخارجية فقط، وليس واجهة الدخول الاعتيادية. |
 | الأسرار | لا تضع مفاتيح فعلية في Git أو `NEXT_PUBLIC_*`. لا يُعرض `SUPABASE_SECRET_KEY` أو مفاتيح Twilio/OpenAI في السجل أو الواجهة. |
 | التحقق | Zod في كل حدود الإدخال، وتطبيع للرقم الشخصي والهاتف والعملة والتاريخ. |
@@ -355,6 +356,11 @@ tests/
   20260819140000_server_only_critical_mutation_policies.sql
   20260824231500_super_admin_operational_client_v1.sql
   20260824232500_super_admin_operational_client_management_v1.sql
+  20260825191000_harden_public_function_execute.sql
+  20260825192500_revoke_anon_server_rpc_execute.sql
+  20260825193500_limit_authenticated_security_definer_rpc.sql
+  20260825194500_allow_public_search_validation_helper.sql
+  20260825195000_allow_authenticated_search_rpc.sql
 
 ```
 
@@ -384,7 +390,7 @@ npm run dev
 ## 14. الاختبار والمراقبة
 
 - تسجل تقارير التحقق المؤرخة نتيجة كل تشغيل فعلي؛ لا يثبت README عداد اختبارات أو ادعاء جاهزية من دون سجل البيئة والوقت والنتيجة. يشمل التحقق الحالي TypeScript وESLint وVitest وبناء الإنتاج واختبارات المتصفح ذات الصلة.
-- [`tests/e2e/home.spec.ts`](tests/e2e/home.spec.ts) واختبارات المتصفح المرتبطة تغطي البحث العربي/الإنجليزي، النوع الدقيق، التفضيل الزمني، نطاق 25 كم، رفض تفضيل موعد غير صالح، الدخول والتسجيل، فصل المسارات المحمية، دعم الزائر بلا جلسة، health، حارس القراءة العامة المباشرة لكل كيانات DEV، CSP، PWA وعدم الاتصال، وحماية تصدير النشاط.
+- [`tests/e2e/home.spec.ts`](tests/e2e/home.spec.ts) واختبارات المتصفح المرتبطة تغطي البحث العربي/الإنجليزي، النوع الدقيق، التفضيل الزمني، نطاق 25 كم، رفض تفضيل موعد غير صالح، الدخول والتسجيل، فصل المسارات المحمية، دعم الزائر بلا جلسة، health المختصر، حارس القراءة العامة المباشرة لكل كيانات DEV، CSP، PWA وعدم الاتصال، وحماية تصدير النشاط. يتطلب تشغيلها محليًا قيم Supabase public صالحة في البيئة؛ لا تنسخ قيم Production إلى shell أو Git.
 - اختبارات الوحدة تفحص تحويل المال، validation وعقد البحث، فرز التوازن المستقل، نموذج كشف النشاط، idempotency intent، حارس telemetry والكتابة العامة، أدوار العيادة، الترجمة، server operations، OTP adapter، وservice worker.
 - [`supabase/tests/acceptance.sql`](supabase/tests/acceptance.sql) يضم مجسات قبول قاعدة البيانات.
 - [`scripts/safe-load-test.mjs`](scripts/safe-load-test.mjs) للاختبارات المحلية غير الهدمية فقط؛ لا تنفّذ حملاً على الإنتاج أو تنشئ حجوزات واقعية من دون تفويض واضح وخطة اختبار مخصصة.
@@ -396,7 +402,7 @@ npm run dev
 1. شغّل `npm run verify` و`npm run test:e2e` محليًا.
 2. راجع `git diff --check` ولا ترفع `.env.local` أو مفاتيح أو مخرجات تجريبية.
 3. طبّق ترحيلات DDL عبر مسار Supabase المعتمد، ثم تحقق بالـSQL read-only أو اختبارات القبول.
-4. ادفع إلى `main`، راقب حالة النشر، ثم تحقق حيًا من الصفحة و`/api/health` دون إحداث بيانات حقيقية.
+4. ادفع إلى `main`، راقب حالة النشر، ثم تحقق حيًا من الصفحة و`/api/health` والبحث العام دون إحداث بيانات حقيقية. افحص بعد أي DDL أن تنفيذ `_server` غير متاح لـ`anon` أو `authenticated`.
 5. احفظ دليل التحقق في تقرير مؤرخ داخل `docs/` إذا غيّر النشر سلوكًا أو عقدًا عامًّا.
 
 ## 16. قواعد التطوير وعدم التعارض

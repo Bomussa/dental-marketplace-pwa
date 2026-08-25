@@ -101,3 +101,18 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | `20260824232500_super_admin_operational_client_management_v1.sql` | `super_admin_operational_client_management_v1` | عرض العملاء التشغيليين وإيقافهم مع حفظ السجل. | الإجراءان موجودان ولا يملك `authenticated` تنفيذ العرض مباشرة. |
 
 لا ينشئ أي من الترحيلين كلمة مرور أو يضع بيانات اعتماد في SQL؛ تبقى كلمة المرور حصرًا داخل Supabase Auth وبمسار خادمي محمي.
+
+
+## إصدار Production — 25 أغسطس 2026: حصر تنفيذ RPC
+
+> **الحالة:** طُبّق التسلسل التالي في مشروع Production `bqvcukxfsnchvkgejolz` بعد مراجعة المصدر واختبار Staging. لا يتضمن DML أو نقل بيانات أو حسابات/حجوزات/مواعيد اختبار. رقم `version` هو وقت التسجيل الفعلي لدى Supabase، ولذلك يختلف عن بادئة ملف المصدر.
+
+| # | ملف المصدر | الإصدار البعيد | الاسم المسجل | الغرض |
+|---:|---|---|---|---|
+| 81 | `20260825191000_harden_public_function_execute.sql` | `20260825201107` | `harden_public_function_execute` | سحب grants العامة وحصر دوال `_server` في `service_role`. |
+| 82 | `20260825192500_revoke_anon_server_rpc_execute.sql` | `20260825201142` | `revoke_anon_server_rpc_execute` | إزالة منح `anon` الموروثة ثم إعادة بحث الزوار فقط. |
+| 83 | `20260825193500_limit_authenticated_security_definer_rpc.sql` | `20260825201217` | `limit_authenticated_security_definer_rpc` | منح authenticated لدوال الواجهة المحددة ومساعدات validation فقط. |
+| 84 | `20260825194500_allow_public_search_validation_helper.sql` | `20260825201253` | `allow_public_search_validation_helper` | منح مساعد نطاق السعر غير الخادمي للبحث العام فقط. |
+| 85 | `20260825195000_allow_authenticated_search_rpc.sql` | `20260825201329` | `allow_authenticated_search_rpc` | إبقاء بحث القراءة فقط متاحًا للمستخدم المسجل. |
+
+**Postconditions المقروءة بعد التطبيق:** `anon_server_execute=0`، و`authenticated_server_execute=0`، و`service_server_execute=23`. بقي `search_dental_offers` ومساعد نطاق السعر اللازم متاحين للأدوار المقصودة فقط. أعاد مستشار الأمان تحذيرًا واحدًا لا يتعلق بـRPC: `auth_leaked_password_protection`؛ لم تُفعّل خطة مدفوعة أو إعداد إضافي تلقائي.
