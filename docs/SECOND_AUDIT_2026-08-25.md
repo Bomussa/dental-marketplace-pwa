@@ -39,3 +39,9 @@
 
 [1]: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection "Supabase — Password security and leaked password protection"
 [2]: https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index "Supabase — Unused index advisory"
+
+## النشر والتحقق الحي
+
+نُشرت دفعة موثوقية الاختبارات في الالتزام `a37227c`، وأصبح نشر Vercel الإنتاجي `dpl_F865HuWKEswAhwBP2WndDCxQ6bZA` بحالة `READY`. أنشئ فرع رجوع مستقل باسم `rollback/production-before-second-audit-20260825` عند الالتزام `4ecb789` قبل الدفع.
+
+بعد الجاهزية، أعادت `GET /api/health` على النطاق الرسمي عقد JSON العام ذي `ok: true` و`time` فقط. وأعاد طلب دعم زائر عام غير طبي جوابًا غير فارغ مع `access: public`، من دون جلسة أو حجز. كما أعادت `/account` و`/clinic` و`/clinic/bookings` توجيه 307 إلى تسجيل الدخول مع معامل `next`، وأعادت `/admin` توجيه 307 إلى الجذر. لم يسجل فحص Vercel لمجموعات أخطاء وقت التشغيل في هذه المسارات ضمن نافذة الثلاثين دقيقة بعد التحقق أي خطأ.
