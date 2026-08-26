@@ -139,3 +139,16 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | 88 | `20260826130000_notification_outbox_rls_initplan_v1.sql` | `20260826163826` | `notification_outbox_rls_initplan_v1` | لفّ قراءة `auth.jwt()` في سياسة قراءة إشعارات الحساب داخل `select` ثابت لكل طلب بدل إعادة التقييم لكل صف، من دون تغيير ملكية المريض أو استثناء المدير الأعلى. |
 
 **Postconditions المقروءة بعد التطبيق:** تعريف السياسة الحي يحتفظ بشرط المستلم والـaccount-disabled ويستعمل `(select auth.jwt())` لمسار المدير الأعلى. أزال مستشار الأداء تحذير `auth_rls_initplan`؛ بقيت إشعارات الفهارس غير المستخدمة على مستوى `INFO` فقط. أعاد مستشار الأمان التحذير التشغيلي نفسه `auth_leaked_password_protection` فقط.
+
+
+## إصدار Production — 26 أغسطس 2026: إصلاح حلقة RLS لحجوزات العميل التشغيلي
+
+> **الحالة:** طُبق التسلسل التالي في مشروع Production `bqvcukxfsnchvkgejolz` بعد نجاحه الوظيفي في Preview Staging وتنظيف fixture `TEST_STG` إلى أصفار موسعة. لا يتضمن أي ترحيل DML أعمال أو حسابات أو حجوزات أو رسائل اختبار في Production.
+
+| # | ملف المصدر | الإصدار البعيد | الاسم المسجل | الغرض |
+|---:|---|---|---|---|
+| 89 | `20260826193000_booking_patient_rls_recursion_fix_v1.sql` | `20260826194116` | `booking_patient_rls_recursion_fix_v1` | كسر الحلقة بين `bookings_select` وقراءة ملفات المرضى عبر حارس خاص لملف المريض الذاتي غير المؤرشف. |
+| 90 | `20260826193500_booking_patient_rls_helper_execute_grant_v1.sql` | `20260826194133` | `booking_patient_rls_helper_execute_grant_v1` | تثبيت منح تنفيذ الحارس لدور `authenticated` فقط. |
+| 91 | `20260826194500_booking_patient_rls_helper_search_path_v1.sql` | `20260826194534` | `booking_patient_rls_helper_search_path_v1` | تثبيت مسار بحث `pg_catalog` للحارس مع بقاء جداول التطبيق مؤهلة بالـschema. |
+
+**Postconditions المقروءة بعد التطبيق:** سياسة `bookings_select` تستدعي الحارس الداخلي بدلاً من استعلام `patient_profiles` مباشرة تحت RLS؛ منح التنفيذ هو `authenticated=true` و`anon=false` و`public=false`، ومسار الدالة `search_path=pg_catalog`. لا يثبت هذا تشغيل OTP أو حجزًا أو اختبار حمل في Production.

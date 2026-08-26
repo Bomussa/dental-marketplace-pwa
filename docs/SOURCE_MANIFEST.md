@@ -41,7 +41,7 @@
 | `supabase/migrations/20260826100000_patient_experience_integrity_v1.sql` | تفرد هاتف المريض وnickname القصير، جنس الممارس وفلتر البحث، إشعار الحجز `in_app` وبيانات المكان، والحذف الذاتي المؤرشف المقيد. |
 | `supabase/migrations/20260826103000_patient_account_admin_management_v1.sql` | قائمة مرضى دنيا وإجراء حذف مقيد للمدير الأعلى فقط. |
 | `supabase/migrations/20260826130000_notification_outbox_rls_initplan_v1.sql` | تحسين أداء RLS لقراءة إشعارات الحساب مع إبقاء ملكية المريض وحارس الحساب واستثناء المدير الأعلى. |
-| `supabase/migrations/20260826193000_booking_patient_rls_recursion_fix_v1.sql` و`20260826193500_booking_patient_rls_helper_execute_grant_v1.sql` | كسر حلقة RLS بين `bookings` و`patient_profiles` مع حارس خاص لملف المريض الذاتي غير المؤرشف وتنفيذ مقيد لـ`authenticated` داخل السياسة. |
+| `supabase/migrations/20260826193000_booking_patient_rls_recursion_fix_v1.sql` إلى `20260826194500_booking_patient_rls_helper_search_path_v1.sql` | كسر حلقة RLS بين `bookings` و`patient_profiles` مع حارس خاص لملف المريض الذاتي غير المؤرشف وتنفيذ مقيد لـ`authenticated` داخل السياسة ومسار بحث `pg_catalog` ثابت. |
 | `supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql` | baseline مخطط خالٍ من البيانات لإعادة بناء Staging، وليس مصدرًا لإدخال بيانات Production. |
 | `supabase/baselines/README.md` | تسلسل baseline ثم مهاجرات التقوية الخمس. |
 | `scripts/generate-schema-baseline.py` و`scripts/verify-schema-baseline.py` | توليد ومقارنة جرد المخطط من دون أسرار أو صفوف أعمال. |
