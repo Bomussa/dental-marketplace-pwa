@@ -7,11 +7,11 @@ import { getLocale } from "@/lib/i18n";
 import { accountNationality } from "@/lib/account-copy";
 import { clientBookingStatusTone, parseClientBookingPage, parseClientBookingView } from "@/lib/client-booking-workspace";
 import { clinicStatus } from "@/lib/clinic-copy";
-import { Badge, Button, Card } from "@/components/ui";
-import { BuildingIcon, CalendarIcon, CheckIcon, ShieldCheckIcon } from "@/components/icons";
-import { ClinicBookingStatusForm } from "@/components/clinic-booking-status-form";
+import { clinicBookingAttendanceState, latestClinicAttendanceByBooking } from "@/lib/clinic-booking-attendance";
+import { Badge, Card } from "@/components/ui";
+import { BuildingIcon, CalendarIcon, ShieldCheckIcon } from "@/components/icons";
+import { ClinicBookingActions } from "@/components/clinic-booking-actions";
 import { ClinicLiveRefresh } from "@/components/clinic-live-refresh";
-import { changeBookingStatus, markBookingCheckedIn } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,7 @@ const ATTENTION_STATUSES = ["pending_hold", "pending_clinic_confirmation", "conf
 type Booking = { id: string; booking_code: string; start_at: string; status: string; branch_id: string; offer_snapshot: unknown };
 type Branch = { id: string; name: string; area: string | null };
 type PatientDetails = { booking_id: string; patient_display_name: string; patient_national_id: string; patient_nationality: string; patient_date_of_birth: string; patient_phone: string };
+type AttendanceEvent = { booking_id: string; event_type: string; sequence_no: number };
 type Membership = { clinic_id: string; branch_id: string | null; role: string; status: string };
 type SearchParams = { view?: string; page?: string };
 
@@ -82,11 +83,19 @@ export default async function OperationalBookingsPage({ searchParams }: { search
   const upcomingCount = upcomingCountResult.count ?? 0;
   const historyCount = historyCountResult.count ?? 0;
   const bookingIds = bookings.map((booking) => booking.id);
-  const { data: patientData } = bookingIds.length
-    ? await supabase.rpc("clinic_booking_patient_details", { p_booking_ids: bookingIds }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS))
-    : { data: [] as PatientDetails[] };
+  const [{ data: patientData }, { data: attendanceData, error: attendanceError }] = await Promise.all([
+    bookingIds.length
+      ? supabase.rpc("clinic_booking_patient_details", { p_booking_ids: bookingIds }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS))
+      : Promise.resolve({ data: [] as PatientDetails[] }),
+    bookingIds.length
+      ? withOperationalTimeout(supabase.from("booking_attendance_events").select("booking_id,event_type,sequence_no").in("booking_id", bookingIds))
+      : Promise.resolve({ data: [] as AttendanceEvent[], error: null }),
+  ]);
   const patientByBooking = new Map<string, PatientDetails>();
   for (const item of (patientData ?? []) as PatientDetails[]) patientByBooking.set(item.booking_id, item);
+  const latestAttendanceByBooking = attendanceError
+    ? new Map<string, AttendanceEvent>()
+    : latestClinicAttendanceByBooking((attendanceData ?? []) as AttendanceEvent[]);
   const branchById = new Map(branches.map((branch) => [branch.id, branch]));
   const dateTime = new Intl.DateTimeFormat(isArabic ? "ar-QA" : "en-QA", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Qatar" });
   const copy = isArabic ? {
@@ -123,6 +132,11 @@ export default async function OperationalBookingsPage({ searchParams }: { search
     actionNoShow: "تسجيل عدم الحضور",
     actionFail: "تعذر إتمام الحجز",
     actionApply: "تنفيذ",
+    attendanceUnknown: "تعذر التحقق من حالة الحضور — أعد تحميل الصفحة",
+    attendanceOutOfSync: "حالة الحضور غير متزامنة — أعد تحميل الصفحة",
+    reverseReason: "سبب عكس الحضور",
+    reverse: "عكس",
+    viewOnly: "عرض فقط",
   } : {
     kicker: "Operational client workspace",
     title: "Authorized bookings",
@@ -157,6 +171,11 @@ export default async function OperationalBookingsPage({ searchParams }: { search
     actionNoShow: "Mark no-show",
     actionFail: "Booking could not be completed",
     actionApply: "Apply",
+    attendanceUnknown: "Attendance status could not be verified — reload the page",
+    attendanceOutOfSync: "Attendance status is out of sync — reload the page",
+    reverseReason: "Reason for reversing check-in",
+    reverse: "Reverse",
+    viewOnly: "View only",
   };
   const viewHref = (view: "attention" | "upcoming" | "history", targetPage = 1) => `/clinic/bookings?view=${view}&page=${targetPage}`;
   const firstVisible = visibleCount === 0 ? 0 : rangeStart + 1;
@@ -189,14 +208,15 @@ export default async function OperationalBookingsPage({ searchParams }: { search
         {bookingResult.error ? <p role="alert" className="rounded-2xl bg-amber-50 p-5 text-sm font-bold leading-6 text-amber-900 ring-1 ring-amber-200">{copy.unavailable}</p> : bookings.length ? bookings.map((booking) => {
           const patient = patientByBooking.get(booking.id);
           const branch = branchById.get(booking.branch_id);
-          const mutableStatus = booking.status === "pending_hold" || booking.status === "pending_clinic_confirmation" || booking.status === "confirmed" ? booking.status : null;
+          const latestAttendance = latestAttendanceByBooking.get(booking.id);
+          const attendanceState = clinicBookingAttendanceState(latestAttendance, Boolean(attendanceError));
           return <article key={booking.id} className="grid gap-4 rounded-[22px] bg-slate-50/80 p-4 ring-1 ring-slate-200/70 sm:grid-cols-[1fr_auto]">
             <div>
               <div className="flex flex-wrap items-center gap-2"><span className="font-black" dir="ltr">{booking.booking_code}</span><Badge tone={clientBookingStatusTone(booking.status)}>{clinicStatus(locale, booking.status)}</Badge></div>
               <div className="mt-2 text-sm font-bold text-slate-700">{dateTime.format(new Date(booking.start_at))}</div>
               <div className="mt-2 grid gap-2 rounded-2xl bg-white/80 p-3 text-xs font-bold leading-6 text-slate-600 sm:grid-cols-2"><span>{copy.branch}: <b className="text-slate-900">{branch?.name ?? "—"}</b></span><span>{copy.treatment}: <b className="text-slate-900">{treatmentName(booking.offer_snapshot, locale)}</b></span>{patient ? <><span>{copy.patient}: <b className="text-slate-900">{patient.patient_display_name}</b></span><span>{copy.nationality}: <b className="text-slate-900">{accountNationality(locale, patient.patient_nationality)}</b></span><span dir="ltr">{copy.qid}: <b className="text-slate-900">{patient.patient_national_id}</b></span><span dir="ltr">{copy.phone}: <b className="text-slate-900">{patient.patient_phone}</b></span></> : <span className="sm:col-span-2 text-slate-400">{copy.restricted}</span>}</div>
             </div>
-            <div className="flex flex-wrap content-start gap-2">{booking.status === "confirmed" && <form action={markBookingCheckedIn}><input type="hidden" name="booking_id" value={booking.id} /><input type="hidden" name="reason" value={copy.checkIn} /><Button className="gap-1.5"><CheckIcon size={16} />{copy.checkIn}</Button></form>}{booking.status === "checked_in" && <form action={changeBookingStatus}><input type="hidden" name="booking_id" value={booking.id} /><input type="hidden" name="status" value="completed" /><Button className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"><CheckIcon size={16} />{copy.completeVisit}</Button></form>}{mutableStatus && <ClinicBookingStatusForm bookingId={booking.id} status={mutableStatus} startAt={booking.start_at} labels={copy} />}</div>
+            <ClinicBookingActions bookingId={booking.id} status={booking.status} startAt={booking.start_at} canOperate attendanceState={attendanceState} latestAttendanceEvent={latestAttendance?.event_type} labels={copy} />
           </article>;
         }) : <p className="rounded-2xl bg-slate-50 p-5 text-sm font-bold text-slate-500">{copy.noBookings}</p>}
       </div>
