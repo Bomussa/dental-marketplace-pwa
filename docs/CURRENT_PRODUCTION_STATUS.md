@@ -1,6 +1,6 @@
 # الحالة الإنتاجية الحالية — أسناني قطر / MMC-MMS
 
-**آخر مراجعة موثقة:** 25 أغسطس 2026، بعد نشر الإيداع `8449ab093c07a4f750b3d6a69572423e54dbc32c` إلى `main`، ووصول نشر Vercel الإنتاجي `dpl_5u3Ht58nVavrD4SX2FNyNJSaCCfE` إلى حالة `READY`، وتطبيق تسلسل حصر RPC في مشروع Supabase الإنتاجي `bqvcukxfsnchvkgejolz`. يقرأ هذا الملف مع [README الجذري](../README.md)، وهو **سجل الإصدار والحالة الحالية**؛ أما التقارير المؤرخة الأقدم فتبقى أدلة تاريخية ضمن نطاقها الزمني.
+**آخر مراجعة موثقة:** 25 أغسطس 2026، بعد وصول آخر إيداع `da16624d9c00b49a4445e209f3e8d662a6dd2df9` على `main` ونشر Vercel الإنتاجي `dpl_FMcdBoGDmTxwVkpN1Rob7BCLCtmz` إلى حالة `READY`. يتضمن هذا الإيداع توثيق الإصدار؛ أما تغييرات التطبيق وقابلية إعادة البناء وتقوية RPC فهي في السلف المباشر `8449ab093c07a4f750b3d6a69572423e54dbc32c`. طُبق تسلسل حصر RPC في مشروع Supabase الإنتاجي `bqvcukxfsnchvkgejolz`. يقرأ هذا الملف مع [README الجذري](../README.md)، وهو **سجل الإصدار والحالة الحالية**؛ أما التقارير المؤرخة الأقدم فتبقى أدلة تاريخية ضمن نطاقها الزمني.
 
 > **حكم البوابة الحالي:** **NOT READY — RELEASE BLOCKERS REMAIN.** نُشرت تقوية الصلاحيات والإصلاحات المثبتة بنجاح، لكن لا يجوز إعلان جاهزية حجز عامة كاملة ما دام OTP/SMS الحقيقي غير مهيأ، ولم يُثبت مسار العميل التشغيلي في رحلة Browser مستقلة، ولم ينفذ اختبار K6 للحجز/إعادة المحاولة. كما لا توجد مواعيد إنتاجية مستقبلية ظاهرة في الفحص العام؛ لا تُنشأ بيانات تشغيلية اصطناعية لمعالجة ذلك.
 
@@ -9,8 +9,8 @@
 | البند | القيمة المثبتة |
 |---|---|
 | المستودع والفرع | `Bomussa/dental-marketplace-pwa`، الفرع `main`. |
-| Commit المنشور | `8449ab093c07a4f750b3d6a69572423e54dbc32c` — يطابق commit النشر الإنتاجي. |
-| Vercel | المشروع `dental-marketplace-pwa` (`prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr`)؛ نشر Production `dpl_5u3Ht58nVavrD4SX2FNyNJSaCCfE` بحالة `READY`. |
+| آخر Commit منشور | `da16624d9c00b49a4445e209f3e8d662a6dd2df9` — توثيق الإصدار؛ يتضمن السلف `8449ab093c07a4f750b3d6a69572423e54dbc32c` الذي يحمل تغييرات التطبيق وقابلية إعادة البناء. |
+| Vercel | المشروع `dental-marketplace-pwa` (`prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr`)؛ آخر نشر Production `dpl_FMcdBoGDmTxwVkpN1Rob7BCLCtmz` بحالة `READY` ويطابق `da16624`. |
 | النطاقات | [www.mmc-mms.com](https://www.mmc-mms.com) و[mmc-mms.com](https://mmc-mms.com). |
 | Supabase Production | `bqvcukxfsnchvkgejolz`؛ طابق عداد الكتالوج الصفحة العامة: 48 علاجًا رئيسيًا و79 نوعًا دقيقًا. |
 | Staging المنفصل | `yrlwoxlxizxgrodtbdcp`؛ استُخدم لاختبارات الكتابة والـfixtures ثم نُظف، ولم تُنقل أي بيانات منه إلى Production. |
