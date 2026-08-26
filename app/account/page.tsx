@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getServerAuthClaims, getServerSupabaseClient } from "@/lib/auth-claims.server";
+import { getServerAuthClaims } from "@/lib/auth-claims.server";
 import { withOperationalTimeout } from "@/lib/operations.server";
 import { getLocale } from "@/lib/i18n";
 import { accountNationality, accountNationalityOptions, accountRelationship, accountStatus, getAccountCopy } from "@/lib/account-copy";
@@ -35,14 +35,15 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const registrationSuccessMessage = params.registration_success === "created" ? (locale === "ar" ? "تم إنشاء حسابك بنجاح. يمكنك الآن إكمال ملفك وإدارة حجوزاتك من هنا." : "Your account was created successfully. You can now complete your profile and manage bookings here.") : null;
   const accountDeletionErrorMessage = params.account_deletion_error ? copy.accountDeletionErrors[params.account_deletion_error] ?? null : null;
 
-  const supabase = await getServerSupabaseClient();
   const { data: claimsData, error } = await getServerAuthClaims();
   const userId = claimsData?.claims?.sub;
   if (error || !userId) redirect("/login?next=/account");
 
+  // The service client is constrained by the verified server-side claim on every query.
+  // This avoids treating an unavailable RLS read as an empty patient account.
+  const admin = createAdminClient();
   const hasLoginCredentialsPromise = (async () => {
     try {
-      const admin = createAdminClient();
       const { data: usernameRow } = await withOperationalTimeout(admin.from("account_usernames").select("user_id").eq("user_id", userId).is("disabled_at", null).maybeSingle());
       return Boolean(usernameRow);
     } catch {
@@ -52,11 +53,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   const [hasLoginCredentials, { data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }, { data: notificationData }] = await Promise.all([
     hasLoginCredentialsPromise,
-    withOperationalTimeout(supabase.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle()).catch(() => ({ data: null })),
-    withOperationalTimeout(supabase.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
-    withOperationalTimeout(supabase.from("reviews").select("booking_id,status,rating").eq("patient_id", userId)).catch(() => ({ data: null })),
-    withOperationalTimeout(supabase.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender,created_at").is("archived_at", null).order("created_at", { ascending: true })).catch(() => ({ data: null })),
-    withOperationalTimeout(supabase.from("notification_outbox").select("id,event_type,payload,created_at").eq("channel", "in_app").eq("event_type", "booking_confirmed").order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
+    withOperationalTimeout(admin.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle()).catch(() => ({ data: null })),
+    withOperationalTimeout(admin.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").eq("booked_by_user_id", userId).order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
+    withOperationalTimeout(admin.from("reviews").select("booking_id,status,rating").eq("patient_id", userId)).catch(() => ({ data: null })),
+    withOperationalTimeout(admin.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender,created_at").eq("account_id", userId).is("archived_at", null).order("created_at", { ascending: true })).catch(() => ({ data: null })),
+    withOperationalTimeout(admin.from("notification_outbox").select("id,event_type,payload,created_at").eq("recipient_user_id", userId).eq("channel", "in_app").eq("event_type", "booking_confirmed").order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
   ]);
 
   const bookings = (bookingData ?? []) as BookingRow[];
