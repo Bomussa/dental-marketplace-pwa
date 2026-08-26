@@ -40,6 +40,7 @@
 | `supabase/migrations/20260825191000_harden_public_function_execute.sql` إلى `20260825195000_allow_authenticated_search_rpc.sql` | الحصر الأمني لـRPC: دوال `_server` خادمية، والبحث باستثناءات قراءة ضيقة. |
 | `supabase/migrations/20260826100000_patient_experience_integrity_v1.sql` | تفرد هاتف المريض وnickname القصير، جنس الممارس وفلتر البحث، إشعار الحجز `in_app` وبيانات المكان، والحذف الذاتي المؤرشف المقيد. |
 | `supabase/migrations/20260826103000_patient_account_admin_management_v1.sql` | قائمة مرضى دنيا وإجراء حذف مقيد للمدير الأعلى فقط. |
+| `supabase/migrations/20260826130000_notification_outbox_rls_initplan_v1.sql` | تحسين أداء RLS لقراءة إشعارات الحساب مع إبقاء ملكية المريض وحارس الحساب واستثناء المدير الأعلى. |
 | `supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql` | baseline مخطط خالٍ من البيانات لإعادة بناء Staging، وليس مصدرًا لإدخال بيانات Production. |
 | `supabase/baselines/README.md` | تسلسل baseline ثم مهاجرات التقوية الخمس. |
 | `scripts/generate-schema-baseline.py` و`scripts/verify-schema-baseline.py` | توليد ومقارنة جرد المخطط من دون أسرار أو صفوف أعمال. |
