@@ -20,7 +20,7 @@
 |---|---|---|---|
 | عند كل تغيير مصدر | `git diff --check` ثم `npm run verify`. | نتيجة نظيفة؛ التحذيرات القائمة توثق ولا تخفى. | أوقف النشر عند error أو تغير غير مقصود. |
 | قبل دمج `main` | راجع `git status`، الملفات المتتبعة فقط، وAGENTS/README. | commit قابل للمراجعة ومحدود النطاق. | لا تدفع `.env*` أو artifacts أو dumps أو ملفات `.next/`. |
-| بعد نشر Production | تحقق read-only من `READY`، الصفحة العامة، البحث العام، و`/api/health`. | رابط deployment ووقت الفحص والاستجابة الآمنة. | لا تسجل/تحجز/تجرب OTP أو K6 في Production. |
+| بعد نشر Production | تحقق read-only من `READY`، الصفحة العامة، البحث العام، و`/api/health`، ثم شغل `production-readiness-check.mjs` على النطاق المنشور. | رابط deployment ووقت الفحص وتقرير البوابة؛ لا يتضمن التقرير أسراراً أو بيانات مستخدمين. | لا تسجل/تحجز/تجرب OTP أو K6 في Production. |
 | بعد تغيير DDL أو grants | طبق migration مصدرية في البيئة المقصودة، ثم افحص SQL read-only وSecurity Advisor. | رقم migration وpostconditions واضحة. | لا تعتبر rollback للنشر عكسًا لقاعدة البيانات. |
 | أسبوعيًا أو بعد حادث | راجع runtime errors وSecurity/Performance Advisor. | ملخص alert ورابط remediation إن وجد. | لا تحذف index لمجرد `unused` INFO. |
 | قبل أو بعد fixture Staging | عدادات TEST_STG قبل/بعد، ثم حذف متسلسل للجداول التابعة والحسابات والجلسات. | نتائج صفرية للحسابات والملفات والعضويات والعروض والمواعيد والحجوزات الموسومة. | لا تستعمل أسماء أو بريدًا أو بيانات من Production في fixture. |
@@ -62,7 +62,7 @@
 
 بعد الحذف، نفذ عدادًا تجميعيًا فقط يثبت صفر: المستخدمين، ملفات المرضى، usernames، memberships، operator accounts/events، العيادات والفروع، سجلات التحقق، العروض والكتالوج والأنواع، المواعيد والحجوزات الموسومة، و`booking_status_history` و`booking_attendance_events` و`notification_outbox` ومحاولات تسليمها التابعة أو اليتيمة. امسح جلسة المتصفح وsessionStorage وملفات K6 الخاصة. لا تحذف bucket rate-limit عام مشترك لمجرد أنه من نفس الجهاز؛ احذف فقط المفتاح المشتق من subject الاختباري المعروف.
 
-عند تعديل سياسة قراءة `bookings` أو `patient_profiles`، اختبر في Staging بدور `authenticated` وclaim العميل المقيد. لا تجعل سياسة الحجز تستعلم `patient_profiles` تحت RLS إذا كانت سياسة الملف التشغيلي تستعلم `bookings`؛ استخدم حارسًا خاصًا محدود التنفيذ للحالات الذاتية مثل الحساب المؤرشف، ثم أثبت أن العميل يرى فروعه وحجوزاته المصرح بها فقط.
+عند تعديل سياسة قراءة `bookings` أو `patient_profiles`، اختبر في Staging بدور `authenticated` وclaim العميل المقيد. لا تجعل سياسة الحجز تستعلم `patient_profiles` تحت RLS إذا كانت سياسة الملف التشغيلي تستعلم `bookings`؛ استخدم حارسًا خاصًا محدود التنفيذ للحالات الذاتية مثل الحساب المؤرشف، ثم أثبت أن العميل يرى فروعه وحجوزاته المصرح بها فقط. لا تترك سياسة permissive قديمة موازية لسياسة موحدة جديدة: افحص `pg_policies` قبل وبعد كل migration، واضمن أن القراءة الذاتية بعد الأرشفة غير متاحة وأن وصول الفرع المصرح يبقى مقيداً بالحجز المرتبط.
 
 ## 5. K6 والأداء
 
@@ -70,10 +70,11 @@
 |---|---|---|
 | `search-flow.js` في Staging | نعم | `TARGET_ENV=staging` و`LOAD_TEST_CONFIRMATION=STAGING_ONLY` وHTTPS وrun id صالح. |
 | `booking-flow.js` في Staging | نعم عند توفر fixture | إضافة إلى الحراس السابقة: `BOOKING_WRITE_CONFIRMATION=STAGING_TEST_DATA_ONLY` وfixture خاص وcookie قصير العمر. |
+| `booking-integrity-flow.js` في Staging | نعم عند توفر fixture | جميع حراس الحجز، مع `BOOKING_INTEGRITY_MODE=retry` لاختبار مفتاح واحد يعيد كود الحجز نفسه، أو `BOOKING_INTEGRITY_MODE=concurrency` لعدة حسابات مختلفة على slot/offer واحد؛ ينجح إنشاء واحد فقط والبقية `409`. |
 | K6 أو stress أو booking race في Production | **ممنوع** | لا استثناء في هذا الدليل. |
 | ادعاء سعة 50,000 مستخدم | غير مسموح بلا دليل موزع | يلزم خطة حمل موزع وقياسات تكلفة/حدود وبنية موافق عليها؛ لا تستنتجها من smoke محلي. |
 
-إذا كانت Staging خالية من عيادة/فرع/عرض/موعد حقيقي ومتحقق منه، يسجل الاختبار **BLOCKED** ولا تنشأ تفعيلات اصطناعية لتجاوزه. يتطلب المشغل إدخال البيانات المصرح بها في Staging أولًا.
+إذا كانت Staging خالية من عيادة/فرع/عرض/موعد حقيقي ومتحقق منه، يسجل الاختبار **BLOCKED** ولا تنشأ تفعيلات اصطناعية لتجاوزه. يتطلب المشغل إدخال البيانات المصرح بها في Staging أولًا. لا يحاكي الاختبار إرسال OTP ولا يملأ `phone_verified_at` كدليل رسالة؛ يظل ذلك مقيداً بمزود حقيقي مهيأ وموافقة تشغيلية منفصلة.
 
 ## 6. الحوادث والاستعادة
 
@@ -121,8 +122,12 @@ git status --short
 # مراجعة ملفات متتبعة فقط
 git ls-files
 
+# فحص جاهزية Production قراءة فقط:
+node scripts/production-readiness-check.mjs https://www.mmc-mms.com
+
 # لا تشغل هذه على Production:
 # k6 run load-tests/k6/booking-flow.js
+# k6 run load-tests/k6/booking-integrity-flow.js
 ```
 
 ## 10. المراجع

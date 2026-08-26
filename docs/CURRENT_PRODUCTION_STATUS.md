@@ -4,6 +4,12 @@
 
 > **حكم البوابة الحالي:** **NOT READY — RELEASE BLOCKERS REMAIN.** نُشرت تقوية الصلاحيات والإصلاحات المثبتة بنجاح، وثُبتت ميزات تجربة المريض الجديدة على Preview Staging بحساب وعيادة وعرض وموعد `TEST_STG` مع تنظيف صفري لاحق. لكن لا يجوز إعلان جاهزية حجز عامة كاملة ما دام OTP/SMS الحقيقي غير مهيأ؛ تحقق الهاتف في الاختبار كان اصطناعيًا ومحصورًا في Staging ولا يثبت إرسال رمز فعلي. ولم ينفذ اختبار K6 الفعلي للحجز/إعادة المحاولة لأن Staging يعود خاليًا من أي بيانات تشغيلية بعد التنظيف. لا تُنشأ تفعيلات أو مواعيد اصطناعية لتجاوز ضوابط التحقق، ولا تُنشأ بيانات تشغيلية اصطناعية في Production.
 
+## جولة إغلاق الفجوات — 26 أغسطس 2026
+
+نفذ الالتزام `a577d8a4996f77f22a8e95b760bf7596f369645c` على فرع `staging` فقط عبر Preview المحمي `dpl_3LHmmQwA3Sr6fe1NQLvTS9didZ4A` بحالة `READY`. أضاف بوابة جاهزية إنتاجية قراءة فقط متوافقة مع عقد الصحة والبحث، ومساري `/privacy` و`/terms` كإطار تقني يصرح بأن المحتوى القانوني يحتاج اعتماد المالك/المختص، وفحص وصول آلي WCAG A/AA، وسيناريو K6 محروس لإعادة المحاولة والسباق. لا يمثل الإطار التقني اعتماداً قانونياً، ولا تمثل إضافة السيناريو تنفيذاً لـK6.
+
+اكتشف مستشار أداء Production تحذير `multiple_permissive_policies` على `public.patient_profiles`: كانت سياسة وصول ذاتي مؤرشفة جزئياً تتداخل مع سياسة أقدم تسمح للمالك بقراءة كل ملفاته. أضيفت migration المصدرية `20260826230000_consolidate_patient_profiles_select_policy_v1.sql` وطُبقت **في Staging فقط**؛ دمجت القراءة في سياسة واحدة تشترط أن الملف الذاتي غير مؤرشف وتبقي وصول موظف الفرع المصرح إلى ملفات الحجوزات المرتبطة. لم تطبق هذه migration في Production، ولا يجوز ذلك قبل تأكيد صريح منفصل.
+
 ## سجل الإصدار
 
 | البند | القيمة المثبتة |
@@ -51,7 +57,7 @@
 
 | المجال | النتيجة |
 |---|---|
-| فحص المصدر | `npm run verify`: فحص predeploy وTypeScript والبناء نجحت؛ **100** اختبار Vitest نجح واختبارا اتصال public تُخطيا عمدًا عند غياب تشغيل الشبكة الصريح محليًا؛ تحذيران lint سابقان فقط عن default exports مجهولة في ملفات K6. |
+| فحص المصدر | `npm run verify`: فحص predeploy وTypeScript وlint والبناء نجحت؛ **103** اختبارات Vitest ناجحة واختبارا اتصال public متخطيان عمداً عند غياب تشغيل الشبكة الصريح محلياً. أزيلت تحذيرات default exports من سيناريوهات K6؛ لا أخطاء ولا تحذيرات lint حالياً. |
 | اختبار Browser المحلي وStaging | **BLOCKED محليًا**: `npm run test:e2e` يحتاج URL ومفتاح Supabase public محليين؛ لم تُنسخ قيم Production أو Staging إلى shell. **PASS في Preview Staging**: سجل دخول العميل التشغيلي الحقيقي بالنطاق `clinic_bookings_only`، ورأى فرعه Alpha فقط وحجزين مصرحين. نجحت انتقالات pending → confirmed → checked-in → completed. أعادت محاولات `/` و`/account` و`/admin` و`/clinic` إلى مساحة الحجوزات وفق حاجز proxy المركزي. نُظفت جميع fixtures بعدها بعدادات صفرية موسعة. |
 | صفحة Production الرئيسية | **PASS**: HTTPS والواجهة العربية والكتالوج العام حملا بنجاح بعد النشر، مع 48/79 من بيانات Production القائمة. |
 | البحث والنتائج | **PASS**: صفحة نتائج عامة لنوع علاجي قائم استجابت بلا خطأ صلاحيات؛ عدم وجود نتيجة لهذا النوع لا يمثل خللًا بحد ذاته ولا يبرر إنشاء موعد اصطناعي. |
@@ -61,7 +67,19 @@
 | Console | **PASS**: لا توجد رسائل Console في الفحص النهائي. |
 | أخطاء تشغيل Vercel | **PASS في فحص ما بعد النشر**: لم تظهر أخطاء أو أخطاء قاتلة في نافذة 10 دقائق للنشر `dpl_J9fU9p2cQQsScHCfm8BLsJyVy5W5` بعد وصوله إلى `READY` وفحص `/api/health` والصفحة العامة قراءةً فقط. لا يثبت ذلك اختبار الحجز أو OTP أو الحمل في Production. |
 | مستشار الأمان | **WARN واحد**: بقي فقط `auth_leaked_password_protection` (حماية كلمات المرور المسرّبة معطلة). [إرشاد Supabase](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). لم تُفعّل ترقية أو تكلفة تلقائية، ولا توجد في نتيجة المستشار تحذيرات SECURITY DEFINER أو grants عامة. |
-| مستشار الأداء | **INFO فقط**: أزيل تحذير `auth_rls_initplan` من سياسة `public.notification_outbox` بترحيل مصدر اختبر في Staging ثم طبق في Production؛ أبقت السياسة شرط المستلم وحارس الحساب المعطل واستثناء المدير الأعلى دون تغير. بقيت فقط ملاحظات فهارس لم تستخدم بعد؛ لم تُحذف من Production لأن عدم الاستخدام المرصود لا يثبت عدم لزومها تشغيليًا. [إرشاد الفهارس](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index). |
+| مستشار الأداء | **WARN واحد وINFO متعددة**: أزيل تحذير `auth_rls_initplan` من سياسة `public.notification_outbox` سابقاً. كشف الفحص اللاحق تحذير `multiple_permissive_policies` على `public.patient_profiles`؛ أصلحته migration مصدرية واختبر في Staging فقط ولم تطبق في Production بعد. بقيت ملاحظات فهارس غير مستخدمة؛ لا تحذف تلقائياً لأن عدم الاستخدام المرصود لا يثبت عدم لزومها تشغيلياً. [إرشاد فهارس Supabase](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index) [إرشاد السياسات المتعددة](https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies). |
+
+## مصفوفة أدلة جولة الإغلاق
+
+| المجال | الدليل المنفذ | النتيجة الحالية |
+|---|---|---|
+| بوابة الجاهزية العامة | شغلت `scripts/production-readiness-check.mjs` على Production قراءة فقط: الصفحة، الصحة، manifest، icon، robots، sitemap، الدخول، البحث الصحيح/الفارغ/غير الصالح، والرؤوس الأمنية. | **PASS** لعقد القراءة العام الحالي. Preview Staging محمي عمداً ويعيد 401 لطلبات HTTP غير المصرح بها؛ التحقق المرئي المصرح للمسارات الجديدة نجح. |
+| الخصوصية والشروط | اختبرت `/privacy` و`/terms` على Preview Staging؛ تظهران إطار اعتماد صريح وروابط تذييل وتسجيل. | **PASS تقني فقط**؛ النص القانوني النهائي **LEGAL/OWNER DECISION**. |
+| الوصول الآلي | أضيف `@axe-core/playwright` واختبار WCAG A/AA للصفحة والدخول. | **IMPLEMENTED**؛ تشغيل E2E الخارجي يبقى محجوباً محلياً بسبب إعدادات Supabase/حماية Preview، لذلك لا يرقى إلى PASS تشغيلي حتى تشغيله في بيئة مصرح لها. |
+| RLS والدوال الخادمية | فحص كتالوج Production قراءة فقط: 49 جدولاً عاماً بـRLS، صفر grants لدوال `_server` لـanon/authenticated، ولا SECURITY DEFINER بلا `search_path`. | **PASS محدود للكتالوج**؛ لا يغني عن اختبار IDOR حي بالأدوار. |
+| سياسة ملفات المرضى | فحص Staging قبل/بعد migration أظهر انتقالاً من سياستين permissive إلى سياسة واحدة archived-aware مع بقاء وصول موظفي الفرع. | **PASS في Staging**؛ **PENDING USER CONFIRMATION** قبل DDL Production. |
+| OTP والحجز/K6 | عدادات Staging أظهرت صفر عيادات/فروع/عروض/مواعيد نشطة وحجوزات `TEST_STG`؛ Twilio غير مهيأ. | **BLOCKED**: لا fixture ولا إرسال OTP حقيقي ولا K6/retry/concurrency حي، ولم تُختلق بيانات أو تجاوزات. |
+| الأسرار | فحص ملفات المصدر المتتبعة لم يظهر رمزاً حياً أو JWT أو secret pattern؛ الإشارات المتبقية أسماء متغيرات وترحيلات واختبارات. | **PASS محدود لشجرة المصدر**؛ مراجعة إعدادات النشر وتاريخ Git تبقى جزءاً من قبول الإصدار. |
 
 ## ما لا يثبت هذا الإصدار
 

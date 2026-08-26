@@ -17,8 +17,9 @@
 | Supabase | `lib/supabase/`، `lib/database.types.ts`، `supabase/migrations/`، `supabase/tests/acceptance.sql` | العملاء العام/SSR/الخادمي والأنواع والترحيلات وRLS/RPC/constraints، بما فيها تفرد الهاتف وقناة `in_app` وجنس الممارس وحذف حساب المريض المقيد. |
 | التحديث اللحظي | `components/*-live-refresh.tsx`، `components/use-realtime-router-refresh.ts`، `lib/clinic-realtime-refresh.ts` | إعادة الجلب المعتمدة على Realtime تحت RLS. |
 | PWA والواجهة | `app/manifest.ts`، `app/pwa/icon/[size]/route.tsx`، `public/sw.js`، `components/mobile-navigation.tsx`، `components/ui.tsx` | Manifest وservice worker وأيقونات وتجربة الهاتف. |
-| الاختبارات | `tests/`، `tests/e2e/home.spec.ts`، `load-tests/k6/`، `scripts/safe-load-test.mjs` | Vitest وPlaywright وK6 المحروس؛ لا يستخدم K6 على Production. |
-| بوابة الجودة والنشر | `package.json`، `scripts/predeploy-check.mjs`، `scripts/production-readiness-check.mjs`، `.github/workflows/ci.yml`، `docs/DEPLOYMENT_RUNBOOK.md`، `docs/MAINTENANCE_MANUAL_AR.md` | أوامر build/verify وCI وتسلسل النشر والرجوع ودورة الصيانة الآمنة. |
+| صفحات السياسات | `app/privacy/page.tsx`، `app/terms/page.tsx`، `components/public-policy-template.tsx` | مسارات عامة ثنائية اللغة وروابطها؛ تعرض إطاراً تقنياً صريحاً أن النص القانوني يحتاج اعتماد المالك/المختص ولا تمثل سياسة نافذة قبله. |
+| الاختبارات | `tests/`، `tests/e2e/home.spec.ts`، `tests/e2e/accessibility.spec.ts`، `tests/production-readiness-check.test.ts`، `load-tests/k6/`، `scripts/safe-load-test.mjs` | Vitest وPlaywright وaxe WCAG A/AA وK6 المحروس؛ لا يستخدم K6 على Production. |
+| بوابة الجودة والنشر | `package.json`، `scripts/predeploy-check.mjs`، `scripts/production-readiness-check.mjs`، `.github/workflows/ci.yml`، `docs/DEPLOYMENT_RUNBOOK.md`، `docs/MAINTENANCE_MANUAL_AR.md` | أوامر build/verify وCI وتسلسل النشر والرجوع ودورة الصيانة الآمنة؛ بوابة الجاهزية قراءة فقط وتفحص العقود العامة والرؤوس والبحث. |
 
 ## ملفات الجذر الحاكمة
 
@@ -42,6 +43,7 @@
 | `supabase/migrations/20260826103000_patient_account_admin_management_v1.sql` | قائمة مرضى دنيا وإجراء حذف مقيد للمدير الأعلى فقط. |
 | `supabase/migrations/20260826130000_notification_outbox_rls_initplan_v1.sql` | تحسين أداء RLS لقراءة إشعارات الحساب مع إبقاء ملكية المريض وحارس الحساب واستثناء المدير الأعلى. |
 | `supabase/migrations/20260826193000_booking_patient_rls_recursion_fix_v1.sql` إلى `20260826194500_booking_patient_rls_helper_search_path_v1.sql` | كسر حلقة RLS بين `bookings` و`patient_profiles` مع حارس خاص لملف المريض الذاتي غير المؤرشف وتنفيذ مقيد لـ`authenticated` داخل السياسة ومسار بحث `pg_catalog` ثابت. |
+| `supabase/migrations/20260826230000_consolidate_patient_profiles_select_policy_v1.sql` | يوحد سياسة SELECT لملفات المرضى: يمنع القراءة الذاتية بعد الأرشفة مع إبقاء وصول موظفي الفرع المخول للحجز المرتبط. مطبق في Staging فقط بانتظار قرار DDL Production. |
 | `supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql` | baseline مخطط خالٍ من البيانات لإعادة بناء Staging، وليس مصدرًا لإدخال بيانات Production. |
 | `supabase/baselines/README.md` | تسلسل baseline ثم مهاجرات التقوية الخمس. |
 | `scripts/generate-schema-baseline.py` و`scripts/verify-schema-baseline.py` | توليد ومقارنة جرد المخطط من دون أسرار أو صفوف أعمال. |
@@ -55,5 +57,6 @@
 | `npm run test:e2e` مع بيئة غير مهيأة | نتيجة متوقعة: blocked محليًا بسبب غياب URL/key، وليست دليل فشل للإصدار المنشور. |
 | `TARGET_ENV=staging ... k6 run load-tests/k6/search-flow.js` | K6 للبحث في Staging فقط مع الحراس وإقرار البيئة. |
 | `TARGET_ENV=staging ... k6 run load-tests/k6/booking-flow.js` | حجز K6 مصغر في Staging فقط؛ يحتاج fixture خاصًا وcookie قصير العمر ولا ينفذ عند غياب بيانات تشغيلية مخولة. |
+| `TARGET_ENV=staging ... k6 run load-tests/k6/booking-integrity-flow.js` | تحقق retry بنفس مفتاح idempotency أو سباق عدة حسابات على slot واحد؛ يتطلب `BOOKING_INTEGRITY_MODE=retry|concurrency` وfixtures معزولة ولا ينفذ من دون حراس Staging. |
 
 > لا تحفظ قيم متغيرات البيئة أو secrets أو بيانات مستخدمين في هذا الفهرس. لا تُنشأ بيانات اختبار في Production؛ اقرأ `AGENTS.md` قبل أي عمل كتابة أو migration.
