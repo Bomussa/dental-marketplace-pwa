@@ -116,3 +116,15 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | 85 | `20260825195000_allow_authenticated_search_rpc.sql` | `20260825201329` | `allow_authenticated_search_rpc` | إبقاء بحث القراءة فقط متاحًا للمستخدم المسجل. |
 
 **Postconditions المقروءة بعد التطبيق:** `anon_server_execute=0`، و`authenticated_server_execute=0`، و`service_server_execute=23`. بقي `search_dental_offers` ومساعد نطاق السعر اللازم متاحين للأدوار المقصودة فقط. أعاد مستشار الأمان تحذيرًا واحدًا لا يتعلق بـRPC: `auth_leaked_password_protection`؛ لم تُفعّل خطة مدفوعة أو إعداد إضافي تلقائي.
+
+
+## إصدار Production — 26 أغسطس 2026: تجربة المريض
+
+> **الحالة:** طُبق الترحيلان التاليان في مشروع Production `bqvcukxfsnchvkgejolz` بعد تحقق Staging وقراءة مسبقة لمجموعات التكرار. لم ينشأ التطبيق أي حساب مريض أو حجز أو موعد أو رمز OTP اختباري في Production.
+
+| # | ملف المصدر | الإصدار البعيد | الاسم المسجل | الغرض |
+|---:|---|---|---|---|
+| 86 | `20260826100000_patient_experience_integrity_v1.sql` | `20260826122625` | `patient_experience_integrity_v1` | تفرد الهاتف، nickname المريض، جنس الممارس والبحث، تأكيدات الحجز `in_app`، وحذف الحساب المؤرشف المقيد. |
+| 87 | `20260826103000_patient_account_admin_management_v1.sql` | `20260826122705` | `patient_account_admin_management_v1` | جرد أدنى لحسابات المرضى مخصص للخدمة الخادمية وإدارة حذفها لدى المدير الأعلى. |
+
+**Postconditions المقروءة بعد التطبيق:** وُجد فهرس الهاتف الفريد وtrigger nickname وعمود جنس الممارس وقيد قناة `in_app` ودالتا أرشفة الحساب وجرده للإدارة؛ أعاد فحص مجموعات الهواتف المكررة `0`. لا يثبت ذلك إرسال OTP حقيقي ولا يغير سياسة منع كتابة بيانات الاختبار في Production.
