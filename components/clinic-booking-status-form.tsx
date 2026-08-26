@@ -6,13 +6,13 @@ import { Button, Select } from "@/components/ui";
 import { changeBookingStatus } from "@/app/clinic/actions";
 
 type MutableBookingStatus = "pending_hold" | "pending_clinic_confirmation" | "confirmed";
-type Labels = { actionChoose: string; actionConfirm: string; actionCancel: string; actionNoShow: string; actionFail: string; actionApply: string };
+export type ClinicBookingStatusLabels = { actionChoose: string; actionConfirm: string; actionCancel: string; actionNoShow: string; actionFail: string; actionApply: string };
 
 type Props = {
   bookingId: string;
   status: MutableBookingStatus;
   startAt: string;
-  labels: Labels;
+  labels: ClinicBookingStatusLabels;
 };
 
 export function ClinicBookingStatusForm({ bookingId, status, startAt, labels }: Props) {

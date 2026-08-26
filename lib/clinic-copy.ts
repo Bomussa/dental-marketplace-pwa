@@ -2,7 +2,7 @@ import type { Locale } from "@/lib/i18n";
 
 type ClinicCopy = {
   joinKicker: string; joinTitle: string; joinCopy: string; joinNotice: string; legalName: string; displayName: string; submitApplication: string;
-  dashboardKicker: string; defaultClinicName: string; dashboardCopy: string; pendingNotice: string;
+  dashboardKicker: string; defaultClinicName: string; dashboardCopy: string; pendingNotice: string; workspaceUnavailable: string;
   branches: string; publishedOffers: string; publishedSlots: string; visibleBookings: string;
   addBranch: string; branchName: string; area: string; address: string; latitude: string; longitude: string; saveBranch: string; restrictedAction: string;
   addPractitioner: string; practitionerName: string; licenseReference: string; practitionerGender: string; practitionerFemale: string; practitionerMale: string; practitionerUndeclared: string; saveAsPending: string; workingHours: string; save: string; noBranches: string;
@@ -17,7 +17,7 @@ type ClinicCopy = {
 const copy: Record<Locale, ClinicCopy> = {
   ar: {
     joinKicker: "انضمام العيادات", joinTitle: "قدّم طلب عيادتك", joinCopy: "يُنشأ الطلب بحالة قيد المراجعة. لا يمكن تفعيل العيادة أو الفرع أو الطبيب قبل تسجيل تحقق صالح من الإدارة.", joinNotice: "بياناتك التشغيلية تبقى خلف صلاحيات العيادة وRLS؛ الظهور العام لا يبدأ قبل التحقق والتفعيل.", legalName: "الاسم القانوني", displayName: "الاسم الظاهر", submitApplication: "إرسال الطلب",
-    dashboardKicker: "لوحة العيادة", defaultClinicName: "عيادتي", dashboardCopy: "إدارة الفروع والأطباء والأسعار والمواعيد والحجوزات من مساحة تشغيل واحدة. لا تظهر أو تعمل أدوات التعديل إلا ضمن دورك وفرعك المخول.", pendingNotice: "هذه العيادة قيد التحقق. ستتاح إضافة الفروع والأطباء والعروض والمواعيد بعد تفعيل الإدارة لها؛ لا تُنشر أي بيانات قبل ذلك.",
+    dashboardKicker: "لوحة العيادة", defaultClinicName: "عيادتي", dashboardCopy: "إدارة الفروع والأطباء والأسعار والمواعيد والحجوزات من مساحة تشغيل واحدة. لا تظهر أو تعمل أدوات التعديل إلا ضمن دورك وفرعك المخول.", pendingNotice: "هذه العيادة قيد التحقق. ستتاح إضافة الفروع والأطباء والعروض والمواعيد بعد تفعيل الإدارة لها؛ لا تُنشر أي بيانات قبل ذلك.", workspaceUnavailable: "تعذر تحميل صلاحيات مساحة العيادة مؤقتًا. لم يتم إجراء أي تغيير؛ أعد تحميل الصفحة للمحاولة من جديد.",
     branches: "فروع", publishedOffers: "عروض منشورة", publishedSlots: "مواعيد منشورة", visibleBookings: "حجوزات ظاهرة لك",
     addBranch: "إضافة فرع", branchName: "اسم الفرع", area: "المنطقة", address: "العنوان", latitude: "خط العرض", longitude: "خط الطول", saveBranch: "حفظ الفرع", restrictedAction: "يتطلب هذا الإجراء دور المالك أو المدير وعيادة مفعلة",
     addPractitioner: "إضافة طبيب", practitionerName: "اسم مقدم الخدمة", licenseReference: "مرجع الترخيص", practitionerGender: "جنس الطبيب", practitionerFemale: "أنثى", practitionerMale: "ذكر", practitionerUndeclared: "غير مُعلن", saveAsPending: "حفظ كقيد مراجعة", workingHours: "الفروع وساعات العمل", save: "حفظ", noBranches: "لا توجد فروع بعد.",
@@ -29,7 +29,7 @@ const copy: Record<Locale, ClinicCopy> = {
   },
   en: {
     joinKicker: "Clinic onboarding", joinTitle: "Apply for your clinic", joinCopy: "Your application is created as pending. A clinic, branch, or practitioner cannot be activated until the platform records a valid verification.", joinNotice: "Your operational data remains behind clinic permissions and RLS. It cannot become public until verification and activation are complete.", legalName: "Legal name", displayName: "Display name", submitApplication: "Submit application",
-    dashboardKicker: "Clinic dashboard", defaultClinicName: "My clinic", dashboardCopy: "Manage branches, practitioners, prices, appointments, and bookings from one operations workspace. Editing tools appear and work only for your authorized role and branch.", pendingNotice: "This clinic is pending verification. Branch, practitioner, offer, and appointment tools will be available after platform activation; no data is published before then.",
+    dashboardKicker: "Clinic dashboard", defaultClinicName: "My clinic", dashboardCopy: "Manage branches, practitioners, prices, appointments, and bookings from one operations workspace. Editing tools appear and work only for your authorized role and branch.", pendingNotice: "This clinic is pending verification. Branch, practitioner, offer, and appointment tools will be available after platform activation; no data is published before then.", workspaceUnavailable: "Clinic workspace permissions could not be loaded temporarily. No change was made; reload the page to try again.",
     branches: "Branches", publishedOffers: "Published offers", publishedSlots: "Published appointments", visibleBookings: "Bookings visible to you",
     addBranch: "Add branch", branchName: "Branch name", area: "Area", address: "Address", latitude: "Latitude", longitude: "Longitude", saveBranch: "Save branch", restrictedAction: "This action requires an owner or manager role and an active clinic",
     addPractitioner: "Add practitioner", practitionerName: "Provider name", licenseReference: "Licence reference", practitionerGender: "Practitioner gender", practitionerFemale: "Female", practitionerMale: "Male", practitionerUndeclared: "Not declared", saveAsPending: "Save as pending", workingHours: "Branches and working hours", save: "Save", noBranches: "No branches yet.",

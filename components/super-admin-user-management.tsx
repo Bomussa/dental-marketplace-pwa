@@ -1,6 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { ShieldCheckIcon } from "@/components/icons";
 import { createOperationalClientAccount, createPatientAccount, deletePatientAccountAsAdmin, revokeOperationalClientAccount } from "@/app/admin/actions";
+import { activeOperationalClientBranchesForClinic } from "@/lib/operational-client-branches";
 
 type ClinicOption = { id: string; display_name: string };
 type BranchOption = { id: string; clinic_id: string; name: string; area: string | null; status: string };
@@ -27,7 +31,14 @@ type SuperAdminUserManagementProps = {
 };
 
 export function SuperAdminUserManagement({ clinics, branches, operationalClients, patientAccounts }: SuperAdminUserManagementProps) {
+  const [selectedOperationalClinicId, setSelectedOperationalClinicId] = useState("");
+  const eligibleBranches = activeOperationalClientBranchesForClinic(branches, selectedOperationalClinicId);
   const activeOperationalClients = operationalClients?.filter((client) => !client.revoked_at && client.status === "active") ?? [];
+  const branchHelp = !selectedOperationalClinicId
+    ? "اختر العيادة أولاً لإظهار فروعها المفعلة فقط."
+    : eligibleBranches.length === 0
+      ? "لا توجد فروع مفعلة لهذه العيادة؛ فعّل فرعًا قبل إنشاء حساب عميل للحجوزات."
+      : "اختر فرعًا مفعلاً تابعًا للعيادة المحددة.";
 
   return (
     <section id="super-admin-user-management" className="mt-7 grid gap-6 lg:grid-cols-2">
@@ -41,13 +52,13 @@ export function SuperAdminUserManagement({ clinics, branches, operationalClients
           <form action={createOperationalClientAccount} className="rounded-[22px] bg-white/85 p-4 ring-1 ring-violet-100">
             <div className="flex items-center justify-between gap-3"><div><h3 className="font-black">إنشاء عميل تشغيلي للحجوزات</h3><p className="mt-1 text-xs leading-5 text-slate-500">صلاحية ثابتة: الحجوزات التابعة لفرع واحد فقط، من دون الوصول للحسابات أو الإدارة.</p></div><Badge tone="blue">Bookings only</Badge></div>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <label className="grid gap-1 text-xs font-bold text-slate-600">العيادة<Select name="clinic_id" required defaultValue=""><option value="" disabled>اختر العيادة</option>{clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.display_name}</option>)}</Select></label>
-              <label className="grid gap-1 text-xs font-bold text-slate-600">الفرع<Select name="branch_id" required defaultValue=""><option value="" disabled>اختر الفرع</option>{branches.filter((branch) => branch.status === "active").map((branch) => <option key={branch.id} value={branch.id}>{branch.name}{branch.area ? ` · ${branch.area}` : ""}</option>)}</Select></label>
+              <label className="grid gap-1 text-xs font-bold text-slate-600">العيادة<Select name="clinic_id" required value={selectedOperationalClinicId} onChange={(event) => setSelectedOperationalClinicId(event.currentTarget.value)}><option value="" disabled>اختر العيادة</option>{clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.display_name}</option>)}</Select></label>
+              <label className="grid gap-1 text-xs font-bold text-slate-600">الفرع<Select key={selectedOperationalClinicId} name="branch_id" required defaultValue="" disabled={!selectedOperationalClinicId || eligibleBranches.length === 0} aria-describedby="operational-client-branch-help"><option value="" disabled>اختر الفرع</option>{eligibleBranches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}{branch.area ? ` · ${branch.area}` : ""}</option>)}</Select><span id="operational-client-branch-help" className="text-[11px] font-medium leading-5 text-slate-500">{branchHelp}</span></label>
               <label className="grid gap-1 text-xs font-bold text-slate-600">اسم المستخدم<Input name="username" required minLength={3} maxLength={32} autoComplete="off" placeholder="operator.name" /></label>
               <label className="grid gap-1 text-xs font-bold text-slate-600">البريد الإلكتروني<Input name="email" type="email" required maxLength={254} autoComplete="off" placeholder="operator@example.com" /></label>
               <label className="grid gap-1 text-xs font-bold text-slate-600 sm:col-span-2">كلمة مرور ابتدائية<Input name="password" type="password" required minLength={12} maxLength={128} autoComplete="new-password" placeholder="12 أحرف على الأقل؛ كبير وصغير ورقم" /></label>
             </div>
-            <Button className="mt-4 w-full bg-violet-700 hover:bg-violet-800">إنشاء عميل الحجوزات</Button>
+            <Button className="mt-4 w-full" disabled={!selectedOperationalClinicId || eligibleBranches.length === 0}>إنشاء عميل الحجوزات</Button>
           </form>
 
           <form action={createPatientAccount} className="rounded-[22px] bg-white/85 p-4 ring-1 ring-sky-100">
