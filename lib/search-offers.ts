@@ -4,6 +4,7 @@ import type { SearchOffer } from "@/lib/models";
 
 export type WhenPreference = "earliest" | "today" | "tomorrow";
 export type SearchSort = "balanced" | "price" | "distance" | "rating" | "soonest";
+export type PractitionerGenderPreference = "female" | "male" | null;
 
 export type LiveSearchInput = {
   variant: string;
@@ -12,6 +13,7 @@ export type LiveSearchInput = {
   radius: number;
   when: WhenPreference;
   sort: SearchSort;
+  practitionerGender: PractitionerGenderPreference;
 };
 
 type NormalizationRange = { min: number; max: number } | null;
@@ -90,6 +92,7 @@ export async function searchLiveOffers(input: LiveSearchInput) {
       p_lat: input.lat ?? undefined,
       p_lng: input.lng ?? undefined,
       p_radius_km: input.radius,
+      p_practitioner_gender: input.practitionerGender ?? undefined,
     }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS)),
   ]);
 

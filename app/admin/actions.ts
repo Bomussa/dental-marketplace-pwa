@@ -12,7 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionPatientBookingAccount } from "@/lib/account-auth.server";
 import { ACTIVE_TREATMENT_CATALOG_TAG } from "@/lib/treatment-catalog.server";
 import type { Json } from "@/lib/database.types";
-import { adminOfferUpdateSchema, adminSlotUpdateSchema, clinicOperatorAccountIdSchema, featureFlagUpdateSchema, normalizeQatarDateTime, notificationTemplateSchema, operationalClientAccountSchema, patientBookingRegistrationSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, treatmentCatalogSchema, treatmentCatalogUpdateSchema, treatmentVariantSchema, treatmentVariantUpdateSchema, uuid, verificationSchema } from "@/lib/validation";
+import { adminOfferUpdateSchema, adminSlotUpdateSchema, clinicOperatorAccountIdSchema, featureFlagUpdateSchema, normalizeQatarDateTime, notificationTemplateSchema, operationalClientAccountSchema, patientAccountAdminDeletionSchema, patientBookingRegistrationSchema, settlementPeriodSchema, supportKnowledgeArticleSchema, treatmentCatalogSchema, treatmentCatalogUpdateSchema, treatmentVariantSchema, treatmentVariantUpdateSchema, uuid, verificationSchema } from "@/lib/validation";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -350,6 +350,31 @@ export async function createPatientAccount(formData: FormData): Promise<void> {
 
   const result = await provisionPatientBookingAccount(parsed.data);
   if (!result.ok) adminActionFailure("createPatientAccount", new Error(result.code.toUpperCase()));
+  revalidatePath("/admin");
+  revalidatePath("/account");
+}
+
+export async function deletePatientAccountAsAdmin(formData: FormData): Promise<void> {
+  const parsed = patientAccountAdminDeletionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) validationFailure("deletePatientAccountAsAdmin");
+  const actorId = await requireSuperAdmin();
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    adminActionFailure("deletePatientAccountAsAdmin", new Error("SERVICE_UNAVAILABLE"));
+  }
+
+  const { error: archiveError } = await admin.rpc("archive_patient_account_server", {
+    p_actor_id: actorId,
+    p_target_user_id: parsed.data.target_user_id,
+  }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+  if (archiveError) adminActionFailure("deletePatientAccountAsAdmin", new Error(archiveError.code || "ARCHIVE_FAILED"));
+
+  const { error: authError } = await withOperationalTimeout(admin.auth.admin.deleteUser(parsed.data.target_user_id, true));
+  if (authError) adminActionFailure("deletePatientAccountAsAdmin", new Error(authError.code || "SOFT_DELETE_FAILED"));
+
   revalidatePath("/admin");
   revalidatePath("/account");
 }

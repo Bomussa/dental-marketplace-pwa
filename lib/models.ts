@@ -23,6 +23,7 @@ export type SearchOffer = {
   branch_id: string;
   branch_name: string;
   area: string | null;
+  branch_address: string | null;
   branch_latitude: number | null;
   branch_longitude: number | null;
   variant_id: string;
@@ -44,6 +45,9 @@ export type SearchOffer = {
   open_now: boolean;
   earliest_slot_id: string | null;
   earliest_slot_at: string | null;
+  earliest_practitioner_id: string | null;
+  earliest_practitioner_name: string | null;
+  earliest_practitioner_gender: "female" | "male" | null;
   rating_avg: number | string | null;
   review_count: number;
 };

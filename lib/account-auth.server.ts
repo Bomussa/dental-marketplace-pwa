@@ -8,7 +8,7 @@ import type { patientBookingRegistrationSchema } from "@/lib/validation";
 type PatientRegistration = z.infer<typeof patientBookingRegistrationSchema>;
 type ProvisionResult =
   | { ok: true; userId: string; patientProfileId: string }
-  | { ok: false; code: "username_taken" | "email_taken" | "national_id_taken" | "unavailable" };
+  | { ok: false; code: "username_taken" | "email_taken" | "national_id_taken" | "phone_taken" | "unavailable" };
 
 const DECOY_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -16,6 +16,13 @@ function conflictCode(error: unknown): string {
   if (!error || typeof error !== "object") return "";
   const candidate = error as { code?: unknown; message?: unknown; details?: unknown };
   return `${candidate.code ?? ""} ${candidate.message ?? ""} ${candidate.details ?? ""}`.toLowerCase();
+}
+
+function patientProfileConflict(error: unknown): "national_id_taken" | "phone_taken" | "unavailable" {
+  const conflict = conflictCode(error);
+  if (conflict.includes("patient_profiles_phone_key")) return "phone_taken";
+  if (conflict.includes("patient_profiles_national_id_key")) return "national_id_taken";
+  return "unavailable";
 }
 
 async function cleanupProvisionedPatientAccount(userId: string) {
@@ -101,7 +108,7 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
 
     if (existingProfileError) {
       await cleanupProvisionedPatientAccount(userId);
-      return { ok: false, code: existingProfileError.code === "23505" ? "national_id_taken" : "unavailable" };
+      return { ok: false, code: existingProfileError.code === "23505" ? patientProfileConflict(existingProfileError) : "unavailable" };
     }
 
     if (existingProfile) return { ok: true, userId, patientProfileId: existingProfile.id };
@@ -115,7 +122,7 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
     );
     if (insertProfileError || !insertedProfile) {
       await cleanupProvisionedPatientAccount(userId);
-      return { ok: false, code: insertProfileError?.code === "23505" ? "national_id_taken" : "unavailable" };
+      return { ok: false, code: insertProfileError?.code === "23505" ? patientProfileConflict(insertProfileError) : "unavailable" };
     }
 
     return { ok: true, userId, patientProfileId: insertedProfile.id };

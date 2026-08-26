@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -1682,6 +1682,7 @@ export type Database = {
           clinic_id: string
           created_at: string
           display_name: string
+          gender: string | null
           id: string
           license_ref: string | null
           updated_at: string
@@ -1691,6 +1692,7 @@ export type Database = {
           clinic_id: string
           created_at?: string
           display_name: string
+          gender?: string | null
           id?: string
           license_ref?: string | null
           updated_at?: string
@@ -1700,6 +1702,7 @@ export type Database = {
           clinic_id?: string
           created_at?: string
           display_name?: string
+          gender?: string | null
           id?: string
           license_ref?: string | null
           updated_at?: string
@@ -2408,6 +2411,10 @@ export type Database = {
         Args: { p_days?: number }
         Returns: Json
       }
+      archive_patient_account_server: {
+        Args: { p_actor_id: string; p_target_user_id: string }
+        Returns: undefined
+      }
       audit_clinic_operator_password_reset: {
         Args: { p_operator_account_id: string }
         Returns: undefined
@@ -2596,6 +2603,14 @@ export type Database = {
           username: string
         }[]
       }
+      list_patient_accounts_for_admin: {
+        Args: { p_actor_id: string; p_limit?: number }
+        Returns: {
+          created_at: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       platform_activity_report_server: {
         Args: {
           p_actor_id: string
@@ -2722,11 +2737,13 @@ export type Database = {
         Args: {
           p_lat?: number
           p_lng?: number
+          p_practitioner_gender?: string
           p_radius_km?: number
           p_variant_id: string
         }
         Returns: {
           area: string
+          branch_address: string
           branch_id: string
           branch_latitude: number
           branch_longitude: number
@@ -2737,6 +2754,9 @@ export type Database = {
           currency: string
           distance_km: number
           duration_minutes: number
+          earliest_practitioner_gender: string
+          earliest_practitioner_id: string
+          earliest_practitioner_name: string
           earliest_slot_at: string
           earliest_slot_id: string
           excluded_items: Json

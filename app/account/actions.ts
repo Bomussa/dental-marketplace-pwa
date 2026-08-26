@@ -6,7 +6,7 @@ import { z } from "zod";
 import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { patientPasswordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, usernameSchema, uuid } from "@/lib/validation";
+import { patientAccountDeletionSchema, patientNicknameSchema, patientPasswordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, uuid } from "@/lib/validation";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -15,7 +15,7 @@ async function requireUser() {
   return { supabase, userId: data.claims.sub };
 }
 
-function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "cannot_archive_self"): never {
+function profileActionError(code: "invalid" | "unavailable" | "self_exists" | "cannot_archive_self" | "duplicate_identity" | "duplicate_phone"): never {
   redirect(`/account?patient_profile_error=${code}`);
 }
 
@@ -47,6 +47,14 @@ function credentialsActionSuccess(): never {
   redirect("/account?credentials_success=activated");
 }
 
+function accountDeletionError(code: "invalid" | "unavailable" | "partial"): never {
+  redirect(`/account?account_deletion_error=${code}`);
+}
+
+function accountDeletionSuccess(): never {
+  redirect("/login?account_deleted=1");
+}
+
 function requireAdmin(onUnavailable: () => never) {
   try {
     return createAdminClient();
@@ -56,7 +64,7 @@ function requireAdmin(onUnavailable: () => never) {
 }
 
 export async function activateLoginCredentials(formData: FormData) {
-  const parsed = z.object({ username: usernameSchema, password: patientPasswordSchema }).safeParse({
+  const parsed = z.object({ username: patientNicknameSchema, password: patientPasswordSchema }).safeParse({
     username: formData.get("username"),
     password: formData.get("password"),
   });
@@ -123,7 +131,10 @@ export async function createPatientProfile(formData: FormData) {
     phone_verified_at: null,
     gender: input.gender ?? null,
   })).catch(() => profileActionError("unavailable"));
-  if (error?.code === "23505") return profileActionError("invalid");
+  if (error?.code === "23505") {
+    const conflict = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+    return profileActionError(conflict.includes("patient_profiles_phone_key") ? "duplicate_phone" : "duplicate_identity");
+  }
   if (error) return profileActionError("unavailable");
 
   revalidatePath("/account");
@@ -160,6 +171,27 @@ export async function archivePatientProfile(formData: FormData) {
 
   revalidatePath("/account");
   return profileActionSuccess("archived");
+}
+
+export async function deletePatientAccount(formData: FormData) {
+  const parsed = patientAccountDeletionSchema.safeParse({ confirmation: formData.get("confirmation") });
+  if (!parsed.success) return accountDeletionError("invalid");
+
+  const { supabase, userId } = await requireUser();
+  const admin = requireAdmin(() => accountDeletionError("unavailable"));
+  const { error: archiveError } = await admin.rpc("archive_patient_account_server", {
+    p_actor_id: userId,
+    p_target_user_id: userId,
+  }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+  if (archiveError) {
+    if (archiveError.code === "22023" || archiveError.code === "P0002") return accountDeletionError("invalid");
+    return accountDeletionError("unavailable");
+  }
+
+  const { error: authError } = await withOperationalTimeout(admin.auth.admin.deleteUser(userId, true));
+  if (authError) return accountDeletionError("partial");
+  await withOperationalTimeout(supabase.auth.signOut()).catch(() => undefined);
+  return accountDeletionSuccess();
 }
 
 export async function cancelBooking(formData: FormData) {

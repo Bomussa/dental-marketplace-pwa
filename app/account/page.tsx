@@ -7,14 +7,16 @@ import { getLocale } from "@/lib/i18n";
 import { accountNationality, accountNationalityOptions, accountRelationship, accountStatus, getAccountCopy } from "@/lib/account-copy";
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { CalendarIcon, ClockIcon, StarIcon, UserIcon } from "@/components/icons";
-import { activateLoginCredentials, archivePatientProfile, cancelBooking, createPatientProfile, submitReview } from "./actions";
+import { activateLoginCredentials, archivePatientProfile, cancelBooking, createPatientProfile, deletePatientAccount, submitReview } from "./actions";
 import { AccountLiveRefresh } from "@/components/account-live-refresh";
+import { AccountBookingNotifications } from "@/components/account-booking-notifications";
 
 export const dynamic = "force-dynamic";
 type BookingRow = { id:string; booking_code:string; start_at:string; end_at:string; status:string; offer_snapshot:unknown; created_at:string };
 type ReviewRow = { booking_id:string; status:string; rating:number };
 type PatientProfileRow = { id:string; display_name:string; relationship:string; national_id:string | null; nationality:string | null; date_of_birth:string | null; phone:string | null; phone_verified_at:string | null; gender:string | null; created_at:string };
-type AccountSearchParams = { booking_error?: string; booking_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string; credentials_error?: string; credentials_success?: string; registration_success?: string };
+type NotificationRow = { id:string; event_type:string; payload:unknown; created_at:string };
+type AccountSearchParams = { booking_error?: string; booking_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string; credentials_error?: string; credentials_success?: string; registration_success?: string; account_deletion_error?: string };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<AccountSearchParams> }) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
@@ -31,6 +33,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const credentialsErrorMessage = params.credentials_error ? copy.credentialsErrors[params.credentials_error] ?? null : null;
   const credentialsSuccessMessage = params.credentials_success === "activated" ? copy.credentialsSuccess : null;
   const registrationSuccessMessage = params.registration_success === "created" ? (locale === "ar" ? "تم إنشاء حسابك بنجاح. يمكنك الآن إكمال ملفك وإدارة حجوزاتك من هنا." : "Your account was created successfully. You can now complete your profile and manage bookings here.") : null;
+  const accountDeletionErrorMessage = params.account_deletion_error ? copy.accountDeletionErrors[params.account_deletion_error] ?? null : null;
 
   const supabase = await getServerSupabaseClient();
   const { data: claimsData, error } = await getServerAuthClaims();
@@ -47,17 +50,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     }
   })();
 
-  const [hasLoginCredentials, { data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }] = await Promise.all([
+  const [hasLoginCredentials, { data: profile }, { data: bookingData }, { data: reviewData }, { data: patientProfileData }, { data: notificationData }] = await Promise.all([
     hasLoginCredentialsPromise,
     withOperationalTimeout(supabase.from("profiles").select("display_name,phone,locale,created_at").eq("id", userId).maybeSingle()).catch(() => ({ data: null })),
     withOperationalTimeout(supabase.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
     withOperationalTimeout(supabase.from("reviews").select("booking_id,status,rating").eq("patient_id", userId)).catch(() => ({ data: null })),
     withOperationalTimeout(supabase.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender,created_at").is("archived_at", null).order("created_at", { ascending: true })).catch(() => ({ data: null })),
+    withOperationalTimeout(supabase.from("notification_outbox").select("id,event_type,payload,created_at").eq("channel", "in_app").eq("event_type", "booking_confirmed").order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
   ]);
 
   const bookings = (bookingData ?? []) as BookingRow[];
   const reviews = (reviewData ?? []) as ReviewRow[];
   const patientProfiles = (patientProfileData ?? []) as PatientProfileRow[];
+  const notifications = (notificationData ?? []) as NotificationRow[];
   const reviewed = new Map(reviews.map((review) => [review.booking_id, review]));
   const upcoming = bookings.filter((booking) => ["pending_hold", "pending_clinic_confirmation", "confirmed", "checked_in"].includes(booking.status)).length;
   const completed = bookings.filter((booking) => booking.status === "completed").length;
@@ -81,7 +86,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       {registrationSuccessMessage && <div role="status" className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{registrationSuccessMessage}</div>}
 
-      {!hasLoginCredentials && <section className="mt-8"><Card className="p-5 sm:p-6"><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.credentialsKicker}</p><h2 className="mt-2 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.credentialsTitle}</h2><p className="mt-2 max-w-3xl text-sm font-medium leading-7 text-slate-500">{copy.credentialsCopy}</p>{credentialsErrorMessage && <div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{credentialsErrorMessage}</div>}{credentialsSuccessMessage && <div role="status" className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{credentialsSuccessMessage}</div>}<form action={activateLoginCredentials} className="mt-5 grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.username}<Input name="username" autoComplete="username" dir="ltr" minLength={3} maxLength={32} required /></label><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.password}<Input name="password" type="password" autoComplete="new-password" dir="ltr" minLength={4} maxLength={10} pattern="[A-Za-z0-9]{4,10}" title={locale === "ar" ? "4 إلى 10 أحرف أو أرقام إنجليزية فقط" : "Use 4 to 10 English letters or numbers only"} required /></label><div className="sm:col-span-2"><Button>{copy.activateCredentials}</Button></div></form></Card></section>}
+      {!hasLoginCredentials && <section className="mt-8"><Card className="p-5 sm:p-6"><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.credentialsKicker}</p><h2 className="mt-2 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.credentialsTitle}</h2><p className="mt-2 max-w-3xl text-sm font-medium leading-7 text-slate-500">{copy.credentialsCopy}</p>{credentialsErrorMessage && <div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{credentialsErrorMessage}</div>}{credentialsSuccessMessage && <div role="status" className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{credentialsSuccessMessage}</div>}<form action={activateLoginCredentials} className="mt-5 grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.username}<Input name="username" autoComplete="username" dir="ltr" minLength={2} maxLength={10} pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,9}" title={locale === "ar" ? "2 إلى 10 أحرف أو أرقام إنجليزية، ويمكن استخدام . أو _ أو -" : "Use 2 to 10 English letters or numbers; . _ and - are allowed"} required /></label><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.password}<Input name="password" type="password" autoComplete="new-password" dir="ltr" minLength={4} maxLength={10} pattern="[A-Za-z0-9]{4,10}" title={locale === "ar" ? "4 إلى 10 أحرف أو أرقام إنجليزية فقط" : "Use 4 to 10 English letters or numbers only"} required /></label><div className="sm:col-span-2"><Button>{copy.activateCredentials}</Button></div></form></Card></section>}
 
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.familyKicker}</p><h2 className="mt-1 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.familyTitle}</h2><p className="mt-1 text-sm font-medium text-slate-500">{copy.familyCopy}</p></div><UserIcon className="text-[#0B5CAD]" size={24} /></div>
@@ -101,6 +106,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </Card>
       </section>
 
+      <AccountBookingNotifications locale={locale} labels={copy} notifications={notifications} />
+
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.bookingsKicker}</p><h2 className="mt-1 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.bookingsTitle}</h2></div><CalendarIcon className="text-[#0B5CAD]" size={24} /></div>
         {bookingErrorMessage && <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{bookingErrorMessage}</div>}
@@ -115,6 +122,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           const tone = booking.status === "completed" ? "green" : booking.status.includes("cancel") || booking.status === "failed" ? "red" : "blue";
           return <Card key={booking.id} className="lift overflow-hidden p-0"><div className="grid md:grid-cols-[1fr_230px]"><div className="p-5 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-black">{String(name ?? copy.defaultBooking)}</h3><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-slate-500"><span className="inline-flex items-center gap-1.5"><CalendarIcon size={14} />{dateTimeFormatter.format(new Date(booking.start_at))}</span><span dir="ltr">#{booking.booking_code}</span></div></div><Badge tone={tone}>{accountStatus(locale, booking.status)}</Badge></div>{canCancel && <form action={cancelBooking} className="mt-5"><input type="hidden" name="booking_id" value={booking.id} /><Button className="bg-white text-red-700 shadow-none ring-1 ring-red-200 hover:bg-red-50">{copy.cancelBooking}</Button></form>}</div><aside className="border-t border-slate-200/70 bg-slate-50/60 p-5 md:border-s md:border-t-0"><div className="flex items-center gap-2 text-xs font-extrabold text-slate-500"><ClockIcon size={15} />{copy.visitStatus}</div><div className="mt-2 text-sm font-black">{accountStatus(locale, booking.status)}</div>{booking.status === "completed" && <div className="mt-4">{existingReview ? <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/70"><div className="flex items-center gap-1.5 font-black"><StarIcon size={15} className="text-amber-500" />{existingReview.rating}/5</div><div className="mt-1 text-xs font-bold text-slate-500">{existingReview.status}</div></div> : <span className="text-xs font-bold text-slate-500">{copy.reviewAvailable}</span>}</div>}</aside></div>{booking.status === "completed" && !existingReview && <form action={submitReview} className="border-t border-slate-200/70 bg-white/70 p-5 sm:p-6"><input type="hidden" name="booking_id" value={booking.id} /><div className="flex items-center gap-2 text-sm font-black"><StarIcon size={18} className="text-amber-500" />{copy.reviewTitle}</div><div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr_auto]"><Select name="rating" defaultValue="5"><option value="5">5 / 5</option><option value="4">4 / 5</option><option value="3">3 / 5</option><option value="2">2 / 5</option><option value="1">1 / 5</option></Select><textarea name="review_text" maxLength={1500} className="min-h-12 rounded-2xl border border-slate-200/80 bg-white p-3 text-sm font-medium outline-none transition focus:border-[#0B5CAD] focus:ring-4 focus:ring-blue-500/10" placeholder={copy.reviewPlaceholder} /><Button>{copy.submitReview}</Button></div></form>}</Card>;
         })}</div>}
+      </section>
+
+      <section className="mt-8">
+        <Card className="border border-red-200 bg-red-50/55 p-5 sm:p-6">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-red-700">{copy.accountDeletionKicker}</p>
+          <h2 className="mt-2 text-2xl font-black tracking-[-.025em] text-red-900">{copy.accountDeletionTitle}</h2>
+          <p className="mt-2 max-w-3xl text-sm font-medium leading-7 text-red-800">{copy.accountDeletionCopy}</p>
+          {accountDeletionErrorMessage && <div role="alert" className="mt-4 rounded-2xl border border-red-300 bg-white/90 px-4 py-3 text-sm font-bold text-red-800">{accountDeletionErrorMessage}</div>}
+          <form action={deletePatientAccount} className="mt-5 grid max-w-xl gap-3 sm:grid-cols-[1fr_auto]">
+            <label className="grid gap-1 text-xs font-extrabold text-red-800">{copy.accountDeletionConfirmation}<Input name="confirmation" required autoComplete="off" dir="ltr" pattern="DELETE" /></label>
+            <Button className="self-end bg-red-700 hover:bg-red-800">{copy.accountDeletionButton}</Button>
+          </form>
+        </Card>
       </section>
     </main>
   );

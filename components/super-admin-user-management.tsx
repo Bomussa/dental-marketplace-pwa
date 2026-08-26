@@ -1,9 +1,11 @@
 import { Badge, Button, Card, Input, Select } from "@/components/ui";
 import { ShieldCheckIcon } from "@/components/icons";
-import { createOperationalClientAccount, createPatientAccount, revokeOperationalClientAccount } from "@/app/admin/actions";
+import { createOperationalClientAccount, createPatientAccount, deletePatientAccountAsAdmin, revokeOperationalClientAccount } from "@/app/admin/actions";
 
 type ClinicOption = { id: string; display_name: string };
 type BranchOption = { id: string; clinic_id: string; name: string; area: string | null; status: string };
+type PatientAccount = { user_id: string; display_name: string; created_at: string };
+
 type OperationalClient = {
   operator_account_id: string;
   user_id: string;
@@ -21,9 +23,10 @@ type SuperAdminUserManagementProps = {
   clinics: ClinicOption[];
   branches: BranchOption[];
   operationalClients: OperationalClient[] | null;
+  patientAccounts: PatientAccount[] | null;
 };
 
-export function SuperAdminUserManagement({ clinics, branches, operationalClients }: SuperAdminUserManagementProps) {
+export function SuperAdminUserManagement({ clinics, branches, operationalClients, patientAccounts }: SuperAdminUserManagementProps) {
   const activeOperationalClients = operationalClients?.filter((client) => !client.revoked_at && client.status === "active") ?? [];
 
   return (
@@ -54,12 +57,12 @@ export function SuperAdminUserManagement({ clinics, branches, operationalClients
               <Input name="display_name" required maxLength={120} placeholder="الاسم الكامل" autoComplete="off" />
               <Input name="national_id" required inputMode="numeric" maxLength={20} placeholder="رقم البطاقة / QID" autoComplete="off" />
               <Input name="nationality" required maxLength={2} pattern="[A-Za-z]{2}" placeholder="رمز الجنسية، مثال QA" autoComplete="off" />
-              <Input name="date_of_birth" required type="date" />
+              <Input name="date_of_birth" type="date" />
               <Input name="phone" required type="tel" placeholder="+974…" autoComplete="off" />
               <Select name="gender" defaultValue=""><option value="">الجنس (اختياري)</option><option value="female">أنثى</option><option value="male">ذكر</option><option value="other">آخر</option><option value="prefer_not_to_say">أفضل عدم الإفصاح</option></Select>
-              <Input name="username" required minLength={3} maxLength={32} autoComplete="off" placeholder="اسم المستخدم" />
+              <Input name="username" required minLength={2} maxLength={10} pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,9}" title="2 إلى 10 أحرف أو أرقام إنجليزية؛ ويسمح بـ . أو _ أو -" autoComplete="off" placeholder="اسم الدخول المختصر (Nickname)" />
               <Input name="email" type="email" required maxLength={254} autoComplete="off" placeholder="البريد الإلكتروني" />
-              <Input name="password" type="password" required minLength={12} maxLength={128} autoComplete="new-password" className="sm:col-span-2" placeholder="كلمة مرور ابتدائية قوية" />
+              <Input name="password" type="password" required minLength={4} maxLength={10} pattern="[A-Za-z0-9]{4,10}" title="4 إلى 10 أحرف أو أرقام إنجليزية فقط" autoComplete="new-password" className="sm:col-span-2" placeholder="كلمة المرور: 4–10 أحرف أو أرقام" />
             </div>
             <Button className="mt-4 w-full">إنشاء حساب المريض</Button>
           </form>
@@ -69,6 +72,11 @@ export function SuperAdminUserManagement({ clinics, branches, operationalClients
       <Card className="p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-black text-[#092b56]">العملاء التشغيليون الحاليون</h2><p className="mt-1 text-xs leading-5 text-slate-500">الإيقاف يلغي العضوية واسم المستخدم تشغيليًا ويحفظ أثر المراجعة؛ لا يحذف المواعيد أو بيانات المرضى.</p></div><Badge tone="blue">{activeOperationalClients.length} نشط</Badge></div>
         {operationalClients === null ? <p className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800">تعذر تحميل السجل التشغيلي الآن. لم يتم إجراء أي تغيير.</p> : operationalClients.length === 0 ? <p className="mt-5 rounded-2xl bg-slate-50 p-5 text-sm font-bold text-slate-600">لا توجد حسابات عميل تشغيلي بعد.</p> : <div className="mt-5 space-y-3">{operationalClients.map((client) => <div key={client.operator_account_id} className="rounded-[22px] bg-slate-50/85 p-4 ring-1 ring-slate-200/70"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="font-black text-[#092b56]">{client.username}</div><div className="mt-1 text-xs font-bold text-slate-500">{client.clinic_name} · {client.branch_name}</div><div className="mt-1 text-xs text-slate-500">أُنشئ: {new Intl.DateTimeFormat("ar-QA", { dateStyle: "medium", timeZone: "Asia/Qatar" }).format(new Date(client.created_at))}</div></div><Badge tone={client.revoked_at || client.status !== "active" ? "slate" : "green"}>{client.revoked_at || client.status !== "active" ? "موقوف" : "نشط"}</Badge></div>{!client.revoked_at && client.status === "active" && <form action={revokeOperationalClientAccount} className="mt-3"><input type="hidden" name="operator_account_id" value={client.operator_account_id} /><Button className="min-h-9 bg-slate-700 px-4 py-1 text-xs hover:bg-slate-800">إيقاف الوصول مع حفظ السجل</Button></form>}</div>)}</div>}
+      </Card>
+
+      <Card className="border border-red-200 bg-red-50/55 p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-black text-red-900">حذف حسابات المرضى</h2><p className="mt-1 text-xs leading-5 text-red-800">متاح للمدير الأعلى فقط. يوقف الوصول ويؤرشف الملف؛ لا يعرض هذا القسم الهوية أو الهاتف أو البريد، ولا يكسر سجلات الحجوزات.</p></div><Badge tone="red">Restricted</Badge></div>
+        {patientAccounts === null ? <p className="mt-5 rounded-2xl bg-white/85 p-4 text-sm font-bold text-red-800">تعذر تحميل قائمة حسابات المرضى الآن. لم يتم إجراء أي تغيير.</p> : patientAccounts.length === 0 ? <p className="mt-5 rounded-2xl bg-white/85 p-4 text-sm font-bold text-slate-600">لا توجد حسابات مرضى نشطة قابلة للإدارة الآن.</p> : <div className="mt-5 space-y-3">{patientAccounts.map((patient) => <div key={patient.user_id} className="rounded-[22px] bg-white/85 p-4 ring-1 ring-red-100"><div className="font-black text-[#092b56]">{patient.display_name}</div><p className="mt-1 text-xs font-bold text-slate-500">أُنشئ: {new Intl.DateTimeFormat("ar-QA", { dateStyle: "medium", timeZone: "Asia/Qatar" }).format(new Date(patient.created_at))}</p><form action={deletePatientAccountAsAdmin} className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]"><input type="hidden" name="target_user_id" value={patient.user_id} /><Input name="confirmation" required pattern="DELETE" dir="ltr" autoComplete="off" placeholder="اكتب DELETE للتأكيد" /><Button className="bg-red-700 hover:bg-red-800">حذف الحساب</Button></form></div>)}</div>}
       </Card>
     </section>
   );

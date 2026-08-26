@@ -5,6 +5,9 @@ export const uuid = z.string().uuid();
 const coordinate = z.coerce.number().finite();
 export const searchSortSchema = z.enum(["balanced", "price", "distance", "rating", "soonest"]);
 export const searchWhenSchema = z.enum(["earliest", "today", "tomorrow"]);
+export const practitionerGenderSchema = z.enum(["female", "male"]);
+const optionalPractitionerGenderSchema = z.union([z.literal(""), practitionerGenderSchema]).optional()
+  .transform((value) => value || null);
 
 export const searchSchema = z.object({
   variant: uuid,
@@ -12,6 +15,7 @@ export const searchSchema = z.object({
   lng: z.union([z.literal(""), coordinate.min(-180).max(180)]).optional(),
   radius: z.coerce.number().min(1).max(50).default(10),
   sort: searchSortSchema.default("balanced"),
+  practitioner_gender: optionalPractitionerGenderSchema,
 });
 
 export const searchQuerySchema = searchSchema.extend({
@@ -116,6 +120,7 @@ export const offerSchema = z.object({
 export const slotSchema = z.object({
   branch_id: uuid,
   variant_id: uuid,
+  practitioner_id: z.union([z.literal(""), uuid]).optional().transform((value) => value || null),
   start_at: z.string().min(16).max(40),
   end_at: z.string().min(16).max(40),
 }).refine((v) => new Date(normalizeQatarDateTime(v.end_at)) > new Date(normalizeQatarDateTime(v.start_at)), {
@@ -145,6 +150,7 @@ export const practitionerSchema = z.object({
   clinic_id: uuid,
   display_name: z.string().trim().min(2).max(120),
   license_ref: z.string().trim().max(120).optional().default(""),
+  gender: z.union([z.literal(""), practitionerGenderSchema]).optional().transform((value) => value || null),
 });
 
 export const dailyHoursSchema = z.object({
@@ -253,7 +259,7 @@ export const supportKnowledgeArticleSchema = z.object({
 
 export const notificationTemplateSchema = z.object({
   template_key: z.string().trim().regex(/^[a-z0-9_.-]{3,80}$/),
-  channel: z.enum(["email", "sms", "push"]),
+  channel: z.enum(["email", "push", "in_app"]),
   locale: z.enum(["ar", "en"]),
   subject: z.string().trim().max(200).optional().default(""),
   body: z.string().trim().min(1).max(4000),
@@ -300,6 +306,7 @@ export const patientProfileUpsertSchema = patientProfileSchema.extend({
 });
 
 export const usernameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/, "اسم المستخدم يجب أن يتكون من 3 إلى 32 حرفًا أو رقمًا، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
+export const patientNicknameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{1,9}$/, "اسم الدخول للمريض يجب أن يتكون من 2 إلى 10 أحرف أو أرقام إنجليزية، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
 export const passwordSchema = z.string()
   .min(12, "كلمة المرور يجب ألا تقل عن 12 حرفًا")
   .max(128)
@@ -346,7 +353,7 @@ export const patientBookingRegistrationSchema = z.object({
   date_of_birth: optionalDateOfBirthSchema,
   phone: phoneSchema,
   gender: optionalGender.optional(),
-  username: usernameSchema,
+  username: patientNicknameSchema,
   email: z.string().trim().toLowerCase().email().max(254),
   password: patientPasswordSchema,
 });
@@ -375,6 +382,14 @@ export const patientPhoneVerificationConfirmSchema = z.object({
 
 export const patientProfileArchiveSchema = z.object({
   patient_profile_id: uuid,
+});
+
+export const patientAccountDeletionSchema = z.object({
+  confirmation: z.literal("DELETE"),
+});
+
+export const patientAccountAdminDeletionSchema = patientAccountDeletionSchema.extend({
+  target_user_id: uuid,
 });
 
 export const deviceInstallationSchema = z.object({

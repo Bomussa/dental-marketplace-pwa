@@ -13,6 +13,7 @@ export function parseSearchQuery(input: SearchQueryInput) {
     lng: first(input.lng) ?? "",
     radius: first(input.radius) ?? "10",
     sort: first(input.sort) ?? "balanced",
+    practitioner_gender: first(input.practitioner_gender) ?? "",
     when: first(input.when) ?? "earliest",
   });
 }

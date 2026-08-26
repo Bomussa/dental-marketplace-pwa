@@ -8,10 +8,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "invalid_search" }, { status: 400, headers: { "cache-control": "no-store" } });
   }
 
-  const { variant, lat: rawLat, lng: rawLng, radius, sort, when } = parsed.data;
+  const { variant, lat: rawLat, lng: rawLng, radius, sort, when, practitioner_gender: practitionerGender } = parsed.data;
   const lat = rawLat === "" || rawLat === undefined ? null : rawLat;
   const lng = rawLng === "" || rawLng === undefined ? null : rawLng;
-  const result = await searchLiveOffers({ variant, lat, lng, radius, when, sort });
+  const result = await searchLiveOffers({ variant, lat, lng, radius, when, sort, practitionerGender });
   if (result.error) {
     return NextResponse.json({ error: "search_unavailable" }, { status: 503, headers: { "cache-control": "no-store" } });
   }

@@ -184,7 +184,7 @@ export async function createPractitioner(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("createPractitioner");
   const supabase = await requireUser();
   try {
-    const result = await withOperationalTimeout(supabase.from("practitioners").insert({ clinic_id: parsed.data.clinic_id, display_name: parsed.data.display_name, license_ref: parsed.data.license_ref || null, active: false }).select("id").single());
+    const result = await withOperationalTimeout(supabase.from("practitioners").insert({ clinic_id: parsed.data.clinic_id, display_name: parsed.data.display_name, license_ref: parsed.data.license_ref || null, gender: parsed.data.gender, active: false }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {
@@ -292,7 +292,7 @@ export async function createSlot(formData: FormData): Promise<void> {
   if (!parsed.success) validationFailure("createSlot");
   const supabase = await requireUser();
   try {
-    const result = await withOperationalTimeout(supabase.from("availability_slots").insert({ branch_id: parsed.data.branch_id, variant_id: parsed.data.variant_id, start_at: normalizeQatarDateTime(parsed.data.start_at), end_at: normalizeQatarDateTime(parsed.data.end_at), status: "draft" }).select("id").single());
+    const result = await withOperationalTimeout(supabase.from("availability_slots").insert({ branch_id: parsed.data.branch_id, variant_id: parsed.data.variant_id, practitioner_id: parsed.data.practitioner_id, start_at: normalizeQatarDateTime(parsed.data.start_at), end_at: normalizeQatarDateTime(parsed.data.end_at), status: "draft" }).select("id").single());
     requireReturnedRow(result.data, result.error);
     revalidatePath("/clinic");
   } catch (error) {

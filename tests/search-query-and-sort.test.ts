@@ -11,6 +11,7 @@ function offer(overrides: Partial<SearchOffer>): SearchOffer {
     branch_id: "33333333-3333-4333-8333-333333333333",
     branch_name: "Branch",
     area: null,
+    branch_address: null,
     branch_latitude: null,
     branch_longitude: null,
     variant_id: "44444444-4444-4444-8444-444444444444",
@@ -32,6 +33,9 @@ function offer(overrides: Partial<SearchOffer>): SearchOffer {
     open_now: true,
     earliest_slot_id: null,
     earliest_slot_at: "2026-08-20T06:00:00.000Z",
+    earliest_practitioner_id: null,
+    earliest_practitioner_name: null,
+    earliest_practitioner_gender: null,
     rating_avg: 4,
     review_count: 10,
     ...overrides,
@@ -45,13 +49,18 @@ describe("parseSearchQuery", () => {
       radius: "25",
       when: "tomorrow",
       sort: "rating",
+      practitioner_gender: "female",
     });
     expect(parsed.success).toBe(true);
-    if (parsed.success) expect(parsed.data).toMatchObject({ radius: 25, when: "tomorrow", sort: "rating" });
+    if (parsed.success) expect(parsed.data).toMatchObject({ radius: 25, when: "tomorrow", sort: "rating", practitioner_gender: "female" });
   });
 
   it("rejects an invalid appointment preference instead of silently changing it", () => {
     expect(parseSearchQuery({ variant: "44444444-4444-4444-8444-444444444444", when: "next_month" }).success).toBe(false);
+  });
+
+  it("rejects a practitioner-gender filter outside the supported values", () => {
+    expect(parseSearchQuery({ variant: "44444444-4444-4444-8444-444444444444", practitioner_gender: "other" }).success).toBe(false);
   });
 });
 

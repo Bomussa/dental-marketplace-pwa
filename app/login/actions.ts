@@ -16,7 +16,7 @@ const REGISTRATION_WINDOW_SECONDS = 60 * 60;
 const MAX_REGISTRATIONS_PER_CLIENT_WINDOW = 5;
 const DECOY_LOGIN_EMAIL = "asnani-login-decoy@example.invalid";
 
-type RegistrationError = "invalid" | "username_taken" | "email_taken" | "national_id_taken" | "unavailable";
+type RegistrationError = "invalid" | "username_taken" | "email_taken" | "patient_data_taken" | "unavailable";
 
 function registrationFailure(code: RegistrationError): never {
   redirect(`/login?register_error=${code}`);
@@ -97,7 +97,10 @@ export async function registerPatient(formData: FormData) {
   if (!registrationAllowed) registrationFailure("unavailable");
 
   const result = await provisionPatientBookingAccount(parsed.data);
-  if (!result.ok) registrationFailure(result.code);
+  if (!result.ok) {
+    if (result.code === "national_id_taken" || result.code === "phone_taken") registrationFailure("patient_data_taken");
+    registrationFailure(result.code);
+  }
 
   try {
     const supabase = await createClient();

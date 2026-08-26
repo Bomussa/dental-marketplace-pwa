@@ -5,7 +5,7 @@ import { withOperationalTimeout } from "@/lib/operations.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Locale } from "@/lib/i18n";
 
-type NotificationChannel = "email" | "sms" | "push";
+type NotificationChannel = "email" | "push" | "in_app";
 type NotificationEvent = "booking_confirmed" | "booking_cancelled" | "booking_updated" | "attendance_recorded" | "price_updated" | "support_reply" | "manual";
 
 type EnqueueNotificationInput = {
@@ -42,7 +42,7 @@ export async function enqueueNotification(input: EnqueueNotificationInput) {
     locale: input.locale,
     payload: input.payload,
     dedupe_key: dedupeKey,
-    status: "pending",
+    status: input.channel === "in_app" ? "stored" : "pending",
     created_by: input.createdBy ?? null,
   }, { onConflict: "dedupe_key", ignoreDuplicates: true }));
   if (error) throw new Error(error.code);
@@ -62,7 +62,7 @@ export async function enqueueBookingConfirmedNotifications(input: {
     recipientUserId: input.patientUserId,
     eventType: "booking_confirmed",
     eventId: input.bookingId,
-    channel: "push",
+    channel: "in_app",
     locale: input.patientLocale,
     payload,
     createdBy: input.patientUserId,
@@ -81,7 +81,7 @@ export async function enqueueBookingConfirmedNotifications(input: {
       recipientUserId: member.user_id,
       eventType: "booking_confirmed",
       eventId: input.bookingId,
-      channel: "push",
+      channel: "in_app",
       locale: "ar",
       payload,
       createdBy: input.patientUserId,

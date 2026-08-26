@@ -45,7 +45,10 @@ export async function POST(request: Request) {
     : undefined;
   if (!isLocale(locale)) return invalidRequest();
 
-  const response = NextResponse.redirect(returnUrl(request), 303);
+  const wantsJson = request.headers.get("accept")?.includes("application/json") === true;
+  const response = wantsJson
+    ? new NextResponse(null, { status: 204 })
+    : NextResponse.redirect(returnUrl(request), 303);
   response.headers.set("cache-control", "no-store");
   response.cookies.set("asnani_locale", locale, {
     httpOnly: true,

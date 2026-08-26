@@ -11,11 +11,20 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { ArrowUpLeftIcon, ClockIcon, LocationIcon, RouteIcon, ShieldCheckIcon, SlidersIcon, StarIcon } from "@/components/icons";
 import { ResultsLiveRefresh } from "@/components/results-live-refresh";
 import { PriceScopeSummary } from "@/components/price-scope-summary";
+import type { SearchOffer } from "@/lib/models";
 
 export const dynamic = "force-dynamic";
 type Params = Record<string, string | string[] | undefined>;
 function replaceTokens(template: string, values: Record<string, string | number>) {
   return Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), template);
+}
+
+function directionsHref(offer: SearchOffer) {
+  if (offer.branch_latitude != null && offer.branch_longitude != null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${offer.branch_latitude},${offer.branch_longitude}`)}`;
+  }
+  const address = [offer.branch_address, offer.branch_name, offer.area, offer.clinic_name, "Qatar"].filter((value): value is string => Boolean(value)).join(", ");
+  return address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : null;
 }
 
 export default async function ResultsPage({ searchParams }: { searchParams: Promise<Params> }) {
@@ -45,9 +54,11 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const lng = parsed.data.lng === "" || parsed.data.lng === undefined ? null : parsed.data.lng;
   const when = parsed.data.when;
   const sort = parsed.data.sort;
+  const practitionerGender = parsed.data.practitioner_gender;
   const sortLabel = t[`search.sort.${sort}`];
+  const practitionerLabel = practitionerGender === "female" ? t["search.femalePractitioner"] : practitionerGender === "male" ? t["search.malePractitioner"] : t["search.anyPractitioner"];
   const [{ variant, offers, error }, { data: claimsData }] = await Promise.all([
-    searchLiveOffers({ variant: parsed.data.variant, lat, lng, radius: parsed.data.radius, when, sort }),
+    searchLiveOffers({ variant: parsed.data.variant, lat, lng, radius: parsed.data.radius, when, sort, practitionerGender }),
     getServerAuthClaims(),
   ]);
   const userId = claimsData?.claims?.sub;
@@ -77,6 +88,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         <span>{whenLabel}</span><span className="text-white/35">•</span>
         <span>{replaceTokens(t["results.sortedBy"], { sort: sortLabel })}</span><span className="text-white/35">•</span>
         <span>{replaceTokens(t["results.radius"], { radius: parsed.data.radius })}</span><span className="text-white/35">•</span>
+        <span>{practitionerLabel}</span><span className="text-white/35">•</span>
         <span>{replaceTokens(t["results.count"], { count: offers.length })}</span><span className="text-white/35">•</span>
         <ResultsLiveRefresh variantId={parsed.data.variant} locale={locale} />
       </div>
@@ -109,9 +121,10 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                     <div className="result-fact rounded-2xl p-3.5"><div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><ClockIcon size={14} />{t["results.duration"]}</div><div className="mt-1 text-sm font-black">{replaceTokens(t["results.minutes"], { minutes: offer.duration_minutes })}</div></div>
                     <div className="result-fact rounded-2xl p-3.5"><div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><LocationIcon size={14} />{t["results.distance"]}</div><div className="mt-1 text-sm font-black">{offer.distance_km == null ? t["results.distanceUnavailable"] : replaceTokens(t["results.distanceValue"], { distance: offer.distance_km.toFixed(1) })}</div></div>
                     <div className="result-fact result-fact--quiet rounded-2xl p-3.5 sm:col-span-2 lg:col-span-1"><div className="text-[11px] font-bold text-slate-500">{t["results.lastVerified"]}</div><div className="mt-1 text-sm font-black">{offer.last_verified_at ? dateFormatter.format(new Date(offer.last_verified_at)) : t["results.notRecorded"]}</div></div>
+                    <div className="result-fact rounded-2xl p-3.5 sm:col-span-2 lg:col-span-1"><div className="text-[11px] font-bold text-slate-500">{t["results.practitioner"]}</div><div className="mt-1 text-sm font-black">{offer.earliest_practitioner_name ?? t["results.practitionerUnavailable"]}</div></div>
                   </div>
                   <PriceScopeSummary offer={offer} locale={locale} />
-                  {offer.branch_latitude != null && offer.branch_longitude != null ? <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${offer.branch_latitude},${offer.branch_longitude}`)}`} target="_blank" rel="noreferrer" className="result-directions mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-xs font-black"><RouteIcon size={16}/>{t["results.directions"]}</a> : <p className="mt-4 text-xs font-bold text-slate-400">{t["results.directionsUnavailable"]}</p>}
+                  {directionsHref(offer) ? <a href={directionsHref(offer) ?? undefined} target="_blank" rel="noreferrer" className="result-directions mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-xs font-black"><RouteIcon size={16}/>{t["results.directions"]}</a> : <p className="mt-4 text-xs font-bold text-slate-400">{t["results.directionsUnavailable"]}</p>}
                 </div>
 
                 <aside className="result-pricing border-t p-6 sm:p-7 lg:border-s lg:border-t-0">

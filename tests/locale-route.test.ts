@@ -3,7 +3,7 @@ import { POST } from "@/app/api/locale/route";
 
 const resultsUrl = "https://example.test/results?variant=sample&when=earliest&radius=10&sort=balanced";
 
-function request(body: string, origin = "https://example.test", contentLength = body.length, referer = resultsUrl) {
+function request(body: string, origin = "https://example.test", contentLength = body.length, referer = resultsUrl, accept?: string) {
   return new Request("https://example.test/api/locale", {
     method: "POST",
     headers: {
@@ -12,6 +12,7 @@ function request(body: string, origin = "https://example.test", contentLength = 
       host: "example.test",
       "content-type": "application/x-www-form-urlencoded",
       "content-length": String(contentLength),
+      ...(accept ? { accept } : {}),
     },
     body,
   });
@@ -28,6 +29,15 @@ describe("locale route", () => {
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
     expect(response.headers.get("set-cookie")).toContain("SameSite=lax");
     expect(response.headers.get("set-cookie")).toContain("Path=/");
+  });
+
+  it("returns a lightweight response for the instant client-side locale update", async () => {
+    const response = await POST(request("locale=ar", "https://example.test", 9, resultsUrl, "application/json"));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("set-cookie")).toContain("asnani_locale=ar");
   });
 
   it("rejects cross-origin and malformed requests without setting a cookie", async () => {

@@ -9,6 +9,7 @@ import { getDictionary, type Locale } from "@/lib/i18n";
 
 type WhenPreference = "earliest" | "today" | "tomorrow";
 type SearchSort = "balanced" | "price" | "distance" | "rating" | "soonest";
+type PractitionerGender = "" | "female" | "male";
 
 type PreviewState = "idle" | "loading" | "ready" | "error";
 
@@ -17,8 +18,8 @@ type SearchPreview = {
   count: number;
 };
 
-function searchHref({ variant, when, radius, sort, lat, lng }: { variant: string; when: WhenPreference; radius: number; sort: SearchSort; lat: string; lng: string }) {
-  const query = new URLSearchParams({ variant, when, radius: String(radius), sort, lat, lng });
+function searchHref({ variant, when, radius, sort, practitionerGender, lat, lng }: { variant: string; when: WhenPreference; radius: number; sort: SearchSort; practitionerGender: PractitionerGender; lat: string; lng: string }) {
+  const query = new URLSearchParams({ variant, when, radius: String(radius), sort, practitioner_gender: practitionerGender, lat, lng });
   return `/results?${query.toString()}`;
 }
 
@@ -51,6 +52,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
   const [when, setWhen] = useState<WhenPreference>("earliest");
   const [radius, setRadius] = useState<1 | 5 | 10 | 25 | 50>(10);
   const [sort, setSort] = useState<SearchSort>("balanced");
+  const [practitionerGender, setPractitionerGender] = useState<PractitionerGender>("");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [geoState, setGeoState] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -59,7 +61,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
   const availableVariants = useMemo(() => variants.filter((variant) => variant.catalog_id === treatmentId), [variants, treatmentId]);
   const effectiveVariant = variantId || availableVariants[0]?.id || "";
   const quickTreatments = treatments.slice(0, 5);
-  const resultHref = effectiveVariant ? searchHref({ variant: effectiveVariant, when, radius, sort, lat, lng }) : "/#start-compare";
+  const resultHref = effectiveVariant ? searchHref({ variant: effectiveVariant, when, radius, sort, practitionerGender, lat, lng }) : "/#start-compare";
   const selectedTreatment = treatments.find((treatment) => treatment.id === treatmentId);
   const selectedVariant = availableVariants.find((variant) => variant.id === effectiveVariant);
   const isArabic = locale === "ar";
@@ -98,7 +100,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
       event_name: "search_submitted",
       treatment_id: treatmentId || undefined,
       variant_id: effectiveVariant || undefined,
-      choice_value: { when, sort, radius_km: radius, location_used: Boolean(lat && lng) },
+      choice_value: { when, sort, practitioner_gender: practitionerGender || null, radius_km: radius, location_used: Boolean(lat && lng) },
     });
   }
 
@@ -106,7 +108,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
     if (!effectiveVariant) return;
 
     const controller = new AbortController();
-    const requestHref = `/api/search?${new URLSearchParams({ variant: effectiveVariant, when, radius: String(radius), sort, lat, lng }).toString()}`;
+    const requestHref = `/api/search?${new URLSearchParams({ variant: effectiveVariant, when, radius: String(radius), sort, practitioner_gender: practitionerGender, lat, lng }).toString()}`;
     fetch(requestHref, { signal: controller.signal, cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error("search_unavailable");
@@ -124,7 +126,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
       });
 
     return () => controller.abort();
-  }, [effectiveVariant, when, radius, sort, lat, lng]);
+  }, [effectiveVariant, when, radius, sort, practitionerGender, lat, lng]);
 
   const visiblePreview = effectiveVariant ? preview : { offers: [], count: 0 };
   const visiblePreviewState: PreviewState = effectiveVariant ? previewState : "idle";
@@ -184,6 +186,7 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
       <div className="reference-search__filters" aria-label={isArabic ? "تصفية المقارنة" : "Comparison filters"}>
         <label className="reference-filter"><span className="sr-only">{t["search.appointment"]}</span><CalendarIcon size={16} /><select name="when" value={when} onChange={(event) => { const next = event.target.value as WhenPreference; setWhen(next); trackChoice({ event_name: "appointment_preference_selected", treatment_id: treatmentId || undefined, variant_id: effectiveVariant || undefined, choice_value: { when: next } }); }}><option value="earliest">{t["search.earliest"]}</option><option value="today">{t["search.today"]}</option><option value="tomorrow">{t["search.tomorrow"]}</option></select></label>
         <label className="reference-filter"><span className="sr-only">{t["search.sort"]}</span><SlidersIcon size={16} /><select name="sort" value={sort} onChange={(event) => setSort(event.target.value as SearchSort)}><option value="balanced">{t["search.sort.balanced"]}</option><option value="price">{t["search.sort.price"]}</option><option value="distance">{t["search.sort.distance"]}</option><option value="rating">{t["search.sort.rating"]}</option><option value="soonest">{t["search.sort.soonest"]}</option></select></label>
+        <label className="reference-filter"><span className="sr-only">{t["search.practitionerGender"]}</span><ToothIcon size={16} /><select name="practitioner_gender" value={practitionerGender} onChange={(event) => setPractitionerGender(event.target.value as PractitionerGender)}><option value="">{t["search.anyPractitioner"]}</option><option value="female">{t["search.femalePractitioner"]}</option><option value="male">{t["search.malePractitioner"]}</option></select></label>
         <label className="reference-filter"><span className="sr-only">{t["search.radius"]}</span><LocationIcon size={16} /><select name="radius" value={radius} onChange={(event) => setRadius(Number(event.target.value) as 1 | 5 | 10 | 25 | 50)}>{[1, 5, 10, 25, 50].map((value) => <option key={value} value={value}>{value} {t["search.kilometres"]}</option>)}</select></label>
         <label className="reference-filter reference-filter--variant"><span className="sr-only">{t["search.variant"]}</span><SearchIcon size={16} /><select name="variant" value={effectiveVariant} onChange={(event) => { const next = event.target.value; setVariantId(next); trackChoice({ event_name: "variant_selected", treatment_id: treatmentId || undefined, variant_id: next }); }} required>{availableVariants.map((variant) => <option key={variant.id} value={variant.id}>{isArabic ? variant.name_ar : variant.name_en}</option>)}</select></label>
       </div>
