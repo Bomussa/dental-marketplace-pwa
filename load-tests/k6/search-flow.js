@@ -54,7 +54,7 @@ export const options = {
 const sorts = ["balanced", "price", "distance", "rating", "soonest"];
 const whenValues = ["earliest", "today", "tomorrow"];
 
-export default function () {
+export default function publicSearchFlow() {
   const params = [
     ["variant", variantId],
     ["radius", String(5 + ((__VU + __ITER) % 4) * 5)],

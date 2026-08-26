@@ -46,7 +46,7 @@ export const options = {
   },
 };
 
-export default function () {
+export default function authenticatedBookingFlow() {
   const fixture = fixtures[(__VU - 1) % fixtures.length];
   const sessionCookie = __ENV[fixture.cookie_env];
   if (!sessionCookie) throw new Error(`Missing short-lived staging cookie in ${fixture.cookie_env}.`);

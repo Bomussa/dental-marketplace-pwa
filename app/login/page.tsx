@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { Card, Input, Button, Select } from "@/components/ui";
 import { ShieldCheckIcon, UserIcon } from "@/components/icons";
@@ -31,6 +32,11 @@ const registrationCopy = {
     other: "آخر",
     submit: "إنشاء حساب المريض",
     privacy: "لا تشارك كلمة مرورك أو رمز التحقق. تُستخدم هذه البيانات لإدارة ملف المريض وطلبات الحجز وفق الصلاحيات المصرح بها.",
+    policyPrefix: "قبل إنشاء الحساب، راجع إطار",
+    privacyLink: "الخصوصية",
+    policyJoiner: "و",
+    termsLink: "الشروط",
+    policySuffix: "المعروضين للاعتماد.",
     errors: {
       invalid: "تحقق من الحقول المطلوبة: الاسم والرقم الشخصي والهاتف والجنسية وبيانات الدخول يجب أن تكون صالحة.",
       username_taken: "اسم المستخدم مستخدم بالفعل. اختر اسمًا آخر.",
@@ -59,6 +65,11 @@ const registrationCopy = {
     other: "Other",
     submit: "Create patient account",
     privacy: "Never share your password or verification code. These details are used to manage the patient profile and booking requests within authorized access.",
+    policyPrefix: "Before creating an account, review the approval-required",
+    privacyLink: "privacy",
+    policyJoiner: "and",
+    termsLink: "terms",
+    policySuffix: "frameworks.",
     errors: {
       invalid: "Check the required fields: name, QID, phone, nationality, and sign-in details must be valid.",
       username_taken: "That username is already in use. Choose another one.",
@@ -112,7 +123,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               <label className="grid gap-2 text-sm font-extrabold text-slate-800">{copy.username}<Input name="username" required minLength={2} maxLength={10} pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,9}" title={locale === "ar" ? "2 إلى 10 أحرف أو أرقام إنجليزية، ويمكن استخدام . أو _ أو -" : "Use 2 to 10 English letters or numbers; . _ and - are allowed"} autoComplete="username" dir="ltr" /></label>
               <label className="grid gap-2 text-sm font-extrabold text-slate-800">{copy.email}<Input name="email" type="email" required maxLength={254} autoComplete="email" dir="ltr" /></label>
               <label className="grid gap-2 text-sm font-extrabold text-slate-800 sm:col-span-2">{copy.password}<Input name="password" type="password" required minLength={4} maxLength={10} pattern="[A-Za-z0-9]{4,10}" title={locale === "ar" ? "4 إلى 10 أحرف أو أرقام إنجليزية فقط" : "Use 4 to 10 English letters or numbers only"} autoComplete="new-password" dir="ltr" /></label>
-              <div className="sm:col-span-2"><Button type="submit">{copy.submit}</Button><p className="mt-3 text-xs font-bold leading-5 text-slate-500">{copy.privacy} {locale === "ar" ? "تاريخ الميلاد والجنس اختياريان الآن؛ يُطلب تاريخ الميلاد فقط قبل تأكيد الحجز." : "Date of birth and gender are optional now; date of birth is required only before confirming a booking."}</p></div>
+              <div className="sm:col-span-2"><Button type="submit">{copy.submit}</Button><p className="mt-3 text-xs font-bold leading-5 text-slate-500">{copy.privacy} {locale === "ar" ? "تاريخ الميلاد والجنس اختياريان الآن؛ يُطلب تاريخ الميلاد فقط قبل تأكيد الحجز." : "Date of birth and gender are optional now; date of birth is required only before confirming a booking."}</p><p className="mt-2 text-xs font-bold leading-5 text-slate-500">{copy.policyPrefix} <Link href="/privacy" className="text-[#0B5CAD] underline-offset-4 hover:underline">{copy.privacyLink}</Link> {copy.policyJoiner} <Link href="/terms" className="text-[#0B5CAD] underline-offset-4 hover:underline">{copy.termsLink}</Link> {copy.policySuffix}</p></div>
             </form>
           </div>
         </details>

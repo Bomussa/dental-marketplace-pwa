@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { Manrope, Noto_Sans_Arabic } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
@@ -36,7 +37,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <BrandLockup brandName={t["brand.name"]} systemName={t["brand.systemName"]} tone="dark" />
                 <p className="site-footer__system" dir="ltr">{t["footer.systemName"]}</p>
               </div>
-              <p className="site-footer__disclaimer">{t["footer.disclaimer"]}</p>
+              <div className="grid gap-3">
+                <p className="site-footer__disclaimer">{t["footer.disclaimer"]}</p>
+                <nav aria-label={locale === "ar" ? "روابط السياسات" : "Policy links"} className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-[#0B5CAD]">
+                  <Link href="/privacy" className="underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B5CAD]">{locale === "ar" ? "الخصوصية" : "Privacy"}</Link>
+                  <Link href="/terms" className="underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B5CAD]">{locale === "ar" ? "الشروط" : "Terms"}</Link>
+                </nav>
+              </div>
             </div>
           </footer>
         </LocaleProvider>

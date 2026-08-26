@@ -354,3 +354,26 @@ test("signout rejects an external origin before changing a session", async ({ re
   expect(response.status()).toBe(403);
   expect((await response.json()).error).toBe("forbidden_origin");
 });
+
+
+test("public policy routes disclose their approval-required status", async ({ page }) => {
+  await page.goto("/privacy");
+  await expect(page.getByRole("heading", { level: 1, name: "الخصوصية وحماية البيانات" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "المحتوى القانوني يحتاج اعتماداً" })).toBeVisible();
+
+  await page.goto("/terms");
+  await expect(page.getByRole("heading", { level: 1, name: "شروط استخدام المنصة" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "المحتوى القانوني يحتاج اعتماداً" })).toBeVisible();
+});
+
+test("registration and footer expose the approval-required policy routes", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByText("ليس لديك حساب؟ أنشئ حساب مريض").click();
+  await expect(page.getByRole("link", { name: "الخصوصية" })).toHaveAttribute("href", "/privacy");
+  await expect(page.getByRole("link", { name: "الشروط" })).toHaveAttribute("href", "/terms");
+
+  await page.goto("/");
+  const footer = page.locator("footer");
+  await expect(footer.getByRole("link", { name: "الخصوصية" })).toHaveAttribute("href", "/privacy");
+  await expect(footer.getByRole("link", { name: "الشروط" })).toHaveAttribute("href", "/terms");
+});
