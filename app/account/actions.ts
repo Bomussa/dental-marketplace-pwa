@@ -6,7 +6,7 @@ import { z } from "zod";
 import { consumeRateLimit, OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { passwordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, usernameSchema, uuid } from "@/lib/validation";
+import { patientPasswordSchema, patientProfileArchiveSchema, patientProfileSchema, reviewSchema, usernameSchema, uuid } from "@/lib/validation";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -56,7 +56,7 @@ function requireAdmin(onUnavailable: () => never) {
 }
 
 export async function activateLoginCredentials(formData: FormData) {
-  const parsed = z.object({ username: usernameSchema, password: passwordSchema }).safeParse({
+  const parsed = z.object({ username: usernameSchema, password: patientPasswordSchema }).safeParse({
     username: formData.get("username"),
     password: formData.get("password"),
   });

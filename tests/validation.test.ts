@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { activityReportSchema, adminOfferUpdateSchema, adminSlotUpdateSchema, bookingSchema, choiceEventSchema, clinicOperatorAccountSchema, deviceInstallationSchema, featureFlagUpdateSchema, financialReportSchema, isIsoCalendarDate, notificationTemplateSchema, offerSchema, operationalClientAccountSchema, passwordLoginSchema, patientBookingRegistrationSchema, patientPhoneVerificationConfirmSchema, patientProfileSchema, searchSchema, supportKnowledgeArticleSchema, supportMessageSchema, treatmentCatalogSchema, treatmentVariantSchema } from "@/lib/validation";
+import { accountNationality, accountNationalityOptions } from "@/lib/account-copy";
 
 const eventBase = {
   event_id: "11111111-1111-4111-8111-111111111111",
@@ -56,26 +57,27 @@ describe("validation", () => {
     expect(deviceInstallationSchema.safeParse({ installation_id: "77777777-7777-4777-8777-777777777777", device_class: "watch" }).success).toBe(false);
   });
 
-  it("requires a secure username-password registration profile before an unauthenticated patient can proceed to phone verification", () => {
+  it("requires the essential patient registration identity while allowing optional details until booking", () => {
     const registration = patientBookingRegistrationSchema.safeParse({
       display_name: "فاطمة أحمد",
       relationship: "self",
       national_id: "28412345678",
       nationality: "qa",
-      date_of_birth: "1992-04-15",
       phone: "00974 5512 3456",
       username: "fatima.ahmed",
       email: "fatima@example.test",
-      password: "SafePass2026!",
+      password: "Patient7",
     });
     expect(registration.success).toBe(true);
     if (registration.success) {
       expect(registration.data.username).toBe("fatima.ahmed");
       expect(registration.data.nationality).toBe("QA");
       expect(registration.data.phone).toBe("+97455123456");
+      expect(registration.data.date_of_birth).toBeUndefined();
     }
-    expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة", relationship: "self", national_id: "28412345678", nationality: "QA", date_of_birth: "1992-04-15", phone: "+97455123456", username: "bad user", email: "not-an-email", password: "weakpassword" }).success).toBe(false);
-    expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة أحمد", relationship: "self", national_id: "28412345678", nationality: "QA", date_of_birth: "1992-04-15", phone: "+97455123456", username: "fatima.ahmed", email: "fatima@example.test", password: "SafePass2026x" }).success).toBe(false);
+    expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة", relationship: "self", national_id: "28412345678", nationality: "QA", phone: "+97455123456", username: "bad user", email: "not-an-email", password: "abc" }).success).toBe(false);
+    expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة أحمد", relationship: "self", national_id: "28412345678", nationality: "QA", phone: "+97455123456", username: "fatima.ahmed", email: "fatima@example.test", password: "SafePass2026x" }).success).toBe(false);
+    expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة أحمد", relationship: "self", national_id: "28412345678", nationality: "QA", phone: "+97455123456", username: "fatima.ahmed", email: "fatima@example.test", password: "Pass!1" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "Fatima.Ahmed", password: "anything", next: "/results" }).success).toBe(true);
     expect(passwordLoginSchema.safeParse({ username: "a", password: "anything", next: "https://unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "//unsafe.example" }).success).toBe(false);
@@ -83,6 +85,15 @@ describe("validation", () => {
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%2F%2Funsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%252F%252Funsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/%5Cunsafe.example" }).success).toBe(false);
+  });
+
+  it("exposes every ISO nationality consistently across Arabic and English account surfaces", () => {
+    expect(accountNationalityOptions).toHaveLength(249);
+    expect(accountNationalityOptions).toContain("QA");
+    expect(accountNationalityOptions).toContain("DE");
+    expect(accountNationalityOptions).toContain("ZW");
+    expect(accountNationality("ar", "DE")).not.toBe("DE");
+    expect(accountNationality("en", "QA")).toBe("Qatar");
   });
 
   it("validates activity report windows and supported aggregation safely", () => {

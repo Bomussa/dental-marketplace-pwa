@@ -1,4 +1,6 @@
 import type { Locale } from "@/lib/i18n";
+import { accountNationalityName } from "@/lib/account-nationality-options";
+export { accountNationalityOptions } from "@/lib/account-nationality-options";
 
 type AccountCopy = {
   accountKicker: string; defaultName: string; privacy: string; signOut: string; allBookings: string; upcoming: string; completedVisits: string;
@@ -9,13 +11,6 @@ type AccountCopy = {
   bookingsKicker: string; bookingsTitle: string; noBookings: string; noBookingsCopy: string; defaultBooking: string; cancelBooking: string; visitStatus: string; reviewAvailable: string; reviewTitle: string; reviewPlaceholder: string; submitReview: string;
   bookingErrors: Record<string, string>; bookingSuccess: string; profileErrors: Record<string, string>; profileSuccess: Record<string, string>; reviewErrors: Record<string, string>; reviewSuccess: string; liveConnected: string; liveDisconnected: string; liveConnecting: string; liveTooltip: string;
 };
-
-const nationalities = {
-  QA: ["قطر", "Qatar"], SA: ["السعودية", "Saudi Arabia"], AE: ["الإمارات", "United Arab Emirates"], BH: ["البحرين", "Bahrain"],
-  KW: ["الكويت", "Kuwait"], OM: ["عُمان", "Oman"], EG: ["مصر", "Egypt"], IN: ["الهند", "India"],
-  PH: ["الفلبين", "Philippines"], PK: ["باكستان", "Pakistan"], BD: ["بنغلاديش", "Bangladesh"], JO: ["الأردن", "Jordan"],
-  LB: ["لبنان", "Lebanon"], SY: ["سوريا", "Syria"], US: ["الولايات المتحدة", "United States"], GB: ["المملكة المتحدة", "United Kingdom"],
-} as const;
 
 const statusCopy = {
   pending_hold: ["قيد تأمين الموعد", "Holding appointment"],
@@ -78,8 +73,5 @@ export function accountRelationship(locale: Locale, relationship: string): strin
 }
 
 export function accountNationality(locale: Locale, nationality: string): string {
-  const value = nationalities[nationality as keyof typeof nationalities];
-  return value ? value[locale === "ar" ? 0 : 1] : nationality;
+  return accountNationalityName(locale, nationality);
 }
-
-export const accountNationalityOptions = Object.keys(nationalities) as Array<keyof typeof nationalities>;

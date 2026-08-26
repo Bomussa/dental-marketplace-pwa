@@ -83,7 +83,7 @@ export async function provisionPatientBookingAccount(input: PatientRegistration)
       relationship: "self" as const,
       national_id: input.national_id,
       nationality: input.nationality,
-      date_of_birth: input.date_of_birth,
+      date_of_birth: input.date_of_birth ?? null,
       phone: input.phone,
       gender: input.gender ?? null,
       phone_verified_at: null,

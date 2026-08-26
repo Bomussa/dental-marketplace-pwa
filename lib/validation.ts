@@ -283,6 +283,7 @@ const dateOfBirthSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value)
   const parsed = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value && value <= new Date().toISOString().slice(0, 10);
 }, { message: "تاريخ الميلاد غير صالح" });
+const optionalDateOfBirthSchema = z.preprocess((value) => value === "" || value === null ? undefined : value, dateOfBirthSchema.optional());
 
 export const patientProfileSchema = z.object({
   display_name: z.string().trim().min(1).max(120),
@@ -306,6 +307,11 @@ export const passwordSchema = z.string()
     (value) => /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9\s]/.test(value),
     "كلمة المرور تحتاج حرفًا صغيرًا وكبيرًا ورقمًا ورمزًا خاصًا واحدًا على الأقل",
   );
+
+export const patientPasswordSchema = z.string().regex(
+  /^[A-Za-z0-9]{4,10}$/,
+  "كلمة المرور للمريض يجب أن تتكون من 4 إلى 10 أحرف أو أرقام إنجليزية فقط",
+);
 
 export function isSafeInternalRedirectPath(value: string) {
   try {
@@ -332,11 +338,17 @@ export const passwordLoginSchema = z.object({
   next: internalRedirectPathSchema.default("/account"),
 });
 
-export const patientBookingRegistrationSchema = patientProfileSchema.extend({
+export const patientBookingRegistrationSchema = z.object({
+  display_name: z.string().trim().min(1).max(120),
   relationship: z.literal("self"),
+  national_id: nationalIdSchema,
+  nationality: nationalitySchema,
+  date_of_birth: optionalDateOfBirthSchema,
+  phone: phoneSchema,
+  gender: optionalGender.optional(),
   username: usernameSchema,
   email: z.string().trim().toLowerCase().email().max(254),
-  password: passwordSchema,
+  password: patientPasswordSchema,
 });
 
 export const clinicOperatorAccountSchema = z.object({
