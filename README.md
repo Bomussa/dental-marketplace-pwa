@@ -124,7 +124,7 @@ flowchart LR
 | حد المعدل | `consume_rate_limit_server` يطبق نوافذ وحدودًا لكل مجال: حجز، دعم، OTP، تثبيت جهاز، أو telemetry. |
 | المساعد | الكلمات الدالة على حالة طبية/طارئة تعطي رد سلامة ثابتًا، ولا تستدعي النموذج. الحالة القياسية تستخدم مقالات approved/public عند توفرها، وإلا fallback محليًا غير تشخيصي لا يخترع أسعارًا أو مواعيد أو سياسة. |
 | وصول العميل التشغيلي | الحساب ذو `account_kind=clinic_operator` و`access_scope=clinic_bookings_only` لا يعرض إلا `/clinic/bookings`. يفرض PostgreSQL/RLS وRPC العضوية receptionist النشطة والفرع المخصص؛ Proxy مجرد حاجز تجربة مستخدم إضافي. |
-| المدير الأعلى | يتطلب claimَي `app_metadata.platform_admin=true` و`app_metadata.platform_super_admin=true`. وحده ينشئ حساب مريض أو عميل حجوزات، ويوقف العميل تشغيليًا عبر سجل تدقيق بدل الحذف المباشر. |
+| المدير الأعلى | يتطلب claimَي `app_metadata.platform_admin=true` و`app_metadata.platform_super_admin=true`. ينشئ حساب مريض أو عميل حجوزات من سطح الإدارة ويوقف العميل عبر سجل تدقيق. يملك مالك عيادة نشطة أيضًا مسارًا مقيدًا لإنشاء/إلغاء حسابي تشغيل لعيادته فقط؛ لا يمنح ذلك أي صلاحية منصة. |
 | التحديث اللحظي | مكونات realtime تعيد جلب البيانات عند تغير الجداول السطحية المصرح بها؛ سياسة RLS هي الحكم النهائي لما يراه كل دور. |
 
 ## 7. قاعدة البيانات: الجداول
@@ -421,15 +421,17 @@ npm run dev
 | المرجع | استخدامه |
 |---|---|
 | [`docs/DEPLOYMENT_RUNBOOK.md`](docs/DEPLOYMENT_RUNBOOK.md) | تشغيل النشر وإعدادات الاستضافة. |
+| [`docs/MAINTENANCE_MANUAL_AR.md`](docs/MAINTENANCE_MANUAL_AR.md) | دورة الصيانة، Staging والـfixtures، K6، الحوادث، الأسرار، والتحقق بعد النشر. |
+| [`docs/ARCHITECTURE_AND_CODE_MAP_AR.md`](docs/ARCHITECTURE_AND_CODE_MAP_AR.md) | رسم الهيكل، المسارات، الطبقات، الملفات، الدوال والخوارزميات. |
 | [`docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md`](docs/BOOKING_ACCESS_REALTIME_CONTRACT_2026-08-17.md) | عقد الحجز والصلاحيات وRealtime. |
 | [`docs/TREATMENT_CATALOG_AND_PRICE_SCOPE_AUDIT_2026-08-18.md`](docs/TREATMENT_CATALOG_AND_PRICE_SCOPE_AUDIT_2026-08-18.md) | كتالوج العلاج ونطاق السعر. |
 | [`docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md`](docs/PRODUCTION_LAUNCH_READINESS_AUDIT_2026-08-18.md) | ملاحظات الجاهزية والقيود التشغيلية التاريخية. |
 | [`docs/CURRENT_PRODUCTION_STATUS.md`](docs/CURRENT_PRODUCTION_STATUS.md) | موجز الحالة الإنتاجية والقيود الحالية وآخر تحقق موثق. |
 | [`supabase/REMOTE_APPLIED_MIGRATIONS.md`](supabase/REMOTE_APPLIED_MIGRATIONS.md) | سجل الترحيلات الذي ظهر في قاعدة البيانات البعيدة. |
 | [`docs/README.md`](docs/README.md) | فهرس الوثائق: يميز المرجع الحالي عن تقارير التدقيق والاختبار التاريخية. |
-| [`docs/SOURCE_MANIFEST.md`](docs/SOURCE_MANIFEST.md) | فهرس مولّد من `git ls-files` لكل الملفات المتتبعة، بما فيها الأصول المرئية ولقطات الإثبات. |
-| [`docs/operations-manual/OPERATIONS_MANUAL_AR.md`](docs/operations-manual/OPERATIONS_MANUAL_AR.md) | كتيب تشغيل ذاتي بالصور الحقيقية للمريض والعيادة والإدارة. |
+| [`docs/SOURCE_MANIFEST.md`](docs/SOURCE_MANIFEST.md) | فهرس سريع لمسؤوليات المصدر ومواضع العقود والتنفيذ. |
+| [`docs/operations-manual/OPERATIONS_MANUAL_AR.md`](docs/operations-manual/OPERATIONS_MANUAL_AR.md) | كتيب تشغيل ذاتي للزائر والمريض والعميل التشغيلي والعيادة والإدارة. |
 
 ---
 
-**سياسة التحديث:** أي تغيير في المسارات أو عقود API أو الجداول أو الدوال أو متغيرات البيئة أو قيود النشر يرافقه تحديث لهذا README في الإيداع نفسه. لا تُوثّق قيمة سرية، ولا يُقال إن ميزة خارجية مفعلة من دون اختبار مقصود ودليل تشغيلي.
+**سياسة التحديث:** أي تغيير في المسارات أو عقود API أو الجداول أو الدوال أو متغيرات البيئة أو قيود النشر يرافقه تحديث لهذا README في الإيداع نفسه، مع تحديث خريطة الكود أو دليل الصيانة أو كتيب الدور عندما تتغير مسؤوليتها. لا تُوثّق قيمة سرية، ولا يُقال إن ميزة خارجية مفعلة من دون اختبار مقصود ودليل تشغيلي.

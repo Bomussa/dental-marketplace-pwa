@@ -18,7 +18,7 @@
 | التحديث اللحظي | `components/*-live-refresh.tsx`، `components/use-realtime-router-refresh.ts`، `lib/clinic-realtime-refresh.ts` | إعادة الجلب المعتمدة على Realtime تحت RLS. |
 | PWA والواجهة | `app/manifest.ts`، `app/pwa/icon/[size]/route.tsx`، `public/sw.js`، `components/mobile-navigation.tsx`، `components/ui.tsx` | Manifest وservice worker وأيقونات وتجربة الهاتف. |
 | الاختبارات | `tests/`، `tests/e2e/home.spec.ts`، `load-tests/k6/`، `scripts/safe-load-test.mjs` | Vitest وPlaywright وK6 المحروس؛ لا يستخدم K6 على Production. |
-| بوابة الجودة والنشر | `package.json`، `scripts/predeploy-check.mjs`، `scripts/production-readiness-check.mjs`، `.github/workflows/ci.yml`، `docs/DEPLOYMENT_RUNBOOK.md` | أوامر build/verify وCI وتسلسل النشر والرجوع. |
+| بوابة الجودة والنشر | `package.json`، `scripts/predeploy-check.mjs`، `scripts/production-readiness-check.mjs`، `.github/workflows/ci.yml`، `docs/DEPLOYMENT_RUNBOOK.md`، `docs/MAINTENANCE_MANUAL_AR.md` | أوامر build/verify وCI وتسلسل النشر والرجوع ودورة الصيانة الآمنة. |
 
 ## ملفات الجذر الحاكمة
 
@@ -29,6 +29,9 @@
 | [`CHANGELOG.md`](../CHANGELOG.md) | الإصلاحات والإصدارات المؤثرة فقط. |
 | [`docs/CURRENT_PRODUCTION_STATUS.md`](CURRENT_PRODUCTION_STATUS.md) | سجل الإصدار والحالة الحالية والـrollback والقيود. |
 | [`supabase/REMOTE_APPLIED_MIGRATIONS.md`](../supabase/REMOTE_APPLIED_MIGRATIONS.md) | سجل المطابقة الفعلي بين ملفات الترحيل وProduction. |
+| [`docs/ARCHITECTURE_AND_CODE_MAP_AR.md`](ARCHITECTURE_AND_CODE_MAP_AR.md) | الرسم المعماري، فهرس المسارات، الطبقات، الخوارزميات وحدود كل مجموعة ملفات. |
+| [`docs/MAINTENANCE_MANUAL_AR.md`](MAINTENANCE_MANUAL_AR.md) | صيانة المصدر والنشر والحوادث والـfixtures وK6 مع فصل Production/Staging. |
+| [`docs/operations-manual/OPERATIONS_MANUAL_AR.md`](operations-manual/OPERATIONS_MANUAL_AR.md) | طريقة الاستخدام العملية للزائر والمريض والعميل التشغيلي والعيادة والإدارة. |
 
 ## ترحيلات وbaseline أساسية
 
@@ -47,5 +50,6 @@
 | `npm run test:e2e` | Playwright محلي؛ يحتاج إعدادات Supabase public محلية صالحة ولا يقبل نسخ أسرار Production. |
 | `npm run test:e2e` مع بيئة غير مهيأة | نتيجة متوقعة: blocked محليًا بسبب غياب URL/key، وليست دليل فشل للإصدار المنشور. |
 | `TARGET_ENV=staging ... k6 run load-tests/k6/search-flow.js` | K6 للبحث في Staging فقط مع الحراس وإقرار البيئة. |
+| `TARGET_ENV=staging ... k6 run load-tests/k6/booking-flow.js` | حجز K6 مصغر في Staging فقط؛ يحتاج fixture خاصًا وcookie قصير العمر ولا ينفذ عند غياب بيانات تشغيلية مخولة. |
 
 > لا تحفظ قيم متغيرات البيئة أو secrets أو بيانات مستخدمين في هذا الفهرس. لا تُنشأ بيانات اختبار في Production؛ اقرأ `AGENTS.md` قبل أي عمل كتابة أو migration.

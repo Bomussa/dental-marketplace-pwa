@@ -1,6 +1,6 @@
 # تعليمات العمل الآمن — منصة أسناني / MMC-MMS
 
-هذا الملف هو مرجع العمل المختصر لأي Agent أو مهندس. يقرأ مع [README.md](README.md) و[`docs/DEPLOYMENT_RUNBOOK.md`](docs/DEPLOYMENT_RUNBOOK.md)، ولا يحل محلهما.
+هذا الملف هو مرجع العمل المختصر لأي Agent أو مهندس. يقرأ مع [README.md](README.md) و[`docs/DEPLOYMENT_RUNBOOK.md`](docs/DEPLOYMENT_RUNBOOK.md) و[`docs/MAINTENANCE_MANUAL_AR.md`](docs/MAINTENANCE_MANUAL_AR.md) و[`docs/ARCHITECTURE_AND_CODE_MAP_AR.md`](docs/ARCHITECTURE_AND_CODE_MAP_AR.md)، ولا يحل محلها.
 
 ## الهوية ومصدر الحقيقة
 
@@ -28,4 +28,4 @@
 
 ## الرجوع والتوثيق
 
-لا تستخدم rollback للنشر كبديل لعكس DDL. عند الحاجة إلى تغيير صلاحيات أو مخطط بعد الإنتاج أضف migration عكسية صريحة ومراجعة. حدّث README و`docs/CURRENT_PRODUCTION_STATUS.md` و`supabase/REMOTE_APPLIED_MIGRATIONS.md` عند تغير المسارات أو العقود أو المخطط أو حالة الإصدار؛ حدّث `docs/SOURCE_MANIFEST.md` عند تغير خريطة الملفات المهمة.
+لا تستخدم rollback للنشر كبديل لعكس DDL. عند الحاجة إلى تغيير صلاحيات أو مخطط بعد الإنتاج أضف migration عكسية صريحة ومراجعة. حدّث README و`docs/CURRENT_PRODUCTION_STATUS.md` و`supabase/REMOTE_APPLIED_MIGRATIONS.md` عند تغير المسارات أو العقود أو المخطط أو حالة الإصدار؛ حدّث `docs/SOURCE_MANIFEST.md` و`docs/ARCHITECTURE_AND_CODE_MAP_AR.md` عند تغير خريطة الملفات المهمة، و`docs/MAINTENANCE_MANUAL_AR.md` عند تغير دورة التشغيل أو الصيانة، وكتيب التشغيل عند تغير تجربة دور مستخدم.
