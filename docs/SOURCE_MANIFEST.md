@@ -10,7 +10,7 @@
 | البحث والمقارنة | `app/page.tsx`، `app/results/page.tsx`، `app/api/search/route.ts`، `lib/search-offers.ts`، `lib/search-query.ts`، `lib/treatment-catalog.server.ts`، `components/search-form.tsx` | اختيار العلاج الدقيق، البحث، الفرز، النطاق المكاني والزمني، تفضيل جنس الممارس، رابط الاتجاهات من بيانات الفرع المنشورة، وcache الكتالوج. |
 | الحجز | `components/book-button.tsx`، `app/api/book/route.ts`، `app/account/actions.ts`، `lib/booking-intent.client.ts`، `lib/operations.server.ts`، `components/account-booking-notifications.tsx` | إعداد نية الحجز، idempotency، حارس الكتابة، واستدعاء `book_slot_server`، وعرض تأكيد الحجز المحفوظ داخل الحساب. |
 | المريض والهوية | `app/login/`، `app/account/`، `app/api/patient-booking-registration/route.ts`، `app/api/patient-phone-verification/`، `lib/account-auth.server.ts`، `lib/auth-claims.server.ts`، `lib/phone-verification.server.ts` | nickname المريض القصير والفريد، التسجيل والدخول والجلسات ومنع تكرار الهوية/الهاتف وملفات المرضى وOTP وحذف الحساب المؤرشف. |
-| العيادة والعميل التشغيلي | `app/clinic/`، `app/clinic/bookings/page.tsx`، `components/clinic-booking-status-form.tsx`، `lib/clinic-role-display.ts`، `lib/client-booking-workspace.ts` | الفروع والعروض والمواعيد وصلاحيات receptionist وواجهة الحجوزات المقيدة. |
+| العيادة والعميل التشغيلي | `app/clinic/`، `app/clinic/bookings/page.tsx`، `components/clinic-booking-actions.tsx`، `components/clinic-booking-status-form.tsx`، `lib/clinic-booking-attendance.ts`، `lib/clinic-role-display.ts`، `lib/client-booking-workspace.ts` | الفروع والعروض والمواعيد وصلاحيات receptionist وواجهة الحجوزات المقيدة، مع مصدر موحد لإجراءات الحالة والحضور. |
 | الإدارة | `app/admin/`، `components/super-admin-user-management.tsx`، `components/admin-choice-analytics.tsx`، `lib/activity-report.ts` | الحوكمة والكتالوج والتقارير وإدارة العملاء التشغيليين. |
 | الدعم | `components/support-chat.tsx`، `app/api/support/route.ts`، `lib/support-model.server.ts`، `lib/support-public-fallback.ts` | إجابة زائر عامة آمنة ومحادثات المستخدم المصادق من دون تشخيص. |
 | API والحراس | `app/api/`، `lib/validation.ts`، `lib/public-write-request-guard.ts`، `lib/operations.server.ts`، `lib/server-readiness.ts` | Route Handlers وZod وrate limits والمهلات وعمليات الامتياز. |
@@ -41,6 +41,7 @@
 | `supabase/migrations/20260826100000_patient_experience_integrity_v1.sql` | تفرد هاتف المريض وnickname القصير، جنس الممارس وفلتر البحث، إشعار الحجز `in_app` وبيانات المكان، والحذف الذاتي المؤرشف المقيد. |
 | `supabase/migrations/20260826103000_patient_account_admin_management_v1.sql` | قائمة مرضى دنيا وإجراء حذف مقيد للمدير الأعلى فقط. |
 | `supabase/migrations/20260826130000_notification_outbox_rls_initplan_v1.sql` | تحسين أداء RLS لقراءة إشعارات الحساب مع إبقاء ملكية المريض وحارس الحساب واستثناء المدير الأعلى. |
+| `supabase/migrations/20260826193000_booking_patient_rls_recursion_fix_v1.sql` و`20260826193500_booking_patient_rls_helper_execute_grant_v1.sql` | كسر حلقة RLS بين `bookings` و`patient_profiles` مع حارس خاص لملف المريض الذاتي غير المؤرشف وتنفيذ مقيد لـ`authenticated` داخل السياسة. |
 | `supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql` | baseline مخطط خالٍ من البيانات لإعادة بناء Staging، وليس مصدرًا لإدخال بيانات Production. |
 | `supabase/baselines/README.md` | تسلسل baseline ثم مهاجرات التقوية الخمس. |
 | `scripts/generate-schema-baseline.py` و`scripts/verify-schema-baseline.py` | توليد ومقارنة جرد المخطط من دون أسرار أو صفوف أعمال. |
@@ -49,7 +50,7 @@
 
 | الأمر | المجال |
 |---|---|
-| `npm run verify` | predeploy وTypeScript وlint وVitest وbuild. |
+| `npm run verify` | predeploy وTypeScript وlint وVitest وbuild، بما فيها اختبار `booking-rls-recursion.test.ts` لعقد منع الحلقة. |
 | `npm run test:e2e` | Playwright محلي؛ يحتاج إعدادات Supabase public محلية صالحة ولا يقبل نسخ أسرار Production. |
 | `npm run test:e2e` مع بيئة غير مهيأة | نتيجة متوقعة: blocked محليًا بسبب غياب URL/key، وليست دليل فشل للإصدار المنشور. |
 | `TARGET_ENV=staging ... k6 run load-tests/k6/search-flow.js` | K6 للبحث في Staging فقط مع الحراس وإقرار البيئة. |

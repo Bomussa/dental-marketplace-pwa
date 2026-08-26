@@ -60,7 +60,9 @@
 
 رتب الحذف من الأثر التابع إلى الأصل: notifications/history/audit المرتبط، ثم booking/slot/offer عند وجودها، ثم operator events/accounts/memberships، ثم challenges/profiles/usernames/profiles، ثم مستخدم Auth، وأخيرًا branch/clinic. يراعى ترتيب foreign keys الفعلي في المخطط.
 
-بعد الحذف، نفذ عدادًا تجميعيًا فقط يثبت صفر: المستخدمين، ملفات المرضى، usernames، memberships، operator accounts/events، العيادات والفروع، العروض والمواعيد والحجوزات الموسومة. امسح جلسة المتصفح وsessionStorage وملفات K6 الخاصة. لا تحذف bucket rate-limit عام مشترك لمجرد أنه من نفس الجهاز؛ احذف فقط المفتاح المشتق من subject الاختباري المعروف.
+بعد الحذف، نفذ عدادًا تجميعيًا فقط يثبت صفر: المستخدمين، ملفات المرضى، usernames، memberships، operator accounts/events، العيادات والفروع، سجلات التحقق، العروض والكتالوج والأنواع، المواعيد والحجوزات الموسومة، و`booking_status_history` و`booking_attendance_events` و`notification_outbox` ومحاولات تسليمها التابعة أو اليتيمة. امسح جلسة المتصفح وsessionStorage وملفات K6 الخاصة. لا تحذف bucket rate-limit عام مشترك لمجرد أنه من نفس الجهاز؛ احذف فقط المفتاح المشتق من subject الاختباري المعروف.
+
+عند تعديل سياسة قراءة `bookings` أو `patient_profiles`، اختبر في Staging بدور `authenticated` وclaim العميل المقيد. لا تجعل سياسة الحجز تستعلم `patient_profiles` تحت RLS إذا كانت سياسة الملف التشغيلي تستعلم `bookings`؛ استخدم حارسًا خاصًا محدود التنفيذ للحالات الذاتية مثل الحساب المؤرشف، ثم أثبت أن العميل يرى فروعه وحجوزاته المصرح بها فقط.
 
 ## 5. K6 والأداء
 
