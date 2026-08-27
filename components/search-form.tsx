@@ -13,6 +13,23 @@ type PractitionerGender = "" | "female" | "male";
 
 type PreviewState = "idle" | "loading" | "ready" | "error";
 
+export const FEATURED_TREATMENT_CODES = [
+  "whitening",
+  "root_canal",
+  "composite_filling",
+  "tooth_extraction",
+  "scaling",
+] as const;
+
+export function getFeaturedTreatments(treatments: Treatment[]) {
+  const treatmentsByCode = new Map(treatments.map((treatment) => [treatment.code, treatment]));
+  const featured = FEATURED_TREATMENT_CODES
+    .map((code) => treatmentsByCode.get(code))
+    .filter((treatment): treatment is Treatment => Boolean(treatment));
+
+  return featured.length > 0 ? featured : treatments.slice(0, 5);
+}
+
 type SearchPreview = {
   offers: SearchOffer[];
   count: number;
@@ -47,7 +64,8 @@ function formatAvailability(offer: SearchOffer, locale: Locale) {
 
 export function SearchForm({ treatments, variants, locale }: { treatments: Treatment[]; variants: TreatmentVariant[]; locale: Locale }) {
   const t = getDictionary(locale);
-  const [treatmentId, setTreatmentId] = useState(treatments[0]?.id ?? "");
+  const featuredTreatments = getFeaturedTreatments(treatments);
+  const [treatmentId, setTreatmentId] = useState(featuredTreatments[0]?.id ?? treatments[0]?.id ?? "");
   const [variantId, setVariantId] = useState("");
   const [when, setWhen] = useState<WhenPreference>("earliest");
   const [radius, setRadius] = useState<1 | 5 | 10 | 25 | 50>(10);
@@ -60,7 +78,6 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
   const [preview, setPreview] = useState<SearchPreview>({ offers: [], count: 0 });
   const availableVariants = useMemo(() => variants.filter((variant) => variant.catalog_id === treatmentId), [variants, treatmentId]);
   const effectiveVariant = variantId || availableVariants[0]?.id || "";
-  const quickTreatments = treatments.slice(0, 5);
   const resultHref = effectiveVariant ? searchHref({ variant: effectiveVariant, when, radius, sort, practitionerGender, lat, lng }) : "/#start-compare";
   const selectedTreatment = treatments.find((treatment) => treatment.id === treatmentId);
   const selectedVariant = availableVariants.find((variant) => variant.id === effectiveVariant);
@@ -191,10 +208,10 @@ export function SearchForm({ treatments, variants, locale }: { treatments: Treat
         <label className="reference-filter reference-filter--variant"><span className="sr-only">{t["search.variant"]}</span><SearchIcon size={16} /><select name="variant" value={effectiveVariant} onChange={(event) => { const next = event.target.value; setVariantId(next); trackChoice({ event_name: "variant_selected", treatment_id: treatmentId || undefined, variant_id: next }); }} required>{availableVariants.map((variant) => <option key={variant.id} value={variant.id}>{isArabic ? variant.name_ar : variant.name_en}</option>)}</select></label>
       </div>
 
-      <fieldset className="reference-treatment-rail" aria-label={t["home.browseTreatments"]}>
-        <legend className="reference-section-title"><span>{t["home.browseTreatments"]}</span><small>{treatments.length}</small></legend>
+      <fieldset className="reference-treatment-rail" aria-label={t["home.featuredTreatments"]}>
+        <legend className="reference-section-title"><span>{t["home.featuredTreatments"]}</span><small>{t["home.featuredTreatmentsNote"]}</small></legend>
         <div className="reference-treatment-rail__items">
-          {quickTreatments.map((treatment) => {
+          {featuredTreatments.map((treatment) => {
             const selected = treatment.id === treatmentId;
             const treatmentLabel = isArabic ? treatment.name_ar : treatment.name_en;
             return <button key={treatment.id} type="button" className={`reference-treatment ${selected ? "reference-treatment--active" : ""}`} aria-pressed={selected} onClick={() => selectTreatment(treatment.id)}><span><ToothIcon size={23} /></span><b>{treatmentLabel}</b></button>;
