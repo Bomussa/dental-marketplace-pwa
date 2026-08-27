@@ -43,7 +43,7 @@
 | `supabase/migrations/20260826103000_patient_account_admin_management_v1.sql` | قائمة مرضى دنيا وإجراء حذف مقيد للمدير الأعلى فقط. |
 | `supabase/migrations/20260826130000_notification_outbox_rls_initplan_v1.sql` | تحسين أداء RLS لقراءة إشعارات الحساب مع إبقاء ملكية المريض وحارس الحساب واستثناء المدير الأعلى. |
 | `supabase/migrations/20260826193000_booking_patient_rls_recursion_fix_v1.sql` إلى `20260826194500_booking_patient_rls_helper_search_path_v1.sql` | كسر حلقة RLS بين `bookings` و`patient_profiles` مع حارس خاص لملف المريض الذاتي غير المؤرشف وتنفيذ مقيد لـ`authenticated` داخل السياسة ومسار بحث `pg_catalog` ثابت. |
-| `supabase/migrations/20260826230000_consolidate_patient_profiles_select_policy_v1.sql` | يوحد سياسة SELECT لملفات المرضى: يمنع القراءة الذاتية بعد الأرشفة مع إبقاء وصول موظفي الفرع المخول للحجز المرتبط. مطبق في Staging فقط بانتظار قرار DDL Production. |
+| `supabase/migrations/20260826230000_consolidate_patient_profiles_select_policy_v1.sql` | يوحد سياسة SELECT لملفات المرضى: يمنع القراءة الذاتية بعد الأرشفة مع إبقاء وصول موظفي الفرع المخول للحجز المرتبط. طُبق في Staging ثم Production بالنسخة البعيدة `20260827000621` مع postconditions قراءة فقط. |
 | `supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql` | baseline مخطط خالٍ من البيانات لإعادة بناء Staging، وليس مصدرًا لإدخال بيانات Production. |
 | `supabase/baselines/README.md` | تسلسل baseline ثم مهاجرات التقوية الخمس. |
 | `scripts/generate-schema-baseline.py` و`scripts/verify-schema-baseline.py` | توليد ومقارنة جرد المخطط من دون أسرار أو صفوف أعمال. |

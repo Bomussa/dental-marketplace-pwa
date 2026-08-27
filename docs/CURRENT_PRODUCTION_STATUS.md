@@ -8,7 +8,7 @@
 
 نُفذ الالتزام `a577d8a4996f77f22a8e95b760bf7596f369645c` ثم تكملته `decf85cda5568a3a6247c774d5e6d3280fc90ea2` على فرع `staging` فقط عبر Preview المحمي `dpl_5s5SgGFJa2SXCJjFLFMuShcd8b5U` بحالة `READY`. أضافت الجولة بوابة جاهزية إنتاجية قراءة فقط متوافقة مع عقد الصحة والبحث، ومساري `/privacy` و`/terms` كإطار تقني يصرح بأن المحتوى القانوني يحتاج اعتماد المالك/المختص، وفحص وصول آلي WCAG A/AA، وسيناريو K6 محروس لإعادة المحاولة والسباق. لا يمثل الإطار التقني اعتماداً قانونياً، ولا تمثل إضافة السيناريو تنفيذاً لـK6.
 
-اكتشف مستشار أداء Production تحذير `multiple_permissive_policies` على `public.patient_profiles`: كانت سياسة وصول ذاتي مؤرشفة جزئياً تتداخل مع سياسة أقدم تسمح للمالك بقراءة كل ملفاته. أضيفت migration المصدرية `20260826230000_consolidate_patient_profiles_select_policy_v1.sql` وطُبقت **في Staging فقط**؛ دمجت القراءة في سياسة واحدة تشترط أن الملف الذاتي غير مؤرشف وتبقي وصول موظف الفرع المصرح إلى ملفات الحجوزات المرتبطة. لم تطبق هذه migration في Production، ولا يجوز ذلك قبل تأكيد صريح منفصل.
+اكتشف مستشار أداء Production تحذير `multiple_permissive_policies` على `public.patient_profiles`: كانت سياسة وصول ذاتي مؤرشفة جزئياً تتداخل مع سياسة أقدم تسمح للمالك بقراءة كل ملفاته. أضيفت migration المصدرية `20260826230000_consolidate_patient_profiles_select_policy_v1` وطُبقت أولاً في Staging ثم في Production بعد اعتماد صريح؛ دمجت القراءة في سياسة واحدة تشترط أن الملف الذاتي غير مؤرشف وتبقي وصول موظف الفرع المصرح إلى ملفات الحجوزات المرتبطة. لا تتضمن DML أو أي حسابات أو حجوزات أو رسائل اختبار، وفحص postconditions وPerformance Advisor اللاحق اجتازا.
 
 ## سجل الإصدار
 
@@ -52,6 +52,7 @@
 | `20260826193000_booking_patient_rls_recursion_fix_v1.sql` | `20260826194116` | كسر حلقة RLS بين قراءة الحجوزات وملفات المرضى مع بقاء حارس الحساب المؤرشف الذاتي. |
 | `20260826193500_booking_patient_rls_helper_execute_grant_v1.sql` | `20260826194133` | تسجيل منح تنفيذ الحارس الداخلي لدور `authenticated` فقط. |
 | `20260826194500_booking_patient_rls_helper_search_path_v1.sql` | `20260826194534` | تثبيت مسار بحث `pg_catalog` للحارس الداخلي مع بقاء جداول التطبيق مؤهلة بالـschema. |
+| `20260826230000_consolidate_patient_profiles_select_policy_v1.sql` | `20260827000621` | دمج سياسة قراءة ملفات المرضى وإغلاق الوصول الذاتي للحساب المؤرشف من دون تغيير وصول الفرع المصرح. |
 
 ## التحقق الفعلي
 
@@ -67,7 +68,7 @@
 | Console | **PASS**: لا توجد رسائل Console في الفحص النهائي. |
 | أخطاء تشغيل Vercel | **PASS في فحص ما بعد النشر**: لم تظهر أخطاء أو أخطاء قاتلة في نافذة 10 دقائق للنشر `dpl_J9fU9p2cQQsScHCfm8BLsJyVy5W5` بعد وصوله إلى `READY` وفحص `/api/health` والصفحة العامة قراءةً فقط. لا يثبت ذلك اختبار الحجز أو OTP أو الحمل في Production. |
 | مستشار الأمان | **WARN واحد**: بقي فقط `auth_leaked_password_protection` (حماية كلمات المرور المسرّبة معطلة). [إرشاد Supabase](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). لم تُفعّل ترقية أو تكلفة تلقائية، ولا توجد في نتيجة المستشار تحذيرات SECURITY DEFINER أو grants عامة. |
-| مستشار الأداء | **WARN واحد وINFO متعددة**: أزيل تحذير `auth_rls_initplan` من سياسة `public.notification_outbox` سابقاً. كشف الفحص اللاحق تحذير `multiple_permissive_policies` على `public.patient_profiles`؛ أصلحته migration مصدرية واختبر في Staging فقط ولم تطبق في Production بعد. بقيت ملاحظات فهارس غير مستخدمة؛ لا تحذف تلقائياً لأن عدم الاستخدام المرصود لا يثبت عدم لزومها تشغيلياً. [إرشاد فهارس Supabase](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index) [إرشاد السياسات المتعددة](https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies). |
+| مستشار الأداء | **INFO فقط**: أزيل تحذير `auth_rls_initplan` سابقاً، ثم أزيل تحذير `multiple_permissive_policies` على `public.patient_profiles` بترحيل مصدر اجتاز Staging وProduction postconditions. بقيت ملاحظات فهارس غير مستخدمة؛ لا تحذف تلقائياً لأن عدم الاستخدام المرصود لا يثبت عدم لزومها تشغيلياً. [إرشاد فهارس Supabase](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index). |
 
 ## مصفوفة أدلة جولة الإغلاق
 
@@ -77,7 +78,7 @@
 | الخصوصية والشروط | اختبرت `/privacy` و`/terms` على Preview Staging؛ تظهران إطار اعتماد صريح وروابط تذييل وتسجيل. | **PASS تقني فقط**؛ النص القانوني النهائي **LEGAL/OWNER DECISION**. |
 | الوصول الآلي | أضيف `@axe-core/playwright` واختبار WCAG A/AA للصفحة والدخول. | **IMPLEMENTED**؛ تشغيل E2E الخارجي يبقى محجوباً محلياً بسبب إعدادات Supabase/حماية Preview، لذلك لا يرقى إلى PASS تشغيلي حتى تشغيله في بيئة مصرح لها. |
 | RLS والدوال الخادمية | فحص كتالوج Production قراءة فقط: 49 جدولاً عاماً بـRLS، صفر grants لدوال `_server` لـanon/authenticated، ولا SECURITY DEFINER بلا `search_path`. | **PASS محدود للكتالوج**؛ لا يغني عن اختبار IDOR حي بالأدوار. |
-| سياسة ملفات المرضى | فحص Staging قبل/بعد migration أظهر انتقالاً من سياستين permissive إلى سياسة واحدة archived-aware مع بقاء وصول موظفي الفرع. | **PASS في Staging**؛ **PENDING USER CONFIRMATION** قبل DDL Production. |
+| سياسة ملفات المرضى | فحص Staging ثم Production قبل/بعد migration أظهر انتقالاً من سياستين permissive إلى سياسة واحدة archived-aware مع بقاء وصول موظفي الفرع؛ سجلت Production النسخة `20260827000621`. | **PASS في Staging وProduction**؛ لا DML أو بيانات اختبار. |
 | OTP والحجز/K6 | عدادات Staging أظهرت صفر عيادات/فروع/عروض/مواعيد نشطة وحجوزات `TEST_STG`؛ Twilio غير مهيأ. | **BLOCKED**: لا fixture ولا إرسال OTP حقيقي ولا K6/retry/concurrency حي، ولم تُختلق بيانات أو تجاوزات. |
 | الأسرار | فحص ملفات المصدر المتتبعة لم يظهر رمزاً حياً أو JWT أو secret pattern؛ الإشارات المتبقية أسماء متغيرات وترحيلات واختبارات. | **PASS محدود لشجرة المصدر**؛ مراجعة إعدادات النشر وتاريخ Git تبقى جزءاً من قبول الإصدار. |
 

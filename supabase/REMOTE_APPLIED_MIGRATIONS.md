@@ -152,3 +152,14 @@ Canonical project ref used by the current application: `bqvcukxfsnchvkgejolz`.
 | 91 | `20260826194500_booking_patient_rls_helper_search_path_v1.sql` | `20260826194534` | `booking_patient_rls_helper_search_path_v1` | تثبيت مسار بحث `pg_catalog` للحارس مع بقاء جداول التطبيق مؤهلة بالـschema. |
 
 **Postconditions المقروءة بعد التطبيق:** سياسة `bookings_select` تستدعي الحارس الداخلي بدلاً من استعلام `patient_profiles` مباشرة تحت RLS؛ منح التنفيذ هو `authenticated=true` و`anon=false` و`public=false`، ومسار الدالة `search_path=pg_catalog`. لا يثبت هذا تشغيل OTP أو حجزًا أو اختبار حمل في Production.
+
+
+## إصدار Production — 27 أغسطس 2026: توحيد سياسة قراءة ملفات المرضى
+
+> **الحالة:** طُبق الترحيل التالي بعد اختبار الانحدار وتطبيق Staging وpostconditions، وبعد اعتماد صريح لتغيير DDL في Production. لا يتضمن DML، أو حسابات، أو حجوزات، أو رسائل اختبار في Production.
+
+| # | ملف المصدر | الإصدار البعيد | الاسم المسجل | الغرض |
+|---:|---|---|---|---|
+| 92 | `20260826230000_consolidate_patient_profiles_select_policy_v1.sql` | `20260827000621` | `consolidate_patient_profiles_select_policy_v1` | إزالة تداخل سياستي `SELECT` permissive على `patient_profiles`، ومنع الحساب المؤرشف من قراءة ملفه الذاتي، مع بقاء وصول موظف الفرع المصرح إلى الملف المرتبط بحجزه. |
+
+**Postconditions المقروءة بعد التطبيق:** سياسة `patient_profiles_authenticated_select` واحدة فقط لدور `authenticated`؛ تجمع `account_id = auth.uid()` مع `archived_at is null` أو وصول الفرع المصرح عبر الحجز المرتبط. أعاد مستشار أداء Supabase بعد التطبيق ملاحظات فهارس غير مستخدمة من مستوى `INFO` فقط؛ اختفى تحذير `multiple_permissive_policies`.
