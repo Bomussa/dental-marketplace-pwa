@@ -20,17 +20,23 @@ function createPublicCatalogClient() {
 
 const readActiveTreatmentCatalog = unstable_cache(
   async () => {
-    const supabase = createPublicCatalogClient();
-    const [{ data: treatments, error: treatmentsError }, { data: variants, error: variantsError }] = await Promise.all([
-      withOperationalTimeout(supabase.from("treatment_catalog").select("id,code,category,name_ar,name_en").eq("active", true).order("category").order("name_ar")),
-      withOperationalTimeout(supabase.from("treatment_variants").select("id,catalog_id,variant_key,name_ar,name_en").eq("active", true).order("name_ar")),
-    ]);
+    try {
+      const supabase = createPublicCatalogClient();
+      const [{ data: treatments, error: treatmentsError }, { data: variants, error: variantsError }] = await Promise.all([
+        withOperationalTimeout(supabase.from("treatment_catalog").select("id,code,category,name_ar,name_en").eq("active", true).order("category").order("name_ar")),
+        withOperationalTimeout(supabase.from("treatment_variants").select("id,catalog_id,variant_key,name_ar,name_en").eq("active", true).order("name_ar")),
+      ]);
 
-    return {
-      treatments: (treatments ?? []) as Treatment[],
-      variants: (variants ?? []) as TreatmentVariant[],
-      hasError: Boolean(treatmentsError || variantsError),
-    };
+      return {
+        treatments: (treatments ?? []) as Treatment[],
+        variants: (variants ?? []) as TreatmentVariant[],
+        hasError: Boolean(treatmentsError || variantsError),
+      };
+    } catch {
+      // A transient catalog timeout must surface through the existing accessible
+      // alert in the home page, rather than rejecting the whole SSR request.
+      return { treatments: [], variants: [], hasError: true };
+    }
   },
   ["active-treatment-catalog-v2"],
   { revalidate: 60, tags: [ACTIVE_TREATMENT_CATALOG_TAG] },
