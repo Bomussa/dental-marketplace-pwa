@@ -15,12 +15,12 @@
 | البند | القيمة المثبتة |
 |---|---|
 | المستودع والفرع | `Bomussa/dental-marketplace-pwa`، الفرع `main`. |
-| آخر Commit منشور | `98b6850f1011bf3c360901bb9c30c9acaf3f465b` — دفعة إغلاق الفجوات: بوابة الجاهزية، صفحات الإطار القانوني، اختبار الوصول، K6 المحروس، ومطابقة ترحيل سياسة ملفات المرضى المطبق مسبقاً. |
-| Vercel | المشروع `dental-marketplace-pwa` (`prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr`)؛ نشر Production `dpl_2sMLF8xKAzZ9axszc19p1BMjVCoZ` بحالة `READY` ويطابق `98b6850`. ظل Preview Staging المحمي `dpl_9Ru18UYAbUcawRJwUSUQ7aVuLxot` بحالة `READY` ويطابق `98b6850`. |
+| دفعة التغيير الوظيفي المنشورة | `98b6850f1011bf3c360901bb9c30c9acaf3f465b` — بوابة الجاهزية، صفحات الإطار القانوني، اختبار الوصول، K6 المحروس، ومطابقة ترحيل سياسة ملفات المرضى المطبق مسبقاً. توثيق الأدلة اللاحق موجود في `34aacd2`. |
+| Vercel | المشروع `dental-marketplace-pwa` (`prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr`)؛ نشر الوظائف `dpl_2sMLF8xKAzZ9axszc19p1BMjVCoZ` بحالة `READY` ويطابق `98b6850`، ونشر توثيق الأدلة `dpl_8aXJMiNU1L6xVAxt6Z1hpYjN6Dfo` بحالة `READY` ويطابق `34aacd2`. ظل Preview Staging المحمي `dpl_9Ru18UYAbUcawRJwUSUQ7aVuLxot` بحالة `READY` ويطابق `98b6850`. |
 | النطاقات | [www.mmc-mms.com](https://www.mmc-mms.com) و[mmc-mms.com](https://mmc-mms.com). |
 | Supabase Production | `bqvcukxfsnchvkgejolz`؛ طابق عداد الكتالوج الصفحة العامة: 48 علاجًا رئيسيًا و79 نوعًا دقيقًا. |
 | Staging المنفصل | `yrlwoxlxizxgrodtbdcp`؛ استُخدم لاختبارات الكتابة والـfixtures ثم نُظف، ولم تُنقل أي بيانات منه إلى Production. |
-| هدف الرجوع | نشر Production السابق المرشح في Vercel هو `dpl_DSM3fb9c1XnAXYPGzVUQguaNP5XT` (`3f6d87a`) عند وقت النشر. إعادة توجيه النشر لا تعكس DDL؛ أي تغيير مخطط لاحق يحتاج migration مصدرية أمامية. |
+| هدف الرجوع | قبل أي رجوع، يؤكد المشغل نشر Production السابق الموسوم `READY` والمرشح من Vercel؛ إعادة توجيه النشر لا تعكس DDL، وأي تغيير مخطط لاحق يحتاج migration مصدرية أمامية. |
 
 ## التغييرات المنشورة ولماذا
 
