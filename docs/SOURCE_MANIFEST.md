@@ -18,7 +18,7 @@
 | التحديث اللحظي | `components/*-live-refresh.tsx`، `components/use-realtime-router-refresh.ts`، `lib/clinic-realtime-refresh.ts` | إعادة الجلب المعتمدة على Realtime تحت RLS. |
 | PWA والواجهة | `app/manifest.ts`، `app/pwa/icon/[size]/route.tsx`، `public/sw.js`، `components/mobile-navigation.tsx`، `components/ui.tsx` | Manifest وservice worker وأيقونات وتجربة الهاتف. |
 | صفحات السياسات | `app/privacy/page.tsx`، `app/terms/page.tsx`، `components/public-policy-template.tsx` | مسارات عامة ثنائية اللغة وروابطها؛ تعرض إطاراً تقنياً صريحاً أن النص القانوني يحتاج اعتماد المالك/المختص ولا تمثل سياسة نافذة قبله. |
-| الاختبارات | `tests/`، `tests/e2e/home.spec.ts`، `tests/e2e/accessibility.spec.ts`، `tests/production-readiness-check.test.ts`، `load-tests/k6/`، `scripts/safe-load-test.mjs` | Vitest وPlaywright وaxe WCAG A/AA وK6 المحروس؛ لا يستخدم K6 على Production. |
+| الاختبارات | `tests/`، `tests/treatment-catalog-resilience.test.ts`، `tests/e2e/home.spec.ts`، `tests/e2e/accessibility.spec.ts`، `tests/production-readiness-check.test.ts`، `load-tests/k6/`، `scripts/safe-load-test.mjs` | Vitest وPlaywright وaxe WCAG A/AA وK6 المحروس؛ اختبار الكتالوج يثبت تحويل مهلة عابرة إلى حالة خطأ واجهة بدلاً من رفض SSR. لا يستخدم K6 على Production. |
 | بوابة الجودة والنشر | `package.json`، `scripts/predeploy-check.mjs`، `scripts/production-readiness-check.mjs`، `.github/workflows/ci.yml`، `docs/DEPLOYMENT_RUNBOOK.md`، `docs/MAINTENANCE_MANUAL_AR.md` | أوامر build/verify وCI وتسلسل النشر والرجوع ودورة الصيانة الآمنة؛ بوابة الجاهزية قراءة فقط وتفحص العقود العامة والرؤوس والبحث. |
 
 ## ملفات الجذر الحاكمة

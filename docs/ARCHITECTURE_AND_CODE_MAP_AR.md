@@ -119,7 +119,7 @@ flowchart TB
 |---|---|---|
 | الهوية والنصوص | `account-auth.server.ts`، `auth-claims.server.ts`، `account-copy.ts`، `admin-copy.ts`، `clinic-copy.ts`، `i18n/ar.ts`، `i18n/en.ts`، `i18n/index.ts` | جلسات ودخول ونسخ عربية/إنجليزية؛ كلمات المرور لا تخرج من هذه الطبقة. |
 | عقود ونماذج | `validation.ts`، `models.ts`، `database.types.ts` | schemas والنماذج وأنواع Supabase المولدة. |
-| بحث وتسعير | `search-query.ts`، `search-offers.ts`، `treatment-catalog.server.ts`، `price.ts`، `price-scope.ts`، `money-input.ts` | تحليل query، cache كتالوج، تحويل المال، ونطاق السعر. |
+| بحث وتسعير | `search-query.ts`، `search-offers.ts`، `treatment-catalog.server.ts`، `price.ts`، `price-scope.ts`، `money-input.ts` | تحليل query، cache الكتالوج وتعافي مهلة القراءة إلى حالة خطأ واجهة، تحويل المال، ونطاق السعر. |
 | حجز وتشغيل | `booking-intent.client.ts`، `operations.server.ts`، `operation-feedback.ts`، `client-booking-workspace.ts`، `clinic-role-display.ts` | idempotency، RPC/مهلات/rate-limits، وتفسير العمل التشغيلي. |
 | حراس وتحديث | `public-write-request-guard.ts`، `choice-event-guard.ts`، `choice-events.client.ts`، `device-installation.client.ts`، `realtime-refresh-policy.ts`، `clinic-realtime-refresh.ts` | أصل/حجم الكتابة، telemetry، الجهاز، وسياسة Realtime. |
 | تكاملات خادم | `phone-verification.server.ts`، `notifications.server.ts`، `support-model.server.ts`، `support-public-fallback.ts`، `server-readiness.ts` | OTP والإشعارات والدعم والاستعداد الآمن. |
@@ -135,7 +135,7 @@ flowchart TB
 | `scripts/safe-load-test.mjs`، `load-tests/k6/shared.js`، `search-flow.js`، `booking-flow.js` | حمولة محروسة: HTTPS وStaging فقط وحجب hosts الإنتاج؛ booking يحتاج fixture/session خاصين. |
 | `scripts/provision-role-simulation.mjs` | محاكاة دور محلي مقيّدة، لا بديل عن RLS الحي. |
 | `scripts/generate-schema-baseline.py`، `scripts/verify-schema-baseline.py`، `scripts/sync-supabase-types.mjs` | baseline ومقارنة مخطط ومزامنة الأنواع؛ لا تدخل بيانات أعمال. |
-| `tests/*.test.ts` و`tests/e2e/home.spec.ts` و`tests/mocks/server-only.ts` | اختبارات وحدات/عقود/E2E وحاجز modules الخادمية. |
+| `tests/*.test.ts` و`tests/treatment-catalog-resilience.test.ts` و`tests/e2e/home.spec.ts` و`tests/mocks/server-only.ts` | اختبارات وحدات/عقود/E2E، بما فيها انحدار مهلة كتالوج العلاج، وحاجز modules الخادمية. |
 
 ## 5. قاعدة البيانات والترحيلات
 
