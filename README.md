@@ -248,8 +248,9 @@ app/
   icon.tsx                              layout.tsx
   login/actions.ts                      login/page.tsx
   manifest.ts                           operation-error/page.tsx
-  page.tsx                              pwa/icon/[size]/route.tsx
-  results/page.tsx
+  page.tsx                              privacy/page.tsx
+  pwa/icon/[size]/route.tsx             results/page.tsx
+  terms/page.tsx
 components/
   account-live-refresh.tsx              activity-report-card.tsx
   admin-analytics-live-refresh.tsx      admin-choice-analytics.tsx
@@ -259,8 +260,9 @@ components/
   device-installation-registrar.tsx     icons.tsx
   locale-provider.tsx                   locale-toggle.tsx
   price-scope-fields.tsx                price-scope-summary.tsx
-  print-report-button.tsx               results-live-refresh.tsx
-  search-form.tsx                       site-header.tsx
+  print-report-button.tsx               public-policy-template.tsx
+  results-live-refresh.tsx              search-form.tsx
+  site-header.tsx
   support-chat.tsx                      super-admin-user-management.tsx
   ui.tsx
 lib/
@@ -283,19 +285,25 @@ lib/
 public/
   sw.js                                 brand/*                    visuals/*
 scripts/
-  predeploy-check.mjs                   provision-role-simulation.mjs
-  safe-load-test.mjs                    sync-supabase-types.mjs
+  predeploy-check.mjs                   production-readiness-check.mjs
+  provision-role-simulation.mjs         safe-load-test.mjs
+  sync-supabase-types.mjs
+load-tests/k6/
+  booking-flow.js                       booking-integrity-flow.js
+  search-flow.js                        shared.js
 supabase/
   seed.dev.sql                          tests/acceptance.sql
   REMOTE_APPLIED_MIGRATIONS.md          migrations/*.sql
 tests/
   booking-intent.test.ts                choice-event-guard.test.ts
   clinic-role-display.test.ts           customer-choice-analytics.test.ts
-  e2e/home.spec.ts                      i18n.test.ts
-  money-input.test.ts                   operation-feedback.test.ts
+  e2e/accessibility.spec.ts             e2e/home.spec.ts
+  i18n.test.ts                          money-input.test.ts
+  operation-feedback.test.ts            patient-profiles-select-policy.test.ts
   phone-verification.test.ts            price.test.ts
-  server-operations.test.ts             service-worker.test.ts
-  validation.test.ts                    mocks/server-only.ts
+  production-readiness-check.test.ts    server-operations.test.ts
+  service-worker.test.ts                validation.test.ts
+  mocks/server-only.ts
 ```
 
 ### سجل الترحيلات المحلي الكامل
@@ -368,6 +376,13 @@ tests/
   20260825193500_limit_authenticated_security_definer_rpc.sql
   20260825194500_allow_public_search_validation_helper.sql
   20260825195000_allow_authenticated_search_rpc.sql
+  20260826100000_patient_experience_integrity_v1.sql
+  20260826103000_patient_account_admin_management_v1.sql
+  20260826130000_notification_outbox_rls_initplan_v1.sql
+  20260826193000_booking_patient_rls_recursion_fix_v1.sql
+  20260826193500_booking_patient_rls_helper_execute_grant_v1.sql
+  20260826194500_booking_patient_rls_helper_search_path_v1.sql
+  20260826230000_consolidate_patient_profiles_select_policy_v1.sql
 
 ```
 
