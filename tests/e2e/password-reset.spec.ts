@@ -21,10 +21,10 @@ test.describe("password reset", () => {
     await page.getByRole("button", { name: "إرسال رابط الاستعادة" }).click();
 
     await expect(page.getByRole("status")).toContainText("تم إرسال تعليمات الاستعادة");
-    expect(requestBody).not.toBeNull();
-    expect(requestBody?.email).toBe("test@example.com");
-    expect(String(requestBody?.redirect_to)).toContain("/auth/confirm");
-    expect(String(requestBody?.redirect_to)).toContain("next=%2Fauth%2Fupdate-password");
+    if (!requestBody) throw new Error("Reset request body was not captured");
+    expect(requestBody.email).toBe("test@example.com");
+    expect(String(requestBody.redirect_to)).toContain("/auth/confirm");
+    expect(String(requestBody.redirect_to)).toContain("next=%2Fauth%2Fupdate-password");
   });
 
   test("validates and saves a new password after a recovery session", async ({ page }) => {
@@ -81,6 +81,7 @@ test.describe("password reset", () => {
     await page.getByLabel("تأكيد كلمة المرور الجديدة").fill("TestPass123");
     await page.getByRole("button", { name: "حفظ كلمة المرور" }).click();
     await expect(page.getByRole("status")).toContainText("تم حفظ كلمة المرور بنجاح");
-    expect(updateBody?.password).toBe("TestPass123");
+    if (!updateBody) throw new Error("Password update body was not captured");
+    expect(updateBody.password).toBe("TestPass123");
   });
 });
