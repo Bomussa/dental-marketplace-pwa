@@ -104,6 +104,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <input type="hidden" name="next" value={next} />
           <label className="grid gap-2 text-sm font-extrabold text-slate-800">{t["login.username"]}<Input name="username" autoComplete="username" required minLength={3} maxLength={32} dir="ltr" /></label>
           <label className="grid gap-2 text-sm font-extrabold text-slate-800">{t["login.password"]}<Input name="password" type="password" autoComplete="current-password" required minLength={1} maxLength={128} dir="ltr" /></label>
+          <Link href="/auth/forgot-password" className="-mt-2 text-end text-xs font-extrabold text-[#0B5CAD] underline-offset-4 hover:underline">
+            {locale === "ar" ? "نسيت كلمة المرور؟" : "Forgot password?"}
+          </Link>
           <Button type="submit" className="mt-1">{t["login.submit"]}</Button>
         </form>
 
