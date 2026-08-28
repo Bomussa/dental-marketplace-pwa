@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { emailForUsername, provisionPatientBookingAccount } from "@/lib/account-auth.server";
 import { consumeRateLimit, withOperationalTimeout } from "@/lib/operations.server";
 import { publicWriteHeadersClientKey } from "@/lib/public-write-request-guard";
-import { passwordLoginSchema, patientBookingRegistrationSchema } from "@/lib/validation";
+import { patientNicknameSchema, passwordLoginSchema, patientBookingRegistrationSchema } from "@/lib/validation";
 import { createClient } from "@/lib/supabase/server";
 
 const LOGIN_CLIENT_WINDOW_SECONDS = 60;
@@ -23,11 +23,17 @@ function registrationFailure(code: RegistrationError): never {
 }
 
 export async function loginWithPassword(formData: FormData) {
-  const parsed = passwordLoginSchema.safeParse({
-    username: formData.get("username"),
-    password: formData.get("password"),
-    next: formData.get("next") || "/account",
-  });
+  const rawUsername = String(formData.get("username") ?? "").trim();
+  const rawPassword = String(formData.get("password") ?? "");
+  const rawNext = String(formData.get("next") || "/account");
+
+  // Patient accounts intentionally allow 2–10 character nicknames, while clinic
+  // operator accounts may use the broader 3–32 character username contract.
+  // Accept both contracts here so a valid patient account can actually log in.
+  const patientUsername = patientNicknameSchema.safeParse(rawUsername);
+  const parsed = patientUsername.success
+    ? passwordLoginSchema.safeParse({ username: patientUsername.data, password: rawPassword, next: rawNext })
+    : passwordLoginSchema.safeParse({ username: rawUsername, password: rawPassword, next: rawNext });
 
   if (!parsed.success) redirect("/login?error=invalid_credentials");
 
