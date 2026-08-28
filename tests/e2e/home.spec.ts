@@ -369,8 +369,9 @@ test("public policy routes disclose their approval-required status", async ({ pa
 test("registration and footer expose the approval-required policy routes", async ({ page }) => {
   await page.goto("/login");
   await page.getByText("ليس لديك حساب؟ أنشئ حساب مريض").click();
-  await expect(page.getByRole("link", { name: "الخصوصية" })).toHaveAttribute("href", "/privacy");
-  await expect(page.getByRole("link", { name: "الشروط" })).toHaveAttribute("href", "/terms");
+  const registrationSection = page.locator("details");
+  await expect(registrationSection.getByRole("link", { name: "الخصوصية" })).toHaveAttribute("href", "/privacy");
+  await expect(registrationSection.getByRole("link", { name: "الشروط" })).toHaveAttribute("href", "/terms");
 
   await page.goto("/");
   const footer = page.locator("footer");
