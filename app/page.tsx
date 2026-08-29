@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { getActiveTreatmentCatalog } from "@/lib/treatment-catalog.server";
-import { getServerAuthClaims } from "@/lib/auth-claims.server";
+import { getServerUiSession } from "@/lib/auth-claims.server";
 import { SearchForm } from "@/components/search-form";
 import { SupportChat } from "@/components/support-chat";
 import { MobileNavigation } from "@/components/mobile-navigation";
@@ -29,9 +29,9 @@ export default async function HomePage() {
   const t = getDictionary(locale);
   const [{ treatments, variants, hasError }, claims] = await Promise.all([
     getActiveTreatmentCatalog(),
-    getServerAuthClaims(),
+    getServerUiSession(),
   ]);
-  const signedIn = Boolean(claims.data?.claims?.sub);
+  const signedIn = Boolean(claims.data?.session?.user);
 
   return (
     <main className="home-page reference-home-page">
