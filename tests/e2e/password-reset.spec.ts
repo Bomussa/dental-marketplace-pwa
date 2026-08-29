@@ -28,7 +28,6 @@ test.describe("password reset", () => {
     const requestBody = requestBodies.at(-1)!;
     expect(requestBody["email"]).toBe("test@example.com");
 
-    // Supabase sends redirect_to as a query parameter on the recovery request URL.
     const redirectTo = new URL(recoveryUrls.at(-1)!).searchParams.get("redirect_to");
     expect(redirectTo).toContain("/auth/confirm");
     expect(redirectTo).toContain("next=%2Fauth%2Fupdate-password");
@@ -49,7 +48,6 @@ test.describe("password reset", () => {
       },
     };
 
-    // @supabase/ssr's browser client persists the session in cookies, not localStorage.
     await page.addInitScript((value) => {
       document.cookie = `sb-bqvcukxfsnchvkgejolz-auth-token=${encodeURIComponent(JSON.stringify(value))}; Path=/; SameSite=Lax`;
     }, session);
@@ -77,14 +75,16 @@ test.describe("password reset", () => {
 
     await page.goto("/auth/update-password");
     await expect(page.getByRole("heading", { level: 1, name: "إنشاء كلمة مرور جديدة" })).toBeVisible();
-    await expect(page.getByLabel("كلمة المرور الجديدة")).toBeVisible();
+    const newPassword = page.getByRole("textbox", { name: "كلمة المرور الجديدة", exact: true });
+    const confirmPassword = page.getByRole("textbox", { name: "تأكيد كلمة المرور الجديدة", exact: true });
+    await expect(newPassword).toBeVisible();
 
-    await page.getByLabel("كلمة المرور الجديدة").fill("TestPass123");
-    await page.getByLabel("تأكيد كلمة المرور الجديدة").fill("Different123");
+    await newPassword.fill("TestPass123");
+    await confirmPassword.fill("Different123");
     await page.getByRole("button", { name: "حفظ كلمة المرور" }).click();
     await expect(page.getByRole("alert")).toContainText("كلمتا المرور غير متطابقتين");
 
-    await page.getByLabel("تأكيد كلمة المرور الجديدة").fill("TestPass123");
+    await confirmPassword.fill("TestPass123");
     await page.getByRole("button", { name: "حفظ كلمة المرور" }).click();
     await expect(page.getByRole("status")).toContainText("تم حفظ كلمة المرور بنجاح");
     expect(updateBodies).toHaveLength(1);
