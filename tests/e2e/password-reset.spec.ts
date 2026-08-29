@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test.describe("password reset", () => {
   test("exposes forgot-password link and sends a reset request", async ({ page }) => {
     const requestBodies: Record<string, unknown>[] = [];
+    const recoveryUrls: string[] = [];
 
     await page.goto("/login");
     const forgotLink = page.getByRole("link", { name: "نسيت كلمة المرور؟" });
@@ -13,6 +14,7 @@ test.describe("password reset", () => {
     await expect(page.getByRole("heading", { level: 1, name: "استعادة كلمة المرور" })).toBeVisible();
 
     await page.route("**/auth/v1/recover**", async (route) => {
+      recoveryUrls.push(route.request().url());
       requestBodies.push(JSON.parse(route.request().postData() ?? "{}") as Record<string, unknown>);
       await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
     });
@@ -22,12 +24,12 @@ test.describe("password reset", () => {
 
     await expect(page.getByRole("status")).toContainText("تم إرسال تعليمات الاستعادة");
     expect(requestBodies).toHaveLength(1);
+    expect(recoveryUrls).toHaveLength(1);
     const requestBody = requestBodies.at(-1)!;
     expect(requestBody["email"]).toBe("test@example.com");
 
     // Supabase sends redirect_to as a query parameter on the recovery request URL.
-    const recoveryUrl = new URL((await page.waitForRequest("**/auth/v1/recover**")).url());
-    const redirectTo = recoveryUrl.searchParams.get("redirect_to");
+    const redirectTo = new URL(recoveryUrls.at(-1)!).searchParams.get("redirect_to");
     expect(redirectTo).toContain("/auth/confirm");
     expect(redirectTo).toContain("next=%2Fauth%2Fupdate-password");
   });
