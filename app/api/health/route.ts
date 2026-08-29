@@ -13,7 +13,7 @@ export async function GET() {
   try {
     const supabase = await createClient();
     const { error } = await withOperationalTimeout(
-      supabase.from("treatment_catalog").select("id", { count: "exact", head: true }).eq("active", true),
+      supabase.from("treatment_catalog").select("id").eq("active", true).limit(1),
     );
 
     return healthResponse(!error, error ? 503 : 200);

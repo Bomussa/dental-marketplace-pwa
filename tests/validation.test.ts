@@ -80,6 +80,9 @@ describe("validation", () => {
     expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة أحمد", relationship: "self", national_id: "28412345678", nationality: "QA", phone: "+97455123456", username: "fati.ahmed", email: "fatima@example.test", password: "Pass!1" }).success).toBe(false);
     expect(patientBookingRegistrationSchema.safeParse({ display_name: "فاطمة أحمد", relationship: "self", national_id: "28412345678", nationality: "QA", phone: "+97455123456", username: "fatima.ahmed", email: "fatima@example.test", password: "Patient7" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "Fatima.Ahmed", password: "anything", next: "/results" }).success).toBe(true);
+    const shortPatientLogin = passwordLoginSchema.safeParse({ username: "AB", password: "anything", next: "/account" });
+    expect(shortPatientLogin.success).toBe(true);
+    if (shortPatientLogin.success) expect(shortPatientLogin.data.username).toBe("ab");
     expect(passwordLoginSchema.safeParse({ username: "a", password: "anything", next: "https://unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "//unsafe.example" }).success).toBe(false);
     expect(passwordLoginSchema.safeParse({ username: "fatima.ahmed", password: "anything", next: "/\\unsafe.example" }).success).toBe(false);

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const select = vi.fn();
+const limit = vi.fn();
 const from = vi.fn(() => ({ select }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -19,8 +20,10 @@ describe("public health route", () => {
   });
 
   it("reports only service health when the database check succeeds", async () => {
-    const eq = vi.fn().mockResolvedValue({ error: null });
+    const eq = vi.fn();
     select.mockReturnValue({ eq });
+    eq.mockReturnValue({ limit });
+    limit.mockResolvedValue({ error: null });
 
     const response = await GET();
     const payload = await response.json();
@@ -34,8 +37,10 @@ describe("public health route", () => {
   });
 
   it("does not disclose dependency details when the database check fails", async () => {
-    const eq = vi.fn().mockResolvedValue({ error: { code: "UNAVAILABLE" } });
+    const eq = vi.fn();
     select.mockReturnValue({ eq });
+    eq.mockReturnValue({ limit });
+    limit.mockResolvedValue({ error: { code: "UNAVAILABLE" } });
 
     const response = await GET();
     const payload = await response.json();
