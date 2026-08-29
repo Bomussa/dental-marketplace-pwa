@@ -24,30 +24,33 @@ test.describe("password reset", () => {
     expect(requestBodies).toHaveLength(1);
     const requestBody = requestBodies.at(-1)!;
     expect(requestBody["email"]).toBe("test@example.com");
-    expect(String(requestBody["redirect_to"])).toContain("/auth/confirm");
-    expect(String(requestBody["redirect_to"])).toContain("next=%2Fauth%2Fupdate-password");
+
+    // Supabase sends redirect_to as a query parameter on the recovery request URL.
+    const recoveryUrl = new URL((await page.waitForRequest("**/auth/v1/recover**")).url());
+    const redirectTo = recoveryUrl.searchParams.get("redirect_to");
+    expect(redirectTo).toContain("/auth/confirm");
+    expect(redirectTo).toContain("next=%2Fauth%2Fupdate-password");
   });
 
   test("validates and saves a new password after a recovery session", async ({ page }) => {
-    await page.addInitScript(() => {
-      const now = Math.floor(Date.now() / 1000);
-      localStorage.setItem(
-        "sb-bqvcukxfsnchvkgejolz-auth-token",
-        JSON.stringify({
-          access_token: "test-access-token",
-          refresh_token: "test-refresh-token",
-          expires_in: 3600,
-          expires_at: now + 3600,
-          token_type: "bearer",
-          user: {
-            id: "00000000-0000-4000-8000-000000000001",
-            aud: "authenticated",
-            role: "authenticated",
-            email: "test@example.com",
-          },
-        }),
-      );
-    });
+    const session = {
+      access_token: "test-access-token",
+      refresh_token: "test-refresh-token",
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      token_type: "bearer",
+      user: {
+        id: "00000000-0000-4000-8000-000000000001",
+        aud: "authenticated",
+        role: "authenticated",
+        email: "test@example.com",
+      },
+    };
+
+    // @supabase/ssr's browser client persists the session in cookies, not localStorage.
+    await page.addInitScript((value) => {
+      document.cookie = `sb-bqvcukxfsnchvkgejolz-auth-token=${encodeURIComponent(JSON.stringify(value))}; Path=/; SameSite=Lax`;
+    }, session);
 
     const updateBodies: Record<string, unknown>[] = [];
     await page.route("**/auth/v1/user**", async (route) => {
