@@ -82,7 +82,7 @@ test.describe("password reset", () => {
     await newPassword.fill("TestPass123");
     await confirmPassword.fill("Different123");
     await page.getByRole("button", { name: "حفظ كلمة المرور" }).click();
-    await expect(page.getByRole("alert")).toContainText("كلمتا المرور غير متطابقتين");
+    await expect(page.locator('p[role="alert"]').filter({ hasText: "كلمتا المرور غير متطابقتين" })).toBeVisible();
 
     await confirmPassword.fill("TestPass123");
     await page.getByRole("button", { name: "حفظ كلمة المرور" }).click();
