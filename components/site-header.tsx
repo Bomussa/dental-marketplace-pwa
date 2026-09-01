@@ -3,16 +3,16 @@ import Link from "next/link";
 import { BrandLockup } from "@/components/brand-lockup";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { getServerAuthClaims } from "@/lib/auth-claims.server";
+import { getServerUiSession } from "@/lib/auth-claims.server";
 import { BuildingIcon, UserIcon } from "@/components/icons";
 
 export async function SiteHeader() {
   const cookieStore = await cookies();
   const locale = getLocale(cookieStore.get("asnani_locale")?.value);
   const t = getDictionary(locale);
-  const { data } = await getServerAuthClaims();
-  const signedIn = Boolean(data?.claims?.sub);
-  const appMeta = (data?.claims?.app_metadata ?? {}) as Record<string, unknown>;
+  const { data } = await getServerUiSession();
+  const signedIn = Boolean(data.session?.user);
+  const appMeta = (data.session?.user.app_metadata ?? {}) as Record<string, unknown>;
   const isAdmin = appMeta.platform_admin === true;
 
   return (

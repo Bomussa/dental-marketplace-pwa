@@ -102,7 +102,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         {error && <div className="auth-alert auth-alert--error">{t["login.error"]}</div>}
         <form action={loginWithPassword} className="mt-7 grid gap-4">
           <input type="hidden" name="next" value={next} />
-          <label className="grid gap-2 text-sm font-extrabold text-slate-800">{t["login.username"]}<Input name="username" autoComplete="username" required minLength={2} maxLength={10} pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,9}" dir="ltr" /></label>
+          <label className="grid gap-2 text-sm font-extrabold text-slate-800">{t["login.username"]}<Input name="username" autoComplete="username" required minLength={2} maxLength={10} pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,9}" title={locale === "ar" ? "استخدم من حرفين إلى 10 أحرف أو أرقام إنجليزية" : "Use 2 to 10 English letters or numbers"} dir="ltr" /></label>
           <label className="grid gap-2 text-sm font-extrabold text-slate-800">{t["login.password"]}<Input name="password" type="password" autoComplete="current-password" required minLength={1} maxLength={128} dir="ltr" /></label>
           <Link href="/auth/forgot-password" className="-mt-2 text-end text-xs font-extrabold text-[#0B5CAD] underline-offset-4 hover:underline">
             {locale === "ar" ? "نسيت كلمة المرور؟" : "Forgot password?"}

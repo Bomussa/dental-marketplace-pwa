@@ -307,6 +307,7 @@ export const patientProfileUpsertSchema = patientProfileSchema.extend({
 
 export const usernameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$/, "اسم المستخدم يجب أن يتكون من 3 إلى 32 حرفًا أو رقمًا، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
 export const patientNicknameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{1,9}$/, "اسم الدخول للمريض يجب أن يتكون من 2 إلى 10 أحرف أو أرقام إنجليزية، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
+export const loginUsernameSchema = z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{1,31}$/, "اسم الدخول يجب أن يتكون من 2 إلى 32 حرفًا أو رقمًا إنجليزيًا، ويمكن أن يتضمن . أو _ أو -").transform((value) => value.toLowerCase());
 export const passwordSchema = z.string()
   .min(12, "كلمة المرور يجب ألا تقل عن 12 حرفًا")
   .max(128)
@@ -340,7 +341,7 @@ const internalRedirectPathSchema = z.string().startsWith("/").max(300).refine(
 );
 
 export const passwordLoginSchema = z.object({
-  username: usernameSchema,
+  username: loginUsernameSchema,
   password: z.string().min(1).max(128),
   next: internalRedirectPathSchema.default("/account"),
 });
