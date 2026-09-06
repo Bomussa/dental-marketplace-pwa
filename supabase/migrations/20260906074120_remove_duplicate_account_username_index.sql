@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.account_usernames_username_lower_unique;
