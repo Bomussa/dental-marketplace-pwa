@@ -1,326 +1,411 @@
 # أسناني قطر — MMC-MMS
 
-> **المرجع التشغيلي والهندسي الرئيسي للمستودع.**
+> **المرجع الهندسي والتشغيلي الحالي للمستودع.**
 >
-> هذا README يصف الحالة التي تم التحقق منها مباشرة من GitHub وVercel وSupabase بتاريخ **2026-09-07**. لا يُستخدم أي رقم أو حالة قديمة على أنها حالة حالية إذا تعارضت مع المنصة الفعلية.
+> تمت مزامنة هذا الملف بعد التحقق المباشر من GitHub وVercel وSupabase في **2026-09-07**. أي حالة تاريخية يجب قراءتها كسجل زمني، بينما الحالة الحالية يحكمها المصدر الحي في GitHub/Vercel/Supabase.
+>
+> **مهم:** هذا المشروع هو `Bomussa/dental-marketplace-pwa` فقط. لا علاقة تشغيلية له بمستودعي `Bomussa/love` أو `Bomussa/love-api`.
 
-## 1. تعريف المشروع
+## 1. تعريف المشروع ونطاقه
 
-**أسناني قطر (MMC-MMS)** منصة رقمية متخصصة في خدمات طب الأسنان في قطر. الاسم التشغيلي هو **Medical Marketplace Comparison – Medical Matching Service**.
+**أسناني قطر (MMC-MMS)** منصة رقمية لسوق خدمات الأسنان في قطر. الهدف التشغيلي هو:
 
-المنتج يركز على:
+`ابحث ← قارن ← اختر ← احجز`
 
-- اكتشاف خدمات وعيادات الأسنان المشاركة.
-- مطابقة **النوع العلاجي الدقيق** وليس اسم علاج عام فقط.
-- مقارنة الأسعار ونطاق السعر وما يشمله العرض.
-- معرفة التوفر والمواعيد.
-- اختيار الموعد.
-- إنشاء وإدارة الحجز.
-- إدارة العلاقة التشغيلية بين المريض والعيادة.
-- دعم ثنائي اللغة العربية/الإنجليزية.
-- PWA وتجربة Mobile-first.
+المنصة تقوم باكتشاف خدمات الأسنان، مطابقة النوع العلاجي الدقيق، مقارنة عروض الأسعار ونطاقها، إظهار التوفر والمواعيد، ثم إنشاء وإدارة الحجز. وهي ليست جهة تشخيص أو علاج أو اعتماد طبي، ولا يجوز للكود اختراع سعر أو موعد أو معلومة عن شمول الخدمة.
 
-المنصة **ليست جهة تشخيص أو علاج أو اعتماد طبي**، ولا يجوز لها اختراع سعر أو موعد أو شمول علاجي غير مثبت من بيانات العيادة.
+المنتج Mobile-first وRTL ويدعم العربية والإنجليزية وPWA، مع طبقات server-side وPostgreSQL/RLS/RPC لضمان سلامة العمليات الحساسة.
 
-الموقع: **https://www.mmc-mms.com**
-
-النطاقات المرتبطة بمشروع Vercel: `www.mmc-mms.com`، `mmc-mms.com`، وواجهات `vercel.app` الخاصة بالمشروع.
+**الموقع Production:** `https://www.mmc-mms.com`
 
 ---
 
 # 2. الحالة الحالية الموثقة — 2026-09-07
 
-| العنصر | الحالة الحالية التي تم التحقق منها |
+| العنصر | الحالة الفعلية التي تم التحقق منها |
 |---|---|
-| GitHub repository | `Bomussa/dental-marketplace-pwa` |
-| GitHub default branch | `main` |
-| أحدث commit على `main` | `84addac162e3b0a36d2729056b760502bb0ae8d1` — `feat: add vision and goals screen` |
-| آخر تعديل | إضافة `/about` لرؤية وأهداف أسناني وربطه من Footer، مع دعم العربية/الإنجليزية. |
+| GitHub | `Bomussa/dental-marketplace-pwa` |
+| Default branch | `main` |
+| أحدث commit على main | `153d2e134827e61b4cf10a189b091330e8571879` — `docs: synchronize README with current GitHub Vercel and Supabase state` |
+| commit الميزة السابقة | `84addac162e3b0a36d2729056b760502bb0ae8d1` — إضافة `/about` |
 | Vercel project | `dental-marketplace-pwa` |
 | Vercel project ID | `prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr` |
-| Vercel framework | Next.js |
-| Vercel runtime | Node.js `24.x` بحسب إعداد المشروع الحالي |
-| أحدث deployment معروف للمشروع | `dpl_45ZC9EiPh6oSwQkhXQtfyecHHkSz` |
-| حالة أحدث deployment | `READY` |
-| نوع أحدث deployment | `LAMBDAS` |
-| أحدث deployment المؤكد | Preview للفرع `feat/vision-goals-screen`، وليس Production. |
-| Preview URL | `https://dental-marketplace-40z349zgy-bomussa.vercel.app` |
-| GitHub SHA للـPreview | `bd815f001175218b04d679e5ca33af40c0fca0d8` |
-| Production آخر إصدار موثق في سجل المشروع | `6793cbd` عبر `dpl_7Zy57QrthkevQfwL3CppRw895GDA`، موثق في `docs/CURRENT_PRODUCTION_STATUS.md` بتاريخ 2026-09-01. |
-| Supabase Production | `qatar-dental-dev` / ref `bqvcukxfsnchvkgejolz` |
-| Supabase Production region | `eu-central-1` |
-| Supabase Production status | `ACTIVE_HEALTHY` |
-| Supabase PostgreSQL | PostgreSQL 17، الإصدار الحالي الظاهر `17.6.1.155` |
-| Supabase Staging | `asnani-staging` / ref `yrlwoxlxizxgrodtbdcp` |
-| Staging status | `ACTIVE_HEALTHY` |
-| Staging region | `eu-central-1` |
-| Supabase Edge Functions | لا توجد Edge Functions في مشروع Production عند آخر تحقق مباشر. |
-| Production public tables | `49` جدولًا في `public` |
-| Production public functions | `46` اسم دالة ظاهر في catalog؛ بعض الأسماء لها overloads لذلك قد يكون عدد signatures أعلى من عدد الأسماء. |
-| آخر migration مطبق | `20260906074120_remove_duplicate_account_username_index` |
-| Production RLS | مفعّل على جداول `public` التي تم جردها. |
+| Vercel team | `team_aFtFTvzgabqENB5bOxn4SiO7` |
+| Framework | Next.js |
+| Node.js | `24.x` |
+| Production deployment الحالي | `dpl_HXUvTBS27pjDdKLFk8pV3jfhADv5` |
+| Production state | `READY` |
+| Production commit | `153d2e134827e61b4cf10a189b091330e8571879` |
+| Production branch | `main` |
+| Production region | `iad1` |
+| Bundler | Turbopack |
+| Production aliases | `www.mmc-mms.com`, `mmc-mms.com`, `dental-marketplace-pwa.vercel.app`, `dental-marketplace-pwa-bomussa.vercel.app`, `dental-marketplace-pwa-git-main-bomussa.vercel.app` |
+| Supabase Production | `qatar-dental-dev` |
+| Supabase ref | `bqvcukxfsnchvkgejolz` |
+| Supabase region | `eu-central-1` |
+| Supabase status | `ACTIVE_HEALTHY` |
+| PostgreSQL | `17.6.1.155` / engine 17 |
+| Supabase Staging | `asnani-staging` / `yrlwoxlxizxgrodtbdcp` |
+| Production Edge Functions | لا توجد Edge Functions منشورة حاليًا (`[]`) |
+| آخر migration Production | `20260906074120_remove_duplicate_account_username_index` |
+| public tables | 49، وكلها RLS-enabled في الجرد الحالي |
+| Security Advisor | تحذير واحد: `auth_leaked_password_protection` |
+| Performance Advisor | INFO لعدد من unused indexes؛ ليست أخطاء تشغيلية |
+| Vercel runtime errors | لا توجد أخطاء runtime مجمعة خلال آخر 7 أيام عند التحقق |
 
-### ملاحظة حاسمة عن GitHub ↔ Vercel
-
-`main` يحتوي حاليًا على commit أحدث من آخر Production deployment المؤكد. آخر deployment الذي تم التحقق منه مباشرة من Vercel هو Preview للفرع `feat/vision-goals-screen` بحالة `READY`. لذلك **لا يُكتب في أي مكان أن Production يطابق commit `84addac` إلا بعد deployment Production جديد ناجح**.
-
----
-
-# 3. آخر تحديث وظيفي
-
-أضيفت شاشة:
-
-`app/about/page.tsx`
-
-المسار:
-
-`/about`
-
-وتعرض:
-
-- اسم أسناني قطر.
-- عنوان «رؤيتنا وأهدافنا».
-- الرؤية المعتمدة.
-- تعريفًا مختصرًا بدور المنصة.
-- 10 أهداف تشغيلية واضحة.
-- الخلاصة: `ابحث ← قارن ← اختر ← احجز`.
-- تنبيه نطاق يوضح أن المنصة ليست جهة تشخيص أو علاج أو اعتماد طبي.
-- العربية والإنجليزية وفق locale الموجود في المشروع.
-- تصميم responsive متوافق مع النظام البصري الحالي.
-
-كما تم تحديث:
-
-`app/layout.tsx`
-
-لإضافة رابط Footer إلى `/about` دون تغيير مسار البحث أو الحجز أو المصادقة أو الإدارة.
-
-هذا التغيير لا يعدّل قاعدة البيانات ولا API ولا صلاحيات Supabase.
+**تصحيح مهم عن الحالة السابقة:** لم يعد صحيحًا القول إن Production متأخر عن `main`. تم نشر commit `153d2e134827e61b4cf10a189b091330e8571879` إلى Production بنجاح، وحالة deployment الحالية `READY`.
 
 ---
 
-# 4. المعمارية العامة
+# 3. دليل النشر الحالي
+
+Production deployment:
 
 ```text
-Browser / PWA
-    │
-    ▼
-Next.js App Router + Proxy
-    │
-    ├── Server Components / Client Components
-    ├── Server Actions
-    └── Route Handlers /api/*
-             │
-             ▼
-       Zod validation + normalization
-             │
-             ▼
-       Server-only operations
-             │
-             ▼
-       Supabase RPC / PostgreSQL
-             │
-             ├── RLS
-             ├── constraints
-             ├── triggers
-             ├── indexes
-             └── transactional booking logic
-             │
-             ▼
-       Supabase Auth / Realtime / PostgreSQL
+Deployment: dpl_HXUvTBS27pjDdKLFk8pV3jfhADv5
+State: READY
+Target: production
+Source: git
+Branch: main
+Git SHA: 153d2e134827e61b4cf10a189b091330e8571879
+Commit: docs: synchronize README with current GitHub Vercel and Supabase state
+Region: iad1
+Bundler: turbopack
 ```
 
-المبدأ الأساسي: **الواجهة ليست طبقة الصلاحية النهائية**. القرار الأمني يجب أن يُفرض في Route/Server Action/RPC/RLS بحسب العملية.
+Vercel build logs أثبتت بالتتابع:
+
+```text
+predeploy checks
+TypeScript
+ESLint
+Vitest
+Next.js production build
+25/25 static pages generated
+Deployment completed
+```
+
+نتيجة الاختبارات في هذا deployment:
+
+```text
+30 test files passed
+107 tests passed
+1 skipped
+```
+
+لا توجد أخطاء runtime مجمعة في آخر 7 أيام وفق Vercel Runtime Errors عند آخر تحقق.
 
 ---
 
-# 5. طبقات المشروع ومسؤولياتها
+# 4. المعمارية الكاملة
 
-| المسار | المسؤولية |
+```text
+User Browser / PWA
+        │
+        ▼
+Next.js App Router
+        │
+        ├── Server Components
+        ├── Client Components
+        ├── Server Actions
+        ├── Route Handlers (/api/*)
+        └── root proxy.ts
+                │
+                ▼
+        Validation / normalization
+                │
+                ▼
+        Server-only domain operations
+                │
+                ▼
+        Supabase client / RPC
+                │
+                ▼
+        PostgreSQL
+        ├── RLS
+        ├── grants
+        ├── constraints
+        ├── triggers
+        ├── indexes
+        ├── exclusion/concurrency rules
+        └── transactional booking logic
+                │
+                ├── Auth
+                └── Realtime
+```
+
+Next.js 16 يستخدم convention باسم `proxy.ts` بدل `middleware.ts`. الـProxy ليس طبقة التفويض الوحيدة؛ التحقق من الصلاحية يجب أن يبقى داخل Server Actions/Route Handlers/RPC/RLS حسب العملية. هذا يتوافق مع توجيهات Next.js الحالية. citeturn2search0turn2search1
+
+---
+
+# 5. طبقات المشروع: أين أجد الكود؟
+
+| المسار | الدور |
 |---|---|
-| `app/` | App Router، الصفحات، layouts، Server Actions، Route Handlers. |
-| `components/` | مكونات React للواجهة والتفاعل والتحديث اللحظي. |
-| `lib/` | validation، auth، Supabase clients، العمليات الخادمية، التسعير، البحث، الإشعارات، i18n. |
-| `supabase/` | migrations، baseline، seed التطوير، اختبارات قبول SQL. |
-| `tests/` | اختبارات Vitest وPlaywright. |
-| `load-tests/k6/` | سيناريوهات K6 للحمل والحجز والبحث، مع fixtures مثال فقط. |
-| `scripts/` | predeploy، readiness، schema baseline، role simulation، safe load، مزامنة الأنواع. |
-| `docs/` | أدلة التشغيل والتدقيق والإثبات التاريخي. |
-| `public/` | service worker، offline shell، الأصول المرئية. |
-| `presentations/` | مواد العرض التنفيذي وليست جزءًا من runtime. |
+| `app/` | صفحات App Router، layouts، Server Actions، Route Handlers، metadata/PWA/SEO |
+| `components/` | UI والمكونات التفاعلية والتحديث اللحظي |
+| `lib/` | domain logic، validation، auth، Supabase clients، search، pricing، notifications، support |
+| `supabase/migrations/` | المصدر المتسلسل لتغييرات PostgreSQL/RLS/RPC/indexes/triggers |
+| `supabase/baselines/` | baseline schema موثق |
+| `supabase/tests/` | اختبارات قبول قاعدة البيانات |
+| `tests/` | Vitest والاختبارات التكاملية الخفيفة |
+| `tests/e2e/` | Playwright E2E |
+| `load-tests/k6/` | سيناريوهات البحث والحجز وسلامة الحجز تحت الحمل |
+| `scripts/` | readiness، predeploy، schema baseline، role simulation، safe load، type sync |
+| `docs/` | runbooks، خرائط الكود، تقارير التدقيق، evidence |
+| `public/` | service worker، offline shell، assets |
+| `presentations/` | مواد العرض وليست runtime |
+| `proxy.ts` | طبقة الطلبات الأمامية/تحديث جلسة Supabase والـrequest handling |
 
 ---
 
-# 6. المسارات والصفحات الحالية
-
-| المسار | الغرض |
-|---|---|
-| `/` | الصفحة الرئيسية والبحث والمقارنة والمساعد. |
-| `/about` | الرؤية والأهداف. |
-| `/results` | نتائج النوع العلاجي الدقيق والمقارنة. |
-| `/login` | تسجيل الدخول والتسجيل للمستخدمين وفق عقد الحساب. |
-| `/auth/confirm` | تأكيد تدفق جلسة خارجي قديم/محدد. |
-| `/auth/forgot-password` | بدء استرداد كلمة المرور. |
-| `/auth/update-password` | تحديث كلمة المرور بعد تدفق الاسترداد. |
-| `/auth/signout` | تسجيل الخروج عبر POST من نفس الأصل. |
-| `/account` | حساب المريض وملفات المرضى والحجوزات والإشعارات والمراجعات. |
-| `/clinic` | مساحة العيادة للفروع والخدمات والعروض والمواعيد والحجوزات وفق الدور. |
-| `/clinic/bookings` | مساحة العميل التشغيلي المقيد بحجوزات الفرع المخصص. |
-| `/admin` | إدارة المنصة والكتالوج والعروض والمواعيد والمراجعات والدعم والتقارير. |
-| `/privacy` | صفحة الخصوصية الحالية. |
-| `/terms` | صفحة الشروط الحالية. |
-| `/operation-error` | أخطاء تشغيلية آمنة. |
-| `/manifest.webmanifest` | PWA manifest. |
-| `/pwa/icon/[size]` | أيقونات PWA الديناميكية. |
-| `/robots.txt` | SEO crawler policy. |
-| `/sitemap.xml` | SEO sitemap. |
-
----
-
-# 7. Route Handlers / API الحالية
-
-جميع المدخلات الحساسة تمر عبر validation/normalization قبل العمليات. لا يجب كشف SQL أو secrets في response.
-
-| Endpoint | Method | الغرض |
-|---|---:|---|
-| `/api/health` | GET | Health response عامة مختصرة؛ لا تكشف أسرارًا أو عدادات قاعدة البيانات. |
-| `/api/search` | GET | البحث العام في عروض الأسنان وفق treatment variant والوقت والموقع والنطاق. |
-| `/api/book` | POST | إنشاء الحجز عبر مسار ذري مع idempotency وقيود الأهلية. |
-| `/api/choices` | POST | telemetry للأحداث المختارة عبر server ingestion. |
-| `/api/device-installations` | POST | تسجيل/تحديث تثبيت الجهاز عبر المسار الخادمي. |
-| `/api/locale` | GET/POST بحسب العقد الحالي | إدارة locale. |
-| `/api/patient-booking-registration` | POST | تدفق تسجيل/تهيئة المريض المرتبط بالحجز وفق عقد الحساب. |
-| `/api/patient-phone-verification/start` | POST | بدء تحقق الهاتف عبر adapter المزود الخارجي. |
-| `/api/patient-phone-verification/confirm` | POST | تأكيد OTP واستهلاك challenge وتحديث `phone_verified_at`. |
-| `/api/support` | POST | دعم المستخدم/الزائر مع safety routing وknowledge/fallback. |
-| `/api/admin/reports/csv` | GET | تصدير تقرير إداري مصادق عليه. |
-| `/api/admin/reports/activity-csv` | GET | تصدير تقرير النشاط وفق صلاحية الإدارة. |
-
-### قواعد API الحرجة
-
-- `/api/book` لا يُعامل ككتابة عادية؛ الحجز يعتمد على RPC ذري.
-- `idempotency_key` يمنع إنشاء حجز مكرر عند إعادة المحاولة.
-- التحقق من ملف المريض والهاتف يتم قبل الحجز وفق العقد الحالي.
-- حدود المعدل مفروضة server-side/DB-side حسب العملية.
-- telemetry لا يسمح بكتابة مباشرة من المتصفح إلى جدول الأحداث.
-- support لا يقدم تشخيصًا طبيًا؛ حالات الطوارئ تمر بمسار سلامة ثابت.
-
----
-
-# 8. المكونات الرئيسية
+# 6. المسارات والصفحات
 
 ```text
-components/
-  account-booking-notifications.tsx
-  account-live-refresh.tsx
-  activity-report-card.tsx
-  admin-analytics-live-refresh.tsx
-  admin-choice-analytics.tsx
-  app-icon-artwork.tsx
-  book-button.tsx
-  brand-lockup.tsx
-  clinic-booking-actions.tsx
-  clinic-booking-status-form.tsx
-  clinic-live-refresh.tsx
-  device-installation-registrar.tsx
-  forgot-password-form.tsx
-  icons.tsx
-  locale-provider.tsx
-  locale-toggle.tsx
-  mobile-navigation.tsx
-  price-scope-fields.tsx
-  price-scope-summary.tsx
-  print-report-button.tsx
-  public-policy-template.tsx
-  results-live-refresh.tsx
-  search-form.tsx
-  site-header.tsx
-  super-admin-user-management.tsx
-  support-chat.tsx
-  ui.tsx
-  update-password-form.tsx
-  use-realtime-router-refresh.ts
+/                         home/search
+/about                    vision & goals
+/results                  search results/comparison
+/login                    account login
+/auth/confirm             auth confirmation
+/auth/forgot-password     password recovery start
+/auth/update-password     password update
+/auth/signout             POST signout
+/account                  patient account
+/clinic                   clinic workspace
+/clinic/bookings          clinic operational bookings
+/admin                    platform administration
+/privacy                  privacy policy
+/terms                    terms
+/operation-error          safe operational error surface
+/manifest.webmanifest     PWA manifest
+/pwa/icon/[size]          dynamic PWA icon
+/robots.txt               SEO crawler rules
+/sitemap.xml              SEO sitemap
+```
+
+Route Handlers في Next.js تكون داخل `app` في ملفات `route.ts` وتدعم HTTP methods القياسية. citeturn2search3turn2search5
+
+---
+
+# 7. جميع Route Handlers الحالية
+
+```text
+app/api/health/route.ts
+app/api/search/route.ts
+app/api/book/route.ts
+app/api/choices/route.ts
+app/api/device-installations/route.ts
+app/api/locale/route.ts
+app/api/patient-booking-registration/route.ts
+app/api/patient-phone-verification/start/route.ts
+app/api/patient-phone-verification/confirm/route.ts
+app/api/support/route.ts
+app/api/admin/reports/csv/route.ts
+app/api/admin/reports/activity-csv/route.ts
+```
+
+| Endpoint | Method | نقطة التنفيذ الأساسية |
+|---|---|---|
+| `/api/health` | GET | health response آمنة ومحدودة |
+| `/api/search` | GET | `lib/search-query.ts` + `lib/search-offers.ts` + Supabase search RPC |
+| `/api/book` | POST | `lib/booking-intent.client.ts` → server operation → `book_slot_server`/booking RPC |
+| `/api/choices` | POST | guard + server ingestion إلى `customer_choice_events` |
+| `/api/device-installations` | POST | guarded server registration |
+| `/api/locale` | GET/POST | locale contract |
+| `/api/patient-booking-registration` | POST | patient/account booking registration |
+| `/api/patient-phone-verification/start` | POST | server OTP adapter + challenge |
+| `/api/patient-phone-verification/confirm` | POST | OTP confirmation + atomic finalize |
+| `/api/support` | POST | safety routing + knowledge/fallback/model adapter |
+| `/api/admin/reports/csv` | GET | authenticated admin export |
+| `/api/admin/reports/activity-csv` | GET | authenticated activity export |
+
+**قاعدة أمنية:** لا تعتمد API على إخفاء عناصر الواجهة. Route Handler نفسه يتحقق من session/claims/ownership/role، ثم RPC/RLS يفرض الحد النهائي.
+
+---
+
+# 8. Server Actions
+
+```text
+app/account/actions.ts
+app/admin/actions.ts
+app/clinic/actions.ts
+app/login/actions.ts
+app/actions/locale.ts
+```
+
+أي تعديل في بيانات حساسة يجب أن يبقى server-side، مع validation وauthorization وعدم الثقة في قيم العميل.
+
+---
+
+# 9. الملفات الرئيسية في `app/`
+
+```text
+app/about/page.tsx
+app/account/actions.ts
+app/account/page.tsx
+app/actions/locale.ts
+app/admin/actions.ts
+app/admin/page.tsx
+app/api/admin/reports/activity-csv/route.ts
+app/api/admin/reports/csv/route.ts
+app/api/book/route.ts
+app/api/choices/route.ts
+app/api/device-installations/route.ts
+app/api/health/route.ts
+app/api/locale/route.ts
+app/api/patient-booking-registration/route.ts
+app/api/patient-phone-verification/confirm/route.ts
+app/api/patient-phone-verification/start/route.ts
+app/api/search/route.ts
+app/api/support/route.ts
+app/apple-icon.tsx
+app/auth/confirm/page.tsx
+app/auth/forgot-password/page.tsx
+app/auth/signout/route.ts
+app/auth/update-password/page.tsx
+app/clinic/actions.ts
+app/clinic/bookings/page.tsx
+app/clinic/page.tsx
+app/globals.css
+app/icon.tsx
+app/layout.tsx
+app/login/actions.ts
+app/login/page.tsx
+app/manifest.ts
+app/operation-error/page.tsx
+app/page.tsx
+app/privacy/page.tsx
+app/pwa/icon/[size]/route.tsx
+app/results/page.tsx
+app/robots.ts
+app/sitemap.ts
+app/terms/page.tsx
 ```
 
 ---
 
-# 9. المكتبات الخادمية والـdomain logic
+# 10. المكونات `components/`
 
 ```text
-lib/
-  account-auth.server.ts
-  account-copy.ts
-  account-nationality-options.ts
-  activity-report.ts
-  admin-copy.ts
-  auth-claims.server.ts
-  booking-intent.client.ts
-  choice-event-guard.ts
-  choice-events.client.ts
-  client-booking-workspace.ts
-  clinic-booking-attendance.ts
-  clinic-copy.ts
-  clinic-realtime-refresh.ts
-  clinic-role-display.ts
-  customer-choice-analytics.ts
-  database.types.ts
-  device-installation.client.ts
-  i18n/ar.ts
-  i18n/en.ts
-  i18n/index.ts
-  models.ts
-  money-input.ts
-  notifications.server.ts
-  operation-feedback.ts
-  operational-client-branches.ts
-  operations.server.ts
-  phone-verification.server.ts
-  price-scope.ts
-  price.ts
-  public-write-request-guard.ts
-  realtime-refresh-policy.ts
-  search-offers.ts
-  search-query.ts
-  server-readiness.ts
-  supabase/admin.ts
-  supabase/client.ts
-  supabase/proxy.ts
-  supabase/server.ts
-  support-model.server.ts
-  support-public-fallback.ts
-  treatment-catalog.server.ts
-  validation.ts
+components/account-booking-notifications.tsx
+components/account-live-refresh.tsx
+components/activity-report-card.tsx
+components/admin-analytics-live-refresh.tsx
+components/admin-choice-analytics.tsx
+components/app-icon-artwork.tsx
+components/book-button.tsx
+components/brand-lockup.tsx
+components/clinic-booking-actions.tsx
+components/clinic-booking-status-form.tsx
+components/clinic-live-refresh.tsx
+components/device-installation-registrar.tsx
+components/forgot-password-form.tsx
+components/icons.tsx
+components/locale-provider.tsx
+components/locale-toggle.tsx
+components/mobile-navigation.tsx
+components/price-scope-fields.tsx
+components/price-scope-summary.tsx
+components/print-report-button.tsx
+components/public-policy-template.tsx
+components/results-live-refresh.tsx
+components/search-form.tsx
+components/site-header.tsx
+components/super-admin-user-management.tsx
+components/support-chat.tsx
+components/ui.tsx
+components/update-password-form.tsx
+components/use-realtime-router-refresh.ts
 ```
 
-### مصادر الحقيقة للكود
-
-- `lib/validation.ts`: عقود Zod المركزية والتطبيع.
-- `lib/operations.server.ts`: عمليات server-only الأساسية.
-- `lib/database.types.ts`: الأنواع المولدة من Supabase.
-- `lib/search-offers.ts`: طبقة البحث والعروض.
-- `lib/price-scope.ts`: قواعد نطاق السعر.
-- `lib/price.ts` و`lib/money-input.ts`: تحويلات ومبالغ QAR بوحدات صحيحة.
-- `lib/auth-claims.server.ts`: claims الموثوقة للتفويض.
-- `lib/public-write-request-guard.ts`: حارس الكتابة العامة.
-- `lib/supabase/client.ts`: عميل المتصفح بمفتاح publishable.
-- `lib/supabase/server.ts`: عميل SSR مع cookies.
-- `lib/supabase/proxy.ts`: تحديث الجلسة عبر Proxy.
-- `lib/supabase/admin.ts`: عميل server-only مميز؛ لا يخرج إلى bundle المتصفح.
+المكونات لا تمنح صلاحيات. أي button أو UI state هو presentation؛ authorization الحقيقي في server/database.
 
 ---
 
-# 10. Supabase Production — الحالة الحية
+# 11. المكتبات `lib/` ومكان كل مسؤولية
 
-**Project:** `qatar-dental-dev`
+```text
+lib/account-auth.server.ts
+lib/account-copy.ts
+lib/account-nationality-options.ts
+lib/activity-report.ts
+lib/admin-copy.ts
+lib/auth-claims.server.ts
+lib/booking-intent.client.ts
+lib/choice-event-guard.ts
+lib/choice-events.client.ts
+lib/client-booking-workspace.ts
+lib/clinic-booking-attendance.ts
+lib/clinic-copy.ts
+lib/clinic-realtime-refresh.ts
+lib/clinic-role-display.ts
+lib/customer-choice-analytics.ts
+lib/database.types.ts
+lib/device-installation.client.ts
+lib/i18n/ar.ts
+lib/i18n/en.ts
+lib/i18n/index.ts
+lib/models.ts
+lib/money-input.ts
+lib/notifications.server.ts
+lib/operation-feedback.ts
+lib/operational-client-branches.ts
+lib/operations.server.ts
+lib/phone-verification.server.ts
+lib/price-scope.ts
+lib/price.ts
+lib/public-write-request-guard.ts
+lib/realtime-refresh-policy.ts
+lib/search-offers.ts
+lib/search-query.ts
+lib/server-readiness.ts
+lib/supabase/admin.ts
+lib/supabase/client.ts
+lib/supabase/proxy.ts
+lib/supabase/server.ts
+lib/support-model.server.ts
+lib/support-public-fallback.ts
+lib/treatment-catalog.server.ts
+lib/validation.ts
+```
 
-**Ref:** `bqvcukxfsnchvkgejolz`
+### خريطة الإصلاحات والبحث
 
-**Region:** `eu-central-1`
+- validation/Zod → `lib/validation.ts`
+- authorization claims → `lib/auth-claims.server.ts`
+- server operations → `lib/operations.server.ts`
+- search query parsing → `lib/search-query.ts`
+- offer search/domain mapping → `lib/search-offers.ts`
+- price representation → `lib/price.ts`, `lib/money-input.ts`
+- price scope rules → `lib/price-scope.ts`
+- booking intent → `lib/booking-intent.client.ts`
+- public write guard → `lib/public-write-request-guard.ts`
+- OTP/Twilio adapter → `lib/phone-verification.server.ts`
+- notifications → `lib/notifications.server.ts`
+- support/model routing → `lib/support-model.server.ts`, `lib/support-public-fallback.ts`
+- treatment catalog → `lib/treatment-catalog.server.ts`
+- Supabase browser client → `lib/supabase/client.ts`
+- Supabase SSR client → `lib/supabase/server.ts`
+- Supabase session/proxy integration → `lib/supabase/proxy.ts`
+- privileged server client → `lib/supabase/admin.ts`
+- database-generated types → `lib/database.types.ts`
+- readiness checks → `lib/server-readiness.ts`
 
-**Status:** `ACTIVE_HEALTHY`
+---
 
-**Database:** PostgreSQL 17 / `17.6.1.155`
+# 12. Supabase Production
 
-## 10.1 الجداول العامة — 49
+```text
+Project: qatar-dental-dev
+Ref: bqvcukxfsnchvkgejolz
+Region: eu-central-1
+Status: ACTIVE_HEALTHY
+PostgreSQL: 17.6.1.155
+```
+
+Supabase هو PostgreSQL فعلي، وRLS هو طبقة authorization داخل قاعدة البيانات؛ لا ينبغي اعتبار UI أو Route Handler وحده حدًا أمنيًا. citeturn0search0turn0search3
+
+## 12.1 الجداول العامة — 49
 
 ```text
 account_usernames
@@ -374,26 +459,56 @@ treatment_variants
 verification_records
 ```
 
-**RLS:** مفعّل على الجداول العامة التي تم جردها.
+كل هذه الجداول كانت `rls_enabled=true` في الجرد الحالي. توجد أيضًا قيود FK/check/unique وتوليد UUID حسب الجدول.
 
-### مجالات البيانات
+## 12.2 مجموعات البيانات
 
-- الهوية: `profiles`, `account_usernames`, `patient_profiles`.
-- العيادات والفروع: `clinics`, `branches`, `clinic_memberships`, `clinic_operator_accounts`.
-- التحقق: `verification_records`, `suspensions`.
-- الكتالوج: `treatment_catalog`, `treatment_variants`.
-- العروض والأسعار: `branch_service_offers`, `offer_revisions`, `price_disputes`.
-- المواعيد: `branch_hours`, `branch_hour_exceptions`, `resources`, `availability_slots`, `instant_slots`.
-- الحجز: `bookings`, `booking_status_history`, `idempotency_keys`, `booking_attendance_events`.
-- المريض والتحقق: `patient_profiles`, `patient_phone_verification_challenges`, `consent_records`, `device_installations`.
-- الدفع/التسوية: `payment_intents`, `payment_events`, `reconciliation_exceptions`, `clinic_fee_rules`, `settlement_periods`, `accounting_journals`, `accounting_journal_lines`, `report_exports`.
-- الإشعارات: `notification_subscriptions`, `notification_preferences`, `notification_templates`, `notification_outbox`, `notification_delivery_attempts`.
-- الدعم: `support_knowledge_articles`, `support_conversations`, `support_messages`.
-- التحليلات والحوكمة: `customer_choice_events`, `audit_events`, `feature_flags`, `rate_limit_buckets`.
+```text
+Identity/Auth:
+profiles, account_usernames, patient_profiles, consent_records
 
-## 10.2 وظائف PostgreSQL الحالية
+Clinic/Branch:
+clinics, branches, clinic_memberships, clinic_operator_accounts,
+clinic_operator_account_events
 
-الأسماء الظاهرة في catalog عند التحقق:
+Verification/Governance:
+verification_records, suspensions, audit_events
+
+Treatment/Search:
+treatment_catalog, treatment_variants, branch_service_offers,
+availability_slots, instant_slots, branch_hours, branch_hour_exceptions,
+resources, practitioners
+
+Booking:
+bookings, booking_status_history, idempotency_keys,
+booking_attendance_events
+
+Price/Trust:
+offer_revisions, price_disputes, clinic_fee_rules
+
+Finance:
+payment_intents, payment_events, reconciliation_exceptions,
+settlement_periods, accounting_journals, accounting_journal_lines,
+report_exports
+
+Notifications:
+notification_preferences, notification_subscriptions,
+notification_templates, notification_outbox,
+notification_delivery_attempts
+
+Support:
+support_knowledge_articles, support_conversations, support_messages
+
+Telemetry:
+customer_choice_events, device_installations, rate_limit_buckets,
+feature_flags
+```
+
+---
+
+# 13. PostgreSQL functions / RPC
+
+الأسماء الظاهرة في Production catalog عند آخر جرد:
 
 ```text
 admin_customer_choice_analytics
@@ -443,131 +558,148 @@ search_dental_offers
 verify_and_activate_server
 ```
 
-يوجد overload لاسم `book_slot`؛ لذلك عدّ الأسماء لا يساوي بالضرورة عدد signatures الفعلي.
+**ملاحظة:** `book_slot` له overload؛ عدد الأسماء ليس بالضرورة عدد function signatures.
 
-## 10.3 Edge Functions
-
-آخر جرد مباشر لـSupabase Production أعاد:
-
-`[]`
-
-أي **لا توجد Supabase Edge Functions منشورة حاليًا في هذا المشروع**. المسارات الخادمية الحالية تعمل داخل Next.js/Vercel وتستخدم Supabase PostgreSQL/Auth من الخادم.
+Supabase يوصي بتقييد EXECUTE على الدوال الحساسة، واستخدام `security invoker` افتراضيًا أو ضبط `search_path` بعناية عند الحاجة إلى `security definer`. كما يمكن استخدام Postgres logs و`raise` لتسجيل أخطاء الدوال المعقدة. citeturn0search4
 
 ---
 
-# 11. Supabase Staging
+# 14. Edge Functions
 
-**Project:** `asnani-staging`
+الجرد المباشر لـProduction:
 
-**Ref:** `yrlwoxlxizxgrodtbdcp`
+```text
+[]
+```
 
-**Region:** `eu-central-1`
-
-**Status:** `ACTIVE_HEALTHY`
-
-يُستخدم Staging لاختبارات الكتابة والـfixtures المعزولة عند الحاجة. لا يجوز نقل بيانات اختبار إلى Production، ولا استخدام بيانات اصطناعية لتجاوز بوابات التحقق أو صلاحيات العيادات.
+أي لا توجد Supabase Edge Functions منشورة حاليًا. المسارات الخادمية التشغيلية موجودة في Next.js/Vercel، بينما منطق البيانات الحرج موجود في PostgreSQL/RPC/RLS.
 
 ---
 
-# 12. آخر migrations مطبقة في Production
+# 15. Migrations — آخر حالة Production
 
-آخر migration مؤكد من Supabase هو:
+آخر migration مطبق:
 
 ```text
 20260906074120_remove_duplicate_account_username_index
 ```
 
-والـmigrations الأخيرة ذات الصلة:
+المigrations الأخيرة:
 
 ```text
-20260828210500_booking_eligibility_and_client_privileges_hardening_v1.sql
-20260829230000_normalize_account_username_case_v1.sql
-20260906074120_remove_duplicate_account_username_index.sql
+20260828210145_harden_booking_eligibility_and_client_privileges_v2
+20260828211437_normalize_account_username_case_v1
+20260906074120_remove_duplicate_account_username_index
 ```
 
-سجل المصدر الكامل موجود في:
+المصدر:
 
-`supabase/migrations/`
+```text
+supabase/migrations/*.sql
+```
 
-وسجل الترحيلات البعيدة:
+والتوثيق:
 
-`supabase/REMOTE_APPLIED_MIGRATIONS.md`
+```text
+supabase/REMOTE_APPLIED_MIGRATIONS.md
+supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql
+```
 
-Baseline الحالي:
-
-`supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql`
-
-واختبارات قبول قاعدة البيانات:
-
-`supabase/tests/acceptance.sql`
+Supabase migration history منفصلة عن Git history، لذلك يجب الحفاظ على تطابق ملفات `supabase/migrations` مع تاريخ قاعدة البيانات وعدم إجراء DDL إنتاجي غير موثق. citeturn0search2turn0search5
 
 ---
 
-# 13. قواعد الحجز وسلامة البيانات
-
-## البحث
+# 16. تدفق البحث
 
 ```text
 treatment_catalog
       ↓
 treatment_variants
       ↓
-branch_service_offers
-      ↓
-availability_slots
+search query validation
       ↓
 search_dental_offers
+      ↓
+branch_service_offers
+      ↓
+availability / instant slots
+      ↓
+results page
 ```
 
-المطابقة تعتمد على `treatment_variants.id`، وليس نصًا حرًا قد يخلط خدمات مختلفة.
+المطابقة تعتمد على `treatment_variants.id`، وليس على نص حر فقط، لتقليل خلط الخدمات المختلفة.
 
-## السعر
+العروض تحتوي على نطاقات السعر ومجال الشمول والتحقق وحالة العرض ووقت السريان.
 
-عملة المنصة الحالية للعروض هي `QAR`.
+---
 
-العرض يحدد:
+# 17. تدفق السعر وسلامة السعر
 
-- `price_type`: fixed / from / range / package / consultation_required.
-- `min_minor` و`max_minor` كوحدات صحيحة.
-- `price_scope` للبنود التي تشملها أو تستثنيها الخدمة.
-- وقت السريان والتحقق.
-- حالة العرض.
+العملة الحالية: `QAR`.
 
-لا يجب نشر عرض عام إذا كان نطاق السعر غير صالح للنشر وفق `is_price_scope_publishable` وtrigger الحماية المقابل.
-
-## الحجز
-
-المسار المنطقي:
+الأنواع:
 
 ```text
-اختيار العلاج
+fixed
+from
+range
+package
+consultation_required
+```
+
+التمثيل المالي يستخدم minor units:
+
+```text
+min_minor
+max_minor
+```
+
+ونطاق السعر محفوظ في `price_scope`، مع دوال:
+
+```text
+is_valid_price_scope
+is_price_scope_publishable
+enforce_public_offer_price_scope
+```
+
+المبدأ: لا ينشر العرض العام إذا كان نطاقه غير صالح، ولا يتم اختراع تكلفة مفقودة من الواجهة.
+
+---
+
+# 18. تدفق الحجز وسلامة التزامن
+
+```text
+Treatment
   ↓
-اختيار النوع الدقيق
+Exact Variant
   ↓
-البحث
+Search
   ↓
-العرض المؤهل
+Eligible Offer
   ↓
-موعد صالح
+Eligible Slot
   ↓
-تسجيل/دخول المريض
+Patient Account/Profile
   ↓
-ملف المريض
-  ↓
-تحقق الهاتف عند الحاجة
+Phone verification when required
   ↓
 POST /api/book
   ↓
-book_slot_server
+Server validation
   ↓
-transactional booking
+book_slot_server / booking RPC
   ↓
-idempotency + conflict protection
-  ↓
-booking + status history + outbox حسب الحدث
+transaction
+  ├── idempotency
+  ├── slot conflict protection
+  ├── practitioner/resource overlap protection
+  ├── offer snapshot
+  ├── booking record
+  ├── status history
+  └── notification outbox where applicable
 ```
 
-الحالات المدعومة في `bookings` تشمل:
+الحالات الموجودة في schema:
 
 ```text
 pending_hold
@@ -582,203 +714,102 @@ expired
 failed
 ```
 
-لا يجب إنشاء حجز مباشر من المتصفح عبر جدول `bookings`.
+لا يجوز للمتصفح تنفيذ `INSERT` مباشر إلى `bookings` كبديل لمسار الحجز الذري.
 
 ---
 
-# 14. الصلاحيات والأدوار
+# 19. أين أبحث عن الخطأ؟ — خريطة التشخيص
 
-## المريض
-
-يصل إلى:
-
-- البحث والمقارنة العامة.
-- حسابه.
-- ملفات المرضى التابعة المسموح بها.
-- الحجوزات الخاصة به.
-- الإشعارات.
-- المراجعات المسموح بها.
-
-## العيادة
-
-تعمل عبر `clinic_memberships`، والأدوار الحالية:
-
-```text
-owner
-manager
-receptionist
-pricing_manager
-viewer
-```
-
-## العميل التشغيلي
-
-يستخدم `clinic_operator_accounts` مع نطاق وصول مقيد بالحجوزات/الفرع وفق العضوية. لا يعتمد الأمان على إخفاء رابط أو صفحة؛ RLS وRPC server-only هما الحاجز الحقيقي.
-
-## مدير المنصة
-
-يحتاج claims الإدارة المناسبة ويتم التحقق منها server-side/DB-side.
-
-## Super Admin
-
-العمليات الأعلى امتيازًا، مثل إدارة حسابات العملاء التشغيليين وإجراءات حسابات المرضى المقيدة، تمر عبر المسارات الخادمية وRPC المخصصة، ولا تمنح الواجهة أي امتياز بمجرد إظهار الزر.
+| المشكلة | ابدأ من |
+|---|---|
+| الصفحة لا تظهر | `app/<route>/page.tsx` ثم `app/layout.tsx` ثم Vercel build/runtime |
+| API 4xx/5xx | `app/api/<route>/route.ts` ثم `lib/validation.ts` ثم `lib/operations.server.ts` ثم RPC/RLS |
+| بحث خاطئ | `app/api/search/route.ts` → `lib/search-query.ts` → `lib/search-offers.ts` → `search_dental_offers` |
+| سعر خاطئ/غير قابل للنشر | `lib/price.ts` → `lib/price-scope.ts` → `branch_service_offers` → price RPC/triggers |
+| حجز مكرر | `app/api/book/route.ts` → idempotency → `book_slot_server` → `idempotency_keys`/`bookings` |
+| تعارض موعد | `availability_slots` → booking RPC → overlap constraints/indexes |
+| مشكلة صلاحية مريض | `lib/auth-claims.server.ts` → `patient_profiles` RLS → booking policies/RPC |
+| مشكلة صلاحية عيادة | `clinic_memberships` → operator accounts → server RPC → RLS |
+| مشكلة Super Admin | `app/admin/actions.ts` → `auth-claims.server.ts` → admin RPCs → `audit_events` |
+| مشكلة OTP | start/confirm routes → `lib/phone-verification.server.ts` → `patient_phone_verification_challenges` → Twilio env |
+| مشكلة دعم | `/api/support` → `lib/support-model.server.ts` → fallback → support tables |
+| مشكلة notifications | `lib/notifications.server.ts` → outbox → delivery attempts → provider adapter |
+| مشكلة Realtime | component live-refresh → `use-realtime-router-refresh.ts` → `realtime-refresh-policy.ts` → Supabase Realtime/RLS |
+| مشكلة session | `proxy.ts` → `lib/supabase/proxy.ts` → `lib/supabase/server.ts` |
+| مشكلة PWA | `app/manifest.ts`, `public/sw.js`, `public/offline.html` |
+| مشكلة SEO | `app/robots.ts`, `app/sitemap.ts`, metadata/layout |
+| مشكلة build | Vercel build logs → `package.json` → `next.config.ts` → typecheck/lint/test/build |
+| مشكلة Production فقط | Vercel deployment/runtime logs أولًا، ثم Supabase live state |
+| مشكلة DB/RLS | migration + table definition + policy/grant + RPC + `supabase/tests/acceptance.sql` |
 
 ---
 
-# 15. المصادقة والحسابات
+# 20. السجلات والأدلة
 
-المشروع يستخدم Supabase Auth مع طبقة حساب داخلية تعتمد username/password وفق العقد الحالي.
+## GitHub
 
-الجداول ذات الصلة:
+المصدر لتاريخ الكود:
 
 ```text
-auth.users
-profiles
-account_usernames
-patient_profiles
-clinic_memberships
-clinic_operator_accounts
+commits
+pull requests
+.github/workflows/ci.yml
+CHANGELOG.md
+docs/*
 ```
 
-ملف المريض يمكن أن يحتوي على:
+## Vercel
 
-- الاسم المعروض.
-- العلاقة `self/child/spouse/parent/other`.
-- تاريخ الميلاد.
-- الجنس.
-- الرقم الوطني عند توفره وفق عقد التطبيق.
-- الجنسية ISO alpha-2.
-- الهاتف.
-- `phone_verified_at`.
-- `archived_at`.
+المصدر لتشغيل التطبيق:
 
-كلمة المرور لا تُحفظ في `public` ولا تظهر في API أو README أو logs.
+```text
+Deployment state
+Build logs
+Runtime logs
+Runtime Errors
+Domains/Aliases
+Git commit metadata
+```
+
+آخر تحقق: لا توجد runtime errors مجمعة خلال آخر 7 أيام.
+
+## Supabase
+
+المصدر لسلامة البيانات:
+
+```text
+live schema
+migrations
+RLS
+RPC/function catalog
+Security Advisor
+Performance Advisor
+Postgres logs
+```
+
+أي debug logging يجب ألا يسجل secrets أو OTP أو كلمات مرور أو PII غير الضرورية. يمكن للدوال PostgreSQL استخدام `raise` بمستويات مناسبة وفق إرشادات Supabase. citeturn0search4
 
 ---
 
-# 16. OTP / Twilio
+# 21. Security Advisor — الحالة الفعلية
 
-التحقق من الهاتف موجود في الكود عبر:
-
-```text
-app/api/patient-phone-verification/start/route.ts
-app/api/patient-phone-verification/confirm/route.ts
-lib/phone-verification.server.ts
-patient_phone_verification_challenges
-```
-
-عقود البيئة ذات الصلة:
+التحذير الحالي:
 
 ```text
-TWILIO_VERIFY_SERVICE_SID
-TWILIO_API_KEY
-TWILIO_API_SECRET
+auth_leaked_password_protection
+Level: WARN
+Leaked Password Protection Disabled
 ```
 
-إذا لم تكن أسرار المزود مهيأة، يجب أن يفشل المسار بأمان؛ لا توجد بيانات اعتماد حقيقية في Git.
+المعنى: Supabase Auth لا يفعّل حاليًا فحص كلمات المرور المسربة. هذا **تحسين أمني مطلوب** وليس دليل اختراق.
 
-**لا تعتبر هذه الوثيقة تفعيلًا لـOTP الحقيقي ما لم يوجد تحقق تشغيلي مباشر من المزود في البيئة المستهدفة.**
+الإجراء الموصى به: تفعيل Leaked Password Protection قبل اعتبار hardening الأمني مكتملًا، وفق سياسة المنتج. citeturn0search7
 
 ---
 
-# 17. الدعم والمساعد
+# 22. Performance Advisor — الحالة الفعلية
 
-المسار:
-
-`/api/support`
-
-المكونات:
-
-```text
-components/support-chat.tsx
-lib/support-model.server.ts
-lib/support-public-fallback.ts
-support_knowledge_articles
-support_conversations
-support_messages
-```
-
-القواعد:
-
-- الزائر يمكنه الحصول على دعم عام غير تشخيصي.
-- المستخدم المصادق يمكن أن تكون له محادثة محفوظة وفق RLS.
-- المقالات المعتمدة هي مصدر المعرفة المقيد عند توفرها.
-- الحالات الطبية/الطارئة لا تمر إلى نموذج تشخيصي؛ تستخدم safety response.
-- لا يُخترع سعر أو موعد أو سياسة.
-- عند غياب خدمة خارجية، fallback محلي آمن هو المسار البديل.
-
----
-
-# 18. Realtime
-
-الـRealtime مستخدم لإعادة التحقق/التحديث في أسطح مختارة، وليس كبديل عن RLS.
-
-المكونات الرئيسية:
-
-```text
-components/account-live-refresh.tsx
-components/admin-analytics-live-refresh.tsx
-components/clinic-live-refresh.tsx
-components/results-live-refresh.tsx
-components/use-realtime-router-refresh.ts
-lib/clinic-realtime-refresh.ts
-lib/realtime-refresh-policy.ts
-```
-
-تظل صلاحيات قاعدة البيانات هي الحكم النهائي للبيانات التي يمكن للمستخدم رؤيتها.
-
----
-
-# 19. الإشعارات
-
-البنية:
-
-```text
-notification_templates
-notification_preferences
-notification_subscriptions
-notification_outbox
-notification_delivery_attempts
-```
-
-الخدمة الخادمية:
-
-`lib/notifications.server.ts`
-
-القنوات المعرفة في المخطط تشمل `email`, `push`, `in_app`، مع دعم بنية SMS في subscriptions، بينما لا يعني وجود schema أن كل provider خارجي مفعّل في Production.
-
----
-
-# 20. الأمن
-
-الضوابط الحالية تشمل:
-
-- RLS.
-- Server-only RPCs للعمليات الحرجة.
-- Zod validation.
-- normalization للبيانات.
-- rate limiting.
-- idempotency.
-- منع direct browser writes للعمليات الحساسة.
-- CSP/PWA checks.
-- فصل publishable Supabase key عن server secret.
-- عدم وضع secrets في Git.
-- حماية مسارات الإدارة والعيادات بالclaims/membership/RPC/RLS.
-- منع ظهور بيانات synthetic/dev في البحث العام وفق migrations الحماية.
-
-### Advisor الحالي في Supabase — Security
-
-آخر فحص مباشر أظهر تحذيرًا واحدًا:
-
-`auth_leaked_password_protection`
-
-**Leaked Password Protection Disabled**
-
-هذا يعني أن Supabase Auth لا يستخدم حاليًا فحص كلمات المرور المسربة مقابل HaveIBeenPwned.org. الحالة `WARN` وليست ادعاءً بأن النظام مخترق. يجب تفعيلها كتحسين أمني قبل اعتماد الوضع النهائي إذا كان متوافقًا مع سياسة المنتج.
-
-### Advisor الحالي — Performance
-
-ظهر عدد من `unused_index` كـ`INFO`، وليس كأخطاء تشغيلية. من أمثلتها:
+يوجد عدد من `unused_index` بمستوى `INFO`. أمثلة موثقة:
 
 ```text
 branch_service_offers_public_search_idx
@@ -789,6 +820,8 @@ bookings_clinic_start_at_idx
 no_active_practitioner_overlap
 no_active_resource_overlap
 customer_choice_events_session_idx
+customer_choice_events_variant_idx
+customer_choice_events_treatment_idx
 branches_location_gist
 availability_practitioner_time_idx
 availability_resource_time_idx
@@ -801,20 +834,170 @@ clinic_fee_rules_effective_idx
 accounting_journals_period_idx
 accounting_journal_lines_journal_idx
 notification_outbox_dispatch_idx
+notification_outbox_template_id_idx
 support_messages_conversation_idx
+report_exports_settlement_period_id_idx
+bookings_booked_by_user_created_idx
+accounting_journals_reversed_journal_id_idx
 ```
 
-لا يتم حذف index لمجرد ظهوره كـunused؛ يجب إثبات أنه غير مطلوب للخطط المستقبلية/قيود التزامن قبل أي DDL.
+لا يتم حذف index لمجرد ظهوره كـunused؛ بعض الفهارس موجودة لحماية التزامن/القيود أو لاستخدامات مستقبلية، ويجب إثبات عدم الحاجة قبل DDL.
 
 ---
 
-# 21. متغيرات البيئة
+# 23. RLS والامتيازات
 
-المصدر:
+كل جدول exposed في `public` يجب أن يملك RLS/grants مناسبة. RLS ليس مجرد filter في التطبيق؛ هو authorization داخل PostgreSQL ويمكنه حماية الوصول حتى عند استخدام أدوات أخرى تصل إلى قاعدة البيانات. توصي Supabase باختبارات allow/deny لـSELECT/INSERT/UPDATE/DELETE والأدوار ذات الصلة. citeturn0search3turn0search11
 
-`.env.example`
+القواعد المحلية للمشروع:
 
-الأسماء الحالية المتوقعة تشمل:
+1. لا direct browser write إلى الجداول الحساسة.
+2. لا service-role في Client Component.
+3. لا اعتبار إخفاء button authorization.
+4. العمليات الحرجة تمر عبر server/RPC.
+5. RLS هو الحاجز النهائي على البيانات المعروضة.
+6. كل تغيير schema يجب أن يكون migration.
+7. بعد DDL يعاد فحص RLS/grants/advisors.
+
+---
+
+# 24. الأدوار والصلاحيات
+
+## Patient
+
+- public search/comparison
+- account
+- patient profiles المسموح بها
+- own bookings
+- notifications
+- eligible reviews
+
+## Clinic membership roles
+
+```text
+owner
+manager
+receptionist
+pricing_manager
+viewer
+```
+
+## Clinic operator
+
+`clinic_operator_accounts` مرتبط بعضوية وعيادة/فرع، والوصول مقيد server-side/RPC/RLS.
+
+## Platform admin / Super Admin
+
+العمليات الأعلى امتيازًا تمر عبر claims + server actions + privileged RPCs + audit trail. وجود رابط `/admin` لا يعني أن المستخدم يملك الصلاحية.
+
+---
+
+# 25. Authentication / Patient Accounts
+
+الجداول الرئيسية:
+
+```text
+auth.users
+profiles
+account_usernames
+patient_profiles
+clinic_memberships
+clinic_operator_accounts
+```
+
+`patient_profiles` في Production تحتوي قيودًا فعلية للـnational ID والهاتف والجنسية والعلاقة والجنس، ومنها:
+
+```text
+national_id: 11 digits when present
+nationality: ISO alpha-2 uppercase when present
+phone: E.164 when present
+phone_verified_at
+archived_at
+```
+
+لا تحفظ كلمات المرور في `public` ولا في README ولا في logs.
+
+---
+
+# 26. OTP / Twilio
+
+الكود:
+
+```text
+app/api/patient-phone-verification/start/route.ts
+app/api/patient-phone-verification/confirm/route.ts
+lib/phone-verification.server.ts
+patient_phone_verification_challenges
+```
+
+Environment contract:
+
+```text
+TWILIO_VERIFY_SERVICE_SID
+TWILIO_API_KEY
+TWILIO_API_SECRET
+```
+
+وجود adapter أو environment variable **لا يثبت وحده** أن مزود SMS يعمل end-to-end في Production؛ إثبات التفعيل يتطلب اختبارًا تشغيليًا فعليًا.
+
+---
+
+# 27. Support / Assistant
+
+```text
+app/api/support/route.ts
+components/support-chat.tsx
+lib/support-model.server.ts
+lib/support-public-fallback.ts
+support_knowledge_articles
+support_conversations
+support_messages
+```
+
+القواعد:
+
+- لا تشخيص طبي.
+- لا اختراع سعر/موعد.
+- emergency/medical/privacy/billing/abuse لها safety categories.
+- knowledge articles المعتمدة مصدر مقيد عندما تكون متاحة.
+- fallback محلي آمن عند غياب provider خارجي.
+
+---
+
+# 28. Realtime
+
+```text
+components/account-live-refresh.tsx
+components/admin-analytics-live-refresh.tsx
+components/clinic-live-refresh.tsx
+components/results-live-refresh.tsx
+components/use-realtime-router-refresh.ts
+lib/clinic-realtime-refresh.ts
+lib/realtime-refresh-policy.ts
+```
+
+Realtime للتحديث/إعادة التحقق، وليس بديلًا عن RLS أو server authorization.
+
+---
+
+# 29. Notifications
+
+```text
+notification_templates
+notification_preferences
+notification_subscriptions
+notification_outbox
+notification_delivery_attempts
+lib/notifications.server.ts
+```
+
+الـschema يعرف قنوات/حالات delivery، لكن وجود الجداول لا يعني أن كل provider خارجي مفعّل.
+
+---
+
+# 30. Environment Variables
+
+المصدر: `.env.example`
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
@@ -830,85 +1013,82 @@ TWILIO_API_SECRET
 PRODUCTION_READINESS_SEARCH_VARIANT
 ```
 
-### القاعدة
-
-- `NEXT_PUBLIC_*` فقط للقيم التي يمكن أن تكون عامة.
-- `SUPABASE_SECRET_KEY` server-only.
-- `SUPABASE_SERVICE_ROLE_KEY` legacy fallback server-only فقط عند الحاجة.
-- مفاتيح OpenAI/Twilio server-only.
-- لا توضع القيم الفعلية في README أو Git أو issue أو logs.
-
----
-
-# 22. package.json والتقنيات
-
-الاسم في `package.json`:
-
-`qatar-dental-dev`
-
-الإصدار:
-
-`0.1.0`
-
-التقنيات الحالية المثبتة في المستودع:
+القواعد:
 
 ```text
-Next.js ^16.3.1
-React 19.2.8
-React DOM 19.2.8
-@supabase/ssr 0.12.4
-@supabase/supabase-js 2.111.0
-Zod 4.4.3
-Tailwind CSS 4.3.3
-@tailwindcss/postcss 4.3.3
-TypeScript 5.8.3
-ESLint 9.39.5
-eslint-config-next ^16.3.1
-Vitest 4.1.10
-Playwright 1.62.0
-@axe-core/playwright 4.13.0
-Node types 26.1.2
+NEXT_PUBLIC_*                 public-safe values only
+SUPABASE_SECRET_KEY           server-only
+SUPABASE_SERVICE_ROLE_KEY     server-only legacy fallback
+OPENAI_API_KEY                server-only
+TWILIO_*                      server-only
 ```
+
+لا توجد أسرار فعلية في README أو Git.
 
 ---
 
-# 23. أوامر التشغيل والتحقق
+# 31. package.json والتقنيات الفعلية
 
-```bash
-npm install
+`package.json` الحالي:
+
+```text
+next ^16.3.1
+react 19.2.8
+react-dom 19.2.8
+@supabase/ssr 0.12.4
+@supabase/supabase-js 2.111.0
+zod 4.4.3
+@axe-core/playwright 4.13.0
+@playwright/test 1.62.0
+@tailwindcss/postcss 4.3.3
+@types/node 26.1.2
+@types/react 19.2.18
+@types/react-dom 19.2.3
+eslint 9.39.5
+eslint-config-next ^16.3.1
+tailwindcss 4.3.3
+typescript 5.8.3
+vitest 4.1.10
+```
+
+اسم package: `qatar-dental-dev`
+
+الإصدار: `0.1.0`
+
+---
+
+# 32. Scripts التشغيل والتحقق
+
+```text
 npm run dev
+npm run build
+npm run start
 npm run typecheck
 npm run lint
 npm run test
-npm run build
-npm run verify
+npm run test:watch
 npm run test:e2e
-npm run check:production
 npm run predeploy:check
+npm run verify
+npm run verify:e2e
+npm run check:production
 npm run vercel-build
-npm run start -- -p 3000
 ```
 
-### معنى الأوامر
+المعاني:
 
-| الأمر | الوظيفة |
-|---|---|
-| `npm run dev` | تشغيل Next.js محليًا. |
-| `npm run typecheck` | فحص TypeScript دون إصدار ملفات. |
-| `npm run lint` | ESLint. |
-| `npm run test` | Vitest. |
-| `npm run build` | Next.js production build. |
-| `npm run verify` | predeploy + typecheck + lint + tests + build. |
-| `npm run test:e2e` | build ثم Playwright. |
-| `npm run check:production` | production readiness read-only check. |
-| `npm run predeploy:check` | predeploy gates وكشف الأسرار والمسارات الحرجة. |
-| `npm run vercel-build` | build command المستخدم في بيئة Vercel. |
+- `typecheck`: TypeScript.
+- `lint`: ESLint.
+- `test`: Vitest.
+- `test:e2e`: build + Playwright.
+- `predeploy:check`: readiness/secrets/critical path gates.
+- `verify`: predeploy + typecheck + lint + tests + build.
+- `check:production`: readiness read-only check.
+- `vercel-build`: نفس بوابة البناء المستخدمة على Vercel.
 
 ---
 
-# 24. الاختبارات
-
-## Unit / integration-style tests
+# 33. الاختبارات الموجودة
 
 ```text
 tests/activity-report.test.ts
@@ -941,21 +1121,19 @@ tests/support-model.test.ts
 tests/treatment-catalog-resilience.test.ts
 tests/ui-design-system.test.ts
 tests/validation.test.ts
-```
 
-## E2E
-
-```text
 tests/e2e/accessibility.spec.ts
 tests/e2e/home.spec.ts
 tests/e2e/password-reset.spec.ts
+
+supabase/tests/acceptance.sql
 ```
 
-## Database acceptance
+آخر Vercel build أثبت `30/30` test files و`107` tests passed و`1` skipped.
 
-`supabase/tests/acceptance.sql`
+---
 
-## K6
+# 34. K6 / Load Testing
 
 ```text
 load-tests/k6/README.md
@@ -966,11 +1144,11 @@ load-tests/k6/shared.js
 load-tests/k6/fixtures/booking-fixtures.example.json
 ```
 
-**ممنوع تشغيل حمل هادم أو إنشاء حجوزات حقيقية في Production دون تفويض وخطة اختبار مستقلة.**
+`booking-integrity-flow.js` مخصص لاختبارات سلامة الحجز/التزامن. لا تشغل load أو booking creation الحقيقي على Production دون بيئة/تفويض واضحين.
 
 ---
 
-# 25. scripts
+# 35. Scripts المشروع
 
 ```text
 scripts/generate-schema-baseline.py
@@ -984,80 +1162,40 @@ scripts/verify-schema-baseline.py
 
 ---
 
-# 26. Supabase source tree
+# 36. Supabase source tree
 
 ```text
-supabase/
-  REMOTE_APPLIED_MIGRATIONS.md
-  baselines/
-    20260825000000_asnani_current_schema_snapshot.sql
-    README.md
-  migrations/
-    *.sql — المصدر المتسلسل لكل تغييرات PostgreSQL/RLS/RPC/indexes/triggers
-  seed.dev.sql
-  tests/
-    acceptance.sql
+supabase/REMOTE_APPLIED_MIGRATIONS.md
+supabase/seed.dev.sql
+supabase/baselines/README.md
+supabase/baselines/20260825000000_asnani_current_schema_snapshot.sql
+supabase/migrations/*.sql
+supabase/tests/acceptance.sql
 ```
 
-آخر migration source في `main`:
-
-```text
-supabase/migrations/20260906074120_remove_duplicate_account_username_index.sql
-```
-
-ولا توجد Edge Function files تشغيلية في شجرة Supabase الحالية، وهو متوافق مع جرد Supabase المباشر الذي أعاد صفر Edge Functions.
+لا توجد Edge Function source files تشغيلية في الشجرة الحالية لأن Production لا يحتوي Edge Functions منشورة.
 
 ---
 
-# 27. الملفات التنفيذية الرئيسية في app
+# 37. PWA / SEO / Static
 
 ```text
-app/
-  account/actions.ts
-  account/page.tsx
-  actions/locale.ts
-  admin/actions.ts
-  admin/page.tsx
-  api/admin/reports/activity-csv/route.ts
-  api/admin/reports/csv/route.ts
-  api/book/route.ts
-  api/choices/route.ts
-  api/device-installations/route.ts
-  api/health/route.ts
-  api/locale/route.ts
-  api/patient-booking-registration/route.ts
-  api/patient-phone-verification/confirm/route.ts
-  api/patient-phone-verification/start/route.ts
-  api/search/route.ts
-  api/support/route.ts
-  apple-icon.tsx
-  auth/confirm/page.tsx
-  auth/forgot-password/page.tsx
-  auth/signout/route.ts
-  auth/update-password/page.tsx
-  clinic/actions.ts
-  clinic/bookings/page.tsx
-  clinic/page.tsx
-  globals.css
-  icon.tsx
-  layout.tsx
-  login/actions.ts
-  login/page.tsx
-  manifest.ts
-  operation-error/page.tsx
-  page.tsx
-  privacy/page.tsx
-  pwa/icon/[size]/route.tsx
-  results/page.tsx
-  robots.ts
-  sitemap.ts
-  terms/page.tsx
-  about/page.tsx
+app/manifest.ts
+app/robots.ts
+app/sitemap.ts
+app/pwa/icon/[size]/route.tsx
+app/icon.tsx
+app/apple-icon.tsx
+public/sw.js
+public/offline.html
+public/visuals/clinical-aurora-hero.webp
 ```
+
+Next.js App Router هو file-system based، لذلك إضافة/تغيير `page.tsx`, `layout.tsx`, `route.ts`, `robots.ts`, `sitemap.ts`, `manifest.ts` تغيّر behavior/route مباشرة. citeturn2search9turn2search11
 
 ---
 
-# 28. الملفات الجذرية المهمة
+# 38. الملفات الجذرية المهمة
 
 ```text
 .env.example
@@ -1082,139 +1220,7 @@ todo.md
 
 ---
 
-# 29. PWA وSEO
-
-```text
-app/manifest.ts
-app/robots.ts
-app/sitemap.ts
-app/pwa/icon/[size]/route.tsx
-public/sw.js
-public/offline.html
-```
-
-الأصول الحالية:
-
-```text
-public/visuals/clinical-aurora-hero.webp
-```
-
-والـvisual evidence محفوظ في `docs/visual-proof/` و`docs/evidence/`.
-
----
-
-# 30. الاتصال بين GitHub وVercel وSupabase
-
-```text
-GitHub
-  Bomussa/dental-marketplace-pwa
-        │
-        │ Git integration
-        ▼
-Vercel
-  Project: dental-marketplace-pwa
-  Project ID: prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr
-        │
-        │ Next.js server/runtime
-        ▼
-Supabase
-  Production ref: bqvcukxfsnchvkgejolz
-  Staging ref:    yrlwoxlxizxgrodtbdcp
-        │
-        ├── Auth
-        └── PostgreSQL + RLS + RPC + Realtime
-```
-
-لا توجد علاقة تشغيلية بين هذا المشروع وبين مستودعي `Bomussa/love` أو `Bomussa/love-api`. **هذا المشروع مستقل عنهما.**
-
----
-
-# 31. Vercel — تفاصيل آخر Deployment تم التحقق منه
-
-```text
-Project: dental-marketplace-pwa
-Project ID: prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr
-Deployment: dpl_45ZC9EiPh6oSwQkhXQtfyecHHkSz
-State: READY
-URL: dental-marketplace-40z349zgy-bomussa.vercel.app
-Source: git
-Branch: feat/vision-goals-screen
-GitHub PR: #19
-GitHub commit: bd815f001175218b04d679e5ca33af40c0fca0d8
-Bundler: turbopack
-Region: iad1
-```
-
-هذا deployment يثبت Preview ناجحًا للميزة الجديدة. لا يثبت أنه Production.
-
----
-
-# 32. Production status — ما يمكن وما لا يمكن قوله
-
-### مثبت
-
-- يوجد Production deployment سابق موثق بحالة `READY` في `docs/CURRENT_PRODUCTION_STATUS.md`.
-- `main` الآن أحدث من ذلك الإصدار.
-- آخر Preview مباشر للميزة الجديدة `READY`.
-- Supabase Production `ACTIVE_HEALTHY`.
-- آخر migration في Supabase Production هو `20260906074120`.
-
-### غير مثبت حاليًا من آخر تحقق مباشر
-
-- أن commit `84addac` منشور في Production.
-- أن `/about` موجود على النطاق Production قبل نشر `main` الجديد.
-- أن OTP الحقيقي يعمل end-to-end في Production.
-- أن جميع العيادات التشغيلية الحقيقية معتمدة وجاهزة للحجز.
-- أن Realtime للحجز قد خضع لاختبار تشغيلي حي حديث.
-- أن K6 للحجز التشغيلي تم تشغيله على Production.
-
-لا يجوز تحويل أي بند من القسم السابق إلى ادعاء جاهزية أو تفعيل إلا بعد إثبات مباشر.
-
----
-
-# 33. التشغيل المحلي
-
-```bash
-cp .env.example .env.local
-npm install
-npm run verify
-npm run test:e2e
-npm run dev
-```
-
-لتشغيل build محليًا:
-
-```bash
-npm run build
-npm run start -- -p 3000
-```
-
-يجب أن تكون قيم Supabase العامة الصحيحة موجودة في البيئة المحلية. لا تنسخ secrets Production إلى Git أو إلى ملفات قابلة للرفع.
-
----
-
-# 34. قواعد التطوير وعدم التعارض
-
-1. لا تكرر validation schema خارج `lib/validation.ts` دون سبب موثق.
-2. لا تنشئ مسار حجز جديدًا خارج `/api/book` دون عقد أمني واضح ومراجعة.
-3. لا تكتب مباشرة إلى الجداول الحساسة من المتصفح.
-4. لا تعتمد على إخفاء الأزرار كصلاحية.
-5. لا تستخدم service role/secret key في Client Component.
-6. لا تضف أسعارًا أو عيادات أو مواعيد وهمية إلى Production.
-7. لا تعدّل Production schema يدويًا دون migration مصدرية قابلة لإعادة التطبيق.
-8. كل migration جديد يجب أن يظهر في `supabase/migrations/` ويُراجع تسلسله.
-9. بعد أي DDL، أعد فحص RLS وRPC grants وSupabase Advisors.
-10. لا تُعتبر Preview مساوية لـProduction.
-11. لا تعتبر وجود schema/provider adapter دليلًا على تفعيل المزود الخارجي.
-12. أي تغيير في endpoint أو table أو RPC أو environment contract يجب أن يرافقه تحديث README والوثيقة المتخصصة ذات الصلة.
-13. لا تُكتب secrets أو PII أو بيانات اعتماد حقيقية في README أو docs أو issues.
-14. لا تُستخدم البيانات الاصطناعية لتجاوز `verification/activation` gates.
-
----
-
-# 35. الوثائق المرجعية داخل المستودع
-
-الوثائق التشغيلية المهمة:
+# 39. التوثيق التشغيلي داخل `docs/`
 
 ```text
 docs/ARCHITECTURE_AND_CODE_MAP_AR.md
@@ -1234,46 +1240,268 @@ docs/TEST_REPORT.md
 docs/README.md
 ```
 
-تقارير التدقيق المؤرخة هي evidence/snapshots وليست بديلًا عن الحالة الحية في GitHub/Vercel/Supabase.
+التقارير المؤرخة evidence تاريخية. لا تستخدمها وحدها لإثبات الحالة الحالية إذا اختلفت عن GitHub/Vercel/Supabase.
 
 ---
 
-# 36. سياسة تحديث README
+# 40. آخر تحديث وظيفي: `/about`
 
-هذا الملف هو **وصف الحالة الحالية وليس سجلًا تاريخيًا جامدًا**.
-
-عند حدوث أي تغيير في:
-
-- GitHub branch/commit structure.
-- Vercel project/deployment/domain.
-- Supabase project/schema/migration/RLS/RPC.
-- API endpoints.
-- Auth/roles.
-- environment contracts.
-- booking rules.
-- treatment/price rules.
-- notification behavior.
-- Realtime behavior.
-- PWA/SEO paths.
-
-يجب تحديث README في نفس دورة التغيير، مع إبقاء الوثائق التاريخية المؤرخة دون إعادة كتابة بأثر رجعي.
-
----
-
-# 37. مصدر الحقيقة النهائي
-
-عند وجود تعارض بين وثيقة قديمة والحالة الحية:
+الملف:
 
 ```text
-Supabase live schema/migrations
-        +
-Vercel live deployment metadata
-        +
-GitHub main source tree
-        ↓
-الحالة التشغيلية الحالية
+app/about/page.tsx
 ```
 
-التقارير المؤرخة تحت `docs/` تستخدم لإثبات ما حدث في تاريخ محدد، وليست وحدها مصدرًا للحالة الحالية.
+المسار:
 
-**آخر مزامنة موثقة لهذا README: 2026-09-07.**
+```text
+/about
+```
+
+والربط في:
+
+```text
+app/layout.tsx
+```
+
+المحتوى:
+
+- الرؤية.
+- 10 أهداف تشغيلية.
+- دور المنصة.
+- `ابحث ← قارن ← اختر ← احجز`.
+- disclaimer بأن المنصة ليست جهة تشخيص أو علاج أو اعتماد طبي.
+- العربية والإنجليزية.
+- responsive/mobile-first.
+
+تم نشر هذا التغيير في Production ضمن commit `153d2e134827e61b4cf10a189b091330e8571879`.
+
+---
+
+# 41. الاتصال GitHub → Vercel → Supabase
+
+```text
+GitHub
+Bomussa/dental-marketplace-pwa
+       │
+       │ Git integration
+       ▼
+Vercel
+Project: dental-marketplace-pwa
+Project ID: prj_Dj3iqScGPVpMZdbluhw7YUwNBbSr
+       │
+       │ Next.js server/runtime
+       ▼
+Supabase
+Production: bqvcukxfsnchvkgejolz
+Staging:    yrlwoxlxizxgrodtbdcp
+       │
+       ├── Auth
+       ├── PostgreSQL
+       ├── RLS
+       ├── RPC
+       └── Realtime
+```
+
+المسار التشغيلي الفعلي ليس Browser → database مباشرة للعمليات الحساسة؛ المسار المقصود هو Browser → Next.js server → Supabase/RPC/RLS.
+
+---
+
+# 42. Local development
+
+```bash
+cp .env.example .env.local
+npm install
+npm run verify
+npm run dev
+```
+
+Production build:
+
+```bash
+npm run build
+npm run start -- -p 3000
+```
+
+لا تنسخ secrets Production إلى Git أو issue أو README.
+
+---
+
+# 43. قواعد التطوير والإصلاح
+
+1. ابدأ بتحديد المسار الفعلي: route/component/lib/RPC/table.
+2. اقرأ validation قبل تعديل API.
+3. اقرأ authorization قبل تعديل UI صلاحيات.
+4. اقرأ migration وRLS قبل تعديل schema.
+5. لا تنشئ endpoint موازيًا لعملية حساسة موجودة أصلًا.
+6. لا تكرر schema validation دون سبب.
+7. لا direct browser write إلى الجداول الحساسة.
+8. لا تستخدم service role في client bundle.
+9. لا تعتبر Proxy authorization بديلًا عن authorization داخل Server Function/RPC/RLS. citeturn2search1
+10. لا تضع بيانات وهمية في Production.
+11. لا تستخدم fixture/example على أنه production data.
+12. كل DDL يجب أن يكون migration.
+13. بعد DDL أعد فحص RLS/grants/advisors/tests.
+14. لا تحذف indexes دون قياس/سبب موثق.
+15. لا تعتبر provider adapter دليل تفعيل provider.
+16. لا تعتبر deployment Preview دليل Production.
+17. لا تعتبر `READY` وحدها دليل سلامة business data؛ يجب أيضًا فحص DB/RLS/runtime.
+18. أي endpoint/table/RPC/env contract جديد يجب أن يوثق هنا وفي الوثيقة المتخصصة.
+19. لا تسجل secrets/OTP/passwords/PII غير الضرورية.
+20. عند وجود خطأ Production: ابدأ من Vercel runtime/build ثم route/lib ثم RPC/RLS ثم live DB.
+
+---
+
+# 44. قاعدة البيانات: أين يوجد كل إصلاح؟
+
+```text
+Schema creation/change        → supabase/migrations/*.sql
+RLS policy                    → corresponding migration
+RPC logic                     → migration defining the function
+Booking integrity             → bookings + availability_slots + booking RPCs
+Duplicate booking protection  → idempotency_keys + book_slot logic
+Patient authorization         → patient_profiles + RLS/helpers
+Clinic authorization          → clinic_memberships + operator accounts + RPC/RLS
+Price integrity               → branch_service_offers + price scope functions/triggers
+Search trust                  → search_dental_offers + public search guards
+Verification/activation      → verification_records + verify_and_activate_server
+Audit trail                   → audit_events / operator events / status history
+Notifications                 → notification_outbox + delivery_attempts
+Finance                       → payment_* + reconciliation + accounting + settlement
+Support                       → support_* tables + support model/fallback
+Telemetry                     → customer_choice_events
+Rate limiting                 → rate_limit_buckets + consume_rate_limit_server
+```
+
+---
+
+# 45. Release verification sequence
+
+الترتيب المعتمد:
+
+```text
+DISCOVER
+  ↓
+VERIFY
+  ↓
+FIX
+  ↓
+TEST
+  ↓
+RE-TEST
+  ↓
+CLEAN
+  ↓
+FINAL RELEASE CHECK
+```
+
+لا يعتبر العمل منتهيًا بمجرد تعديل الكود. يجب أن تكون الحالة متطابقة بين source tree وbuild وdeployment وdatabase migrations والـsecurity model.
+
+---
+
+# 46. ما هو مثبت الآن وما هو غير مثبت
+
+## مثبت
+
+- `main` يحتوي commit `153d2e134827e61b4cf10a189b091330e8571879`.
+- نفس commit منشور حاليًا في Vercel Production.
+- Production deployment `READY`.
+- build نجح.
+- TypeScript نجح.
+- ESLint نجح.
+- 30 test files نجحت.
+- 107 tests نجحت و1 skipped.
+- 25/25 static pages generated.
+- Supabase Production `ACTIVE_HEALTHY`.
+- آخر migration `20260906074120_remove_duplicate_account_username_index`.
+- لا توجد Edge Functions منشورة.
+- لا توجد runtime errors مجمعة خلال آخر 7 أيام.
+
+## غير مثبت بمجرد وجود الكود
+
+- أن Twilio يعمل end-to-end دون اختبار provider حي.
+- أن كل عيادة حقيقية جاهزة تشغيليًا.
+- أن كل موعد حقيقي متاح للحجز ما لم يظهر من availability الفعلية.
+- أن كل notification provider خارجي مفعّل.
+- أن K6 تم تشغيله على Production في آخر release.
+- أن تحذير leaked password protection تم حله؛ هو **ما زال قائمًا** عند آخر فحص.
+
+هذه التفرقة مقصودة لمنع تحويل وجود schema/code إلى ادعاء تشغيل غير مثبت.
+
+---
+
+# 47. مبدأ البيانات الحقيقية
+
+Production يجب أن يعتمد على:
+
+```text
+real clinic records
+real verified offers
+real availability
+real booking records
+real authorization
+real audit trail
+```
+
+لا تستخدم:
+
+```text
+mock clinics
+fake prices
+fake availability
+fake booking confirmations
+fake verification evidence
+```
+
+يمكن استخدام fixtures في الاختبارات المعزولة فقط، ويجب ألا تتسرب إلى public search أو Production business state.
+
+---
+
+# 48. سياسة تحديث README
+
+يجب تحديث README عند أي تغيير في:
+
+```text
+GitHub structure/branch/commit
+Vercel project/deployment/domain/runtime
+Supabase project/schema/migration/RLS/RPC
+API endpoint/method/contract
+Auth/role/permission
+Environment contract
+Booking lifecycle
+Search/treatment rules
+Price rules
+Notifications
+Realtime
+PWA/SEO
+Tests/load tests
+Security/performance findings
+```
+
+التاريخ الحالي للمزامنة: **2026-09-07**.
+
+---
+
+# 49. Source of Truth
+
+عند التعارض:
+
+```text
+1. Supabase live schema + applied migrations
+2. Vercel live deployment metadata + build/runtime logs
+3. GitHub main source tree
+4. dated docs/evidence
+```
+
+الوثائق القديمة لا تتغلب على الحالة الحية.
+
+**هذا README لا يخفي وجود فجوات تشغيلية مثبتة، ولا يملأها بالتخمين. أي شيء غير مثبت مذكور صراحة كغير مثبت.**
+
+---
+
+## مراجع تقنية خارجية مستخدمة لتثبيت القواعد
+
+- Next.js App Router / project structure / Route Handlers / Proxy.
+- Supabase Database / RLS / Database Functions / migrations / testing.
+
+هذه المراجع لا تستبدل كود المشروع أو الحالة الحية؛ تستخدم فقط لتثبيت الممارسات التقنية العامة.
