@@ -2,7 +2,7 @@
 
 **Revision:** 2026-09-08  
 **Authoritative branch:** `main`  
-**Authoritative commit:** `d0f7adf31930613d4fb1d32d17c5594e6795b556`  
+**Authoritative commit:** `050ea2d12f5dab50e6e104be6e29ac6a7f2b8b3f`  
 **Repository:** `Bomussa/dental-marketplace-pwa`
 
 ## 1. Purpose
@@ -104,7 +104,7 @@ Do not create a second implementation beside any of these without an explicit ar
 
 ## 6. Branch consolidation
 
-GitHub currently contains **51 branches total, including `main`**. The repository has no open pull requests at this review point. `main` is the only authoritative release branch.
+GitHub currently contains **52 branches total, including `main`**. The repository has no open pull requests at this review point. `main` is the only authoritative release branch.
 
 ### Retained intentionally
 
@@ -112,7 +112,8 @@ GitHub currently contains **51 branches total, including `main`**. The repositor
 - `backup/pre-cleanup-2026-09-08` — rollback point for the cleanup.
 - `staging` — historical/staging branch referenced by the project operating rules.
 - `cleanup/safe-nonruntime-2026-09-08` — historical cleanup branch; PR #20 was merged.
-- `handover/consolidation-2026-09-08` — this handover work.
+- `handover/consolidation-2026-09-08` — historical handover work.
+- `handover/final-doc-sync-2026-09-08` — temporary documentation-sync branch; must not be treated as a release source.
 - `rollback/*` — historical rollback references; do not treat them as development branches.
 
 ### Stale/experimental families
