@@ -2,7 +2,7 @@
 
 **Revision:** 2026-09-08  
 **Authoritative branch:** `main`  
-**Authoritative commit:** `050ea2d12f5dab50e6e104be6e29ac6a7f2b8b3f`  
+**Authoritative commit:** `aa73126c83fcd430d11b8736aca5b3166694d1ad`  
 **Repository:** `Bomussa/dental-marketplace-pwa`
 
 ## 1. Purpose
@@ -104,7 +104,7 @@ Do not create a second implementation beside any of these without an explicit ar
 
 ## 6. Branch consolidation
 
-GitHub currently contains **52 branches total, including `main`**. The repository has no open pull requests at this review point. `main` is the only authoritative release branch.
+GitHub currently contains **53 branches total, including `main`**. The repository has no open pull requests at this review point. `main` is the only authoritative release branch.
 
 ### Retained intentionally
 
@@ -113,7 +113,7 @@ GitHub currently contains **52 branches total, including `main`**. The repositor
 - `staging` — historical/staging branch referenced by the project operating rules.
 - `cleanup/safe-nonruntime-2026-09-08` — historical cleanup branch; PR #20 was merged.
 - `handover/consolidation-2026-09-08` — historical handover work.
-- `handover/final-doc-sync-2026-09-08` — temporary documentation-sync branch; must not be treated as a release source.
+- `handover/final-doc-sync-2026-09-08` — temporary documentation-sync branch; PR #22 was merged.
 - `rollback/*` — historical rollback references; do not treat them as development branches.
 
 ### Stale/experimental families
@@ -179,16 +179,16 @@ The cleanup branch was tested before merge and re-tested after the accidental `s
 - E2E: **66/66 passed**.
 - Repeat E2E: **66/66 passed**.
 - Vercel deployment: READY.
-- Production deployment commit: `d0f7adf31930613d4fb1d32d17c5594e6795b556`.
+- Production deployment commit for the runtime cleanup: `d0f7adf31930613d4fb1d32d17c5594e6795b556`.
 - Production runtime error query: **no runtime errors in the selected 24-hour window**.
-- Production error/fatal runtime-log query for the final deployment: **no matching logs**.
+- Production error/fatal runtime-log query for the final runtime cleanup deployment: **no matching logs**.
 
 The E2E suite repeatedly emitted a non-failing warning for `device_installation_registration_failed` because server-side operational actions are not configured in that test environment. It is not silently classified as a passing operational feature; it remains a separate configuration item.
 
 ## 9. Production target
 
 - Vercel project: `dental-marketplace-pwa`.
-- Production deployment: `dpl_ERWbgET3qH1YHbXkV9ugPkct6DLg`.
+- Production deployment for the runtime cleanup: `dpl_ERWbgET3qH1YHbXkV9ugPkct6DLg`.
 - Production domains include `www.mmc-mms.com` and `mmc-mms.com`.
 - Supabase project: `qatar-dental-dev` (`bqvcukxfsnchvkgejolz`).
 - Supabase region: `eu-central-1`.
