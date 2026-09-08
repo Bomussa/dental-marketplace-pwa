@@ -144,7 +144,7 @@ Evidence of staleness/divergence includes, for example:
 - `security/preauthorize-sensitive-actions`: diverged, 4 ahead and 183 behind; it must be cherry-picked/ported only after review if any change is still required.
 - `feature/realtime-customer-choices`: diverged, 1 ahead and 340 behind; do not merge wholesale.
 
-GitHub recommends deleting merged/stale branches when they are no longer needed. The current connector exposes branch creation/update but not a safe branch-delete operation, so historical branch deletion was **not** simulated by moving refs or overwriting history. Manual GitHub branch deletion can be performed after confirming no retention requirement. citeturn0search0turn0search6
+GitHub recommends deleting merged/stale branches when they are no longer needed. The current connector exposes branch creation/update but not a safe branch-delete operation, so historical branch deletion was **not** simulated by moving refs or overwriting history. Manual GitHub branch deletion can be performed after confirming no retention requirement.
 
 ## 7. Dependencies and toolchain
 
@@ -215,7 +215,7 @@ The current Supabase security advisor reports one external warning: leaked-passw
 11. Let CI and Vercel Preview validate the exact PR head before production.
 12. Merge only the reviewed PR into `main`.
 
-This follows the standard GitHub branch/PR workflow and the recommended Develop → Preview → Ship pattern for Next.js/Vercel projects. citeturn0search3turn0search8
+This follows the standard GitHub branch/PR workflow and the recommended Develop → Preview → Ship pattern for Next.js/Vercel projects.
 
 ## 12. Acceptance statement
 
