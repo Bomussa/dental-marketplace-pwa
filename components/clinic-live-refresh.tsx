@@ -3,7 +3,6 @@
 import { useCallback, useMemo } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useRealtimeRouterRefresh } from "@/components/use-realtime-router-refresh";
-import { isClinicBookingNotification } from "@/lib/clinic-realtime-refresh";
 
 type Labels = { liveConnected: string; liveDisconnected: string; liveConnecting: string; liveTooltip: string };
 
@@ -15,7 +14,8 @@ export function ClinicLiveRefresh({ branchIds, userId, labels }: { branchIds: st
       channel.on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `branch_id=eq.${branchId}` }, scheduleRefresh);
     }
     return channel.on("postgres_changes", { event: "INSERT", schema: "public", table: "notification_outbox", filter: `recipient_user_id=eq.${userId}` }, (payload) => {
-      if (isClinicBookingNotification(payload)) scheduleRefresh();
+      const value = payload.new;
+      if (value && typeof value === "object" && (value as { event_type?: unknown }).event_type === "booking_requested") scheduleRefresh();
     });
   }, [orderedBranchIds, userId]);
   const status = useRealtimeRouterRefresh({
