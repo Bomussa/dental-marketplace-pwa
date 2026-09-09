@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseActivityReport } from "@/lib/activity-report";
-import { platformActivityReport, withOperationalTimeout } from "@/lib/operations.server";
-import { createClient } from "@/lib/supabase/server";
+import { platformActivityReport, platformAdminClient, withOperationalTimeout } from "@/lib/operations.server";
 import { activityReportSchema } from "@/lib/validation";
 
 function csvCell(value: string | number) {
@@ -10,12 +9,8 @@ function csvCell(value: string | number) {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null, error: new Error("OPERATION_TIMEOUT") }));
-  const meta = (data?.claims?.app_metadata ?? {}) as Record<string, unknown>;
-  if (error || !data?.claims?.sub || meta.platform_admin !== true) {
-    return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
-  }
+  const supabase = await platformAdminClient();
+  if (!supabase) return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
 
   const url = new URL(request.url);
   const parsed = activityReportSchema.safeParse({
