@@ -23,6 +23,13 @@ export function withOperationalTimeout<T>(operation: PromiseLike<T>, timeoutMs =
   });
 }
 
+export async function platformAdminClient() {
+  const supabase = await createClient();
+  const { data, error } = await withOperationalTimeout(supabase.auth.getClaims()).catch(() => ({ data: null, error: new Error("OPERATION_TIMEOUT") }));
+  const meta = (data?.claims?.app_metadata ?? {}) as Record<string, unknown>;
+  return error || !data?.claims?.sub || meta.platform_admin !== true ? null : supabase;
+}
+
 async function verifiedActor() {
   const supabase = await createClient();
   const { data, error } = await withOperationalTimeout(supabase.auth.getClaims());
