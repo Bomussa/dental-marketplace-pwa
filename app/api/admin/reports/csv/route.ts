@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import { financialReportSummary, withOperationalTimeout } from "@/lib/operations.server";
+import { csvCell } from "@/lib/csv";
 import { createClient } from "@/lib/supabase/server";
 import { financialReportSchema } from "@/lib/validation";
-
-function csvCell(value: string | number) {
-  const text = String(value);
-  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
 
 export async function GET(request: Request) {
   const supabase = await createClient();
