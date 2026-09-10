@@ -1,9 +1,10 @@
+import { NextRequest } from "next/server";
 import { jsonNoStore } from "@/lib/api-response";
 import { parseSearchQuery } from "@/lib/search-query";
 import { searchLiveOffers } from "@/lib/search-offers";
 
-export async function GET(request: Request) {
-  const parsed = parseSearchQuery(Object.fromEntries(new URL(request.url).searchParams));
+export async function GET(request: NextRequest) {
+  const parsed = parseSearchQuery(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) {
     return jsonNoStore({ error: "invalid_search" }, 400);
   }
