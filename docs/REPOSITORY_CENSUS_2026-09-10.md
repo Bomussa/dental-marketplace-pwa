@@ -1,12 +1,12 @@
 # أسناني قطر — Repository Census — 2026-09-10
 
-This document records the machine-measured repository census from the `main` build at commit `c709fd5caf2448539628e4969675bc30cda47f45`.
+This document records the machine-measured repository census from the `main` build at commit `d82856e1fc732c2b0ca2ea6b105bf47593ec088c`.
 
 ## Exact repository counts
 
 | Metric | Exact count |
 |---|---:|
-| Git-tracked project files | **392** |
+| Git-tracked project files | **393** |
 | TypeScript / JavaScript source files | **163** |
 | Lines in TS/JS-family sources | **15,033** |
 | JS/TS callable implementations | **1,066** |
@@ -39,7 +39,7 @@ The 1,244 figure is the exact count of executable routine implementations detect
 | `.html` | 1 |
 | `.js` | 5 |
 | `.json` | 8 |
-| `.md` | 85 |
+| `.md` | 86 |
 | `.mjs` | 8 |
 | `.mts` | 1 |
 | `.py` | 2 |
@@ -49,7 +49,7 @@ The 1,244 figure is the exact count of executable routine implementations detect
 | `.webp` | 42 |
 | `.yml` | 1 |
 | no extension | 1 |
-| **Total** | **392** |
+| **Total** | **393** |
 
 ## Verification method
 
@@ -71,6 +71,6 @@ This is intentionally preferable to a manually estimated file count or a GitHub 
 
 ## Build evidence
 
-The `main` deployment for this census is Vercel deployment `dpl_4ytJJQxqwPEgwgUzvrM3AGrPjF6J` from commit `c709fd5caf2448539628e4969675bc30cda47f45`. The build executes repository metrics before predeploy checks, typecheck, lint, tests, and production build.
+The census metrics were reproduced by Vercel on `main`: 393 tracked files, 163 JS/TS-family source files, 15,033 source lines, 1,066 JS/TS callable implementations, 178 SQL functions, 1,244 executable routines including SQL, and zero parser errors.
 
 GitHub CI also runs `repo:metrics` as the first step of `npm run verify`, so future verification can detect changes in the repository census automatically.
