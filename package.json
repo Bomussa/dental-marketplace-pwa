@@ -15,7 +15,8 @@
     "verify": "npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:e2e": "npm run test:e2e",
     "check:production": "node scripts/production-readiness-check.mjs",
-    "vercel-build": "npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build"
+    "repo:metrics": "node scripts/repo-metrics.mjs",
+    "vercel-build": "npm run repo:metrics && npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
