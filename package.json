@@ -12,11 +12,12 @@
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
     "predeploy:check": "node scripts/predeploy-check.mjs",
+    "change:gate": "node scripts/change-gate.mjs",
     "repo:metrics": "node scripts/repo-metrics.mjs",
-    "verify": "npm run repo:metrics && npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build",
+    "verify": "npm run repo:metrics && npm run predeploy:check && npm run change:gate && npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:e2e": "npm run test:e2e",
     "check:production": "node scripts/production-readiness-check.mjs",
-    "vercel-build": "npm run repo:metrics && npm run predeploy:check && npm run typecheck && npm run lint && npm run test && npm run build"
+    "vercel-build": "npm run repo:metrics && npm run predeploy:check && npm run change:gate && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
