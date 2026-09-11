@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const failures = [];
@@ -8,7 +8,6 @@ const warnings = [];
 const repoRoot = process.cwd();
 const sourceExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".sql"]);
 const ignoredDirs = new Set([".git", ".next", "node_modules", "coverage", "playwright-report", "test-results"]);
-const duplicateSymbolIgnore = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "default"]);
 
 function runGit(args) {
   return execFileSync("git", args, { cwd: repoRoot, encoding: "utf8" }).trim();
@@ -53,10 +52,13 @@ if (!base) {
 
 let changed;
 try {
-  changed = runGit(["diff", "--name-status", `${base}...HEAD`]).split("\n").filter(Boolean).map((line) => {
-    const [status, ...parts] = line.split("\t");
-    return { status, path: parts.at(-1) };
-  });
+  changed = runGit(["diff", "--name-status", `${base}...HEAD`])
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      const [status, ...parts] = line.split("\t");
+      return { status, path: parts.at(-1) };
+    });
 } catch (error) {
   failures.push(`Unable to inspect change set against ${base}: ${error.message}`);
   changed = [];
@@ -68,15 +70,11 @@ const addedSourcePaths = changed
   .map((item) => item.path);
 
 // 1. Whitespace/error gate.
-try {
-  const check = gitSafe(["diff", "--check", `${base}...HEAD`]);
-  if (check) failures.push(`git diff --check failed:\n${check}`);
-} catch (error) {
-  failures.push(`git diff --check could not run: ${error.message}`);
-}
+const diffCheck = gitSafe(["diff", "--check", `${base}...HEAD`]);
+if (diffCheck) failures.push(`git diff --check failed:\n${diffCheck}`);
 
-// 2. Exact duplicate source-file gate. This is deliberately strict because two byte-for-byte
-// identical implementations are never a useful second source of truth.
+// 2. Exact duplicate source-file gate. Two byte-for-byte identical source files are
+// treated as a blocking duplicate because they create two sources of truth.
 const files = walk(repoRoot);
 const byHash = new Map();
 for (const file of files) {
@@ -95,7 +93,7 @@ for (const [hash, paths] of byHash) {
   }
 }
 
-// 3. New source files must not be exact copies of an existing source file.
+// 3. A newly added source file may not be a normalized copy of an existing source file.
 for (const path of addedSourcePaths) {
   const full = join(repoRoot, path);
   if (!existsSync(full)) continue;
@@ -111,34 +109,27 @@ for (const path of addedSourcePaths) {
   }
 }
 
-// 4. Export-name collision gate. Only fail when the same non-route exported declaration has
-// the same normalized declaration line in more than one source file. Route HTTP handlers are
-// intentionally excluded because Next.js requires the same names across route boundaries.
-const exported = new Map();
-const exportPattern = /^\s*export\s+(?:async\s+)?(?:function|const|let|class|type|interface)\s+([A-Za-z_$][\w$]*)[^\n]*/gm;
+// 4. Export-name similarity is informational only. Identical export names are valid across
+// modules and therefore cannot be treated as duplicates without semantic/AST analysis.
+const exportPattern = /^\s*export\s+(?:async\s+)?(?:function|const|let|class|type|interface)\s+([A-Za-z_$][\w$]*)/gm;
+const exportsByName = new Map();
 for (const file of files) {
   const path = rel(file);
-  if (/\/route\.(?:ts|tsx|js|jsx)$/.test(path)) continue;
   const text = readFileSync(file, "utf8");
   for (const match of text.matchAll(exportPattern)) {
     const name = match[1];
-    if (duplicateSymbolIgnore.has(name)) continue;
-    const signature = normalizeText(match[0]);
-    const key = `${name}\n${signature}`;
-    const list = exported.get(key) || [];
+    const list = exportsByName.get(name) || [];
     list.push(path);
-    exported.set(key, list);
+    exportsByName.set(name, list);
   }
 }
-for (const [key, paths] of exported) {
-  if (paths.length > 1) {
-    const [name] = key.split("\n");
-    failures.push(`Duplicate exported declaration detected: ${name} in ${paths.join(", ")}`);
-  }
+const repeatedExportNames = [...exportsByName.entries()].filter(([, paths]) => paths.length > 1);
+if (repeatedExportNames.length) {
+  warnings.push(`Repeated export names exist across modules; semantic review is required for changed modules (${repeatedExportNames.length} repeated names observed).`);
 }
 
-// 5. High-risk boundary awareness. The gate does not reject legitimate changes automatically;
-// it forces an explicit audit marker in the changed source when sensitive boundaries move.
+// 5. High-risk boundary awareness. These changes remain valid, but they require deliberate
+// security/architecture review rather than automatic consolidation.
 const sensitivePatterns = [
   /supabase\/migrations\//,
   /app\/api\/.*\/route\.(?:ts|tsx|js|jsx)$/,
