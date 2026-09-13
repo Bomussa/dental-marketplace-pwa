@@ -2,11 +2,14 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getServerAuthClaims } from "@/lib/auth-claims.server";
 import { OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 
 const schema = z.object({ offer_id: z.string().uuid(), patient_profile_id: z.string().uuid().optional() });
+
+type WaitlistRpcClient = Pick<SupabaseClient, "rpc">;
 
 export async function joinBookingWaitlist(formData: FormData) {
   const parsed = schema.safeParse({ offer_id: formData.get("offer_id"), patient_profile_id: formData.get("patient_profile_id") || undefined });
@@ -22,7 +25,8 @@ export async function joinBookingWaitlist(formData: FormData) {
     patientProfileId = selfProfile?.id;
   }
   if (!patientProfileId) redirect("/account?waitlist_error=profile");
-  const { error } = await admin.rpc("join_booking_waitlist_server", { p_actor_id: actorId, p_offer_id: parsed.data.offer_id, p_patient_profile_id: patientProfileId }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+  const rpcClient = admin as unknown as WaitlistRpcClient;
+  const { error } = await rpcClient.rpc("join_booking_waitlist_server", { p_actor_id: actorId, p_offer_id: parsed.data.offer_id, p_patient_profile_id: patientProfileId }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
   if (error) {
     if (error.code === "42501") redirect("/account?waitlist_error=forbidden");
     if (error.code === "22023") redirect("/account?waitlist_error=incomplete");
