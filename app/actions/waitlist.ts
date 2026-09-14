@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getServerAuthClaims } from "@/lib/auth-claims.server";
 import { OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 
-const schema = z.object({ offer_id: z.string().uuid(), patient_profile_id: z.string().uuid().optional() });
+const schema = z.object({ waitlist_id: z.string().uuid().optional(), offer_id: z.string().uuid(), patient_profile_id: z.string().uuid().optional() });
 
 type WaitlistRpcClient = Pick<SupabaseClient, "rpc">;
 
@@ -17,19 +17,39 @@ export async function joinBookingWaitlist(formData: FormData) {
   const { data, error: authError } = await getServerAuthClaims();
   const actorId = data?.claims?.sub;
   if (authError || !actorId) redirect("/login?next=/account");
+
   let admin;
-  try { admin = createAdminClient(); } catch { redirect("/account?waitlist_error=unavailable"); }
+  try {
+    admin = createAdminClient();
+  } catch {
+    redirect("/account?waitlist_error=unavailable");
+  }
+
   let patientProfileId = parsed.data.patient_profile_id;
   if (!patientProfileId) {
-    const { data: selfProfile } = await withOperationalTimeout(admin.from("patient_profiles").select("id").eq("account_id", actorId).eq("relationship", "self").is("archived_at", null).maybeSingle()).catch(() => ({ data: null }));
+    const { data: selfProfile } = await withOperationalTimeout(
+      admin.from("patient_profiles").select("id").eq("account_id", actorId).eq("relationship", "self").is("archived_at", null).maybeSingle(),
+    ).catch(() => ({ data: null }));
     patientProfileId = selfProfile?.id;
   }
   if (!patientProfileId) redirect("/account?waitlist_error=profile");
+
   const rpcClient = admin as unknown as WaitlistRpcClient;
-  const { error } = await rpcClient.rpc("join_booking_waitlist_server", { p_actor_id: actorId, p_offer_id: parsed.data.offer_id, p_patient_profile_id: patientProfileId }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
-  if (error) {
-    if (error.code === "42501") redirect("/account?waitlist_error=forbidden");
-    if (error.code === "22023") redirect("/account?waitlist_error=incomplete");
+  let rpcError: { code?: string } | null = null;
+  try {
+    const result = await rpcClient.rpc("join_booking_waitlist_server", {
+      p_actor_id: actorId,
+      p_offer_id: parsed.data.offer_id,
+      p_patient_profile_id: patientProfileId,
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+    rpcError = result.error;
+  } catch {
+    redirect("/account?waitlist_error=unavailable");
+  }
+
+  if (rpcError) {
+    if (rpcError.code === "42501") redirect("/account?waitlist_error=forbidden");
+    if (rpcError.code === "22023") redirect("/account?waitlist_error=incomplete");
     redirect("/account?waitlist_error=unavailable");
   }
   redirect("/account?waitlist_success=joined");
