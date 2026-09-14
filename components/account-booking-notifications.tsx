@@ -51,12 +51,17 @@ export async function AccountBookingNotifications({ locale, labels, notification
   const userId = claims?.claims?.sub;
   let waitlist: WaitlistRow[] = [];
   if (userId) {
-    const admin = createAdminClient();
-    const rpcClient = admin as unknown as WaitlistRpcClient;
-    const { data } = await withOperationalTimeout(
-      rpcClient.rpc("list_booking_waitlist_server", { p_actor_id: userId }),
-    ).catch(() => ({ data: null }));
-    waitlist = (data ?? []) as WaitlistRow[];
+    try {
+      const admin = createAdminClient();
+      const rpcClient = admin as unknown as WaitlistRpcClient;
+      const { data } = await withOperationalTimeout(
+        rpcClient.rpc("list_booking_waitlist_server", { p_actor_id: userId }),
+      ).catch(() => ({ data: null }));
+      waitlist = (data ?? []) as WaitlistRow[];
+    } catch {
+      // The account page remains usable if the optional waitlist read path is unavailable.
+      waitlist = [];
+    }
   }
 
   return (
