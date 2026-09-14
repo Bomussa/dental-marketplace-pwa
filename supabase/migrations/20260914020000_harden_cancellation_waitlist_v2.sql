@@ -23,7 +23,9 @@ alter table public.notification_outbox
     'support_reply',
     'waitlist_slot_opened',
     'manual'
-  ));
+  )) not valid;
+alter table public.notification_outbox
+  validate constraint notification_outbox_event_type_check;
 
 -- Keep withdrawal reproducible for fresh environments while matching the
 -- production behavior already verified for this RPC.
