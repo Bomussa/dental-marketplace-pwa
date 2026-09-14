@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Locale } from "@/lib/i18n";
 
 type NotificationChannel = "email" | "push" | "in_app";
-type NotificationEvent = "booking_confirmed" | "booking_cancelled" | "booking_updated" | "attendance_recorded" | "price_updated" | "support_reply" | "manual";
+type NotificationEvent = "booking_confirmed" | "booking_cancelled" | "booking_updated" | "attendance_recorded" | "price_updated" | "support_reply" | "waitlist_slot_opened" | "manual";
 
 type EnqueueNotificationInput = {
   recipientUserId: string;
