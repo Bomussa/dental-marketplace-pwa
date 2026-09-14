@@ -26,14 +26,20 @@ export async function withdrawBookingWaitlist(formData: FormData) {
   }
 
   const rpcClient = admin as unknown as WaitlistRpcClient;
-  const { error } = await rpcClient.rpc("withdraw_booking_waitlist_server", {
-    p_actor_id: actorId,
-    p_waitlist_id: parsed.data.waitlist_id,
-  }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+  let rpcError: { code?: string } | null = null;
+  try {
+    const result = await rpcClient.rpc("withdraw_booking_waitlist_server", {
+      p_actor_id: actorId,
+      p_waitlist_id: parsed.data.waitlist_id,
+    }).abortSignal(AbortSignal.timeout(OPERATIONAL_RPC_TIMEOUT_MS));
+    rpcError = result.error;
+  } catch {
+    redirect("/account?waitlist_error=unavailable");
+  }
 
-  if (error) {
-    if (error.code === "42501") redirect("/account?waitlist_error=forbidden");
-    if (error.code === "55000") redirect("/account?waitlist_error=state");
+  if (rpcError) {
+    if (rpcError.code === "42501") redirect("/account?waitlist_error=forbidden");
+    if (rpcError.code === "55000") redirect("/account?waitlist_error=state");
     redirect("/account?waitlist_error=unavailable");
   }
 
