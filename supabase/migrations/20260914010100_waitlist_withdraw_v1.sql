@@ -1,4 +1,0 @@
--- Intentionally inert.
--- The production waitlist withdrawal RPC is already represented by the canonical
--- cancellation_waitlist_notification_and_withdrawal migration. This placeholder
--- prevents a second implementation of the same database responsibility.
