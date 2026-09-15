@@ -6,7 +6,7 @@
 - Removed legacy waitlist INSERT policies from the production database.
 - Restricted `join_booking_waitlist_server(uuid, uuid, uuid)` execution to `service_role`.
 - Restricted `withdraw_booking_waitlist_server(uuid, uuid)` execution to `service_role`.
-- Hardened the account waitlist read component so an unavailable optional waitlist read cannot crash the account page.
+- Hardened the account waitlist read component so a failed optional waitlist read is surfaced as an explicit unavailable state instead of being silently converted to an empty list.
 
 ## Production database
 
@@ -15,13 +15,14 @@ The security alignment migration was applied successfully to Supabase production
 ## Verification
 
 - Production migration application: successful.
-- Production runtime error aggregation: no runtime errors in the selected last-hour window.
-- Vercel generated a new preview deployment for PR #28 after the commits.
-- PR #28 remains intentionally unmerged because GitHub currently reports it as not mergeable and the repository requires an approving review. Production must not be promoted until that gate is satisfied.
+- Production runtime error aggregation: no runtime errors in the selected last-hour window at the time of verification.
+- Vercel generated preview deployments for PR #28 after the commits.
+- PR #28 is currently reported by GitHub as `mergeable: true` but remains open and unmerged because the repository requires an approving review.
+- The latest branch head must pass a fresh CI/Vercel cycle before release is considered complete.
 
 ## Important release boundary
 
-This file does not claim that PR #28 is production-released. The current production deployment remains the last merged `main` deployment until PR #28 is merged and a new production deployment reaches `READY`.
+This file does not claim that PR #28 is production-released. Production remains the last merged `main` deployment until PR #28 is merged and the resulting production deployment reaches `READY`.
 
 ## Database migration policy
 
