@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getServerAuthClaims } from "@/lib/auth-claims.server";
 import { OPERATIONAL_RPC_TIMEOUT_MS, withOperationalTimeout } from "@/lib/operations.server";
 
-const schema = z.object({ waitlist_id: z.string().uuid().optional(), offer_id: z.string().uuid(), patient_profile_id: z.string().uuid().optional() });
+const schema = z.object({ offer_id: z.string().uuid(), patient_profile_id: z.string().uuid().optional() });
 
 type WaitlistRpcClient = Pick<SupabaseClient, "rpc">;
 
