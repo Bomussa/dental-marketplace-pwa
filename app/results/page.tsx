@@ -5,6 +5,7 @@ import { searchLiveOffers } from "@/lib/search-offers";
 import { priceLabel } from "@/lib/price";
 import { Badge, Card } from "@/components/ui";
 import { BookButton } from "@/components/book-button";
+import { WaitlistCta } from "@/components/waitlist-cta";
 import { getServerAuthClaims } from "@/lib/auth-claims.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { withOperationalTimeout } from "@/lib/operations.server";
@@ -141,7 +142,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                 <aside className="result-pricing border-t p-6 sm:p-7 lg:border-s lg:border-t-0">
                   <div className="text-xs font-extrabold text-slate-500">{t["results.advertisedPrice"]}</div><div className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950">{priceLabel(offer.price_type, offer.min_minor, offer.max_minor, locale)}</div>
                   <div className="mt-5 text-xs font-extrabold text-slate-500">{t["results.nearestAppointment"]}</div><div className="mt-2 min-h-10 text-[.98rem] font-black leading-7">{offer.earliest_slot_at ? dateTimeFormatter.format(new Date(offer.earliest_slot_at)) : t["results.noAppointment"]}</div>
-                  <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} patientProfiles={patientProfiles} isAuthenticated={Boolean(userId)} /> : <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">{t["results.comparisonOnly"]}</div>}</div>
+                  <div className="mt-4">{offer.earliest_slot_id ? <BookButton offerId={offer.offer_id} slotId={offer.earliest_slot_id} patientProfiles={patientProfiles} isAuthenticated={Boolean(userId)} /> : <><div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-extrabold leading-5 text-amber-800">{t["results.comparisonOnly"]}</div><WaitlistCta offerId={offer.offer_id} label={locale === "ar" ? "أبلغوني عند توفر موعد" : "Notify me when an appointment is available"} /></>}</div>
                 </aside>
               </div>
             </Card>
