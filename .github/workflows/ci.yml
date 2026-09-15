@@ -48,11 +48,9 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
-      - name: Runtime High audit report (tracked upstream exception)
-        run: npm audit --omit=dev --audit-level=high || true
-      - name: Runtime Critical dependency gate
-        run: npm audit --omit=dev --audit-level=critical
-      - name: All-dependency Critical gate
+      - name: Runtime High dependency gate
+        run: npm audit --omit=dev --audit-level=high
+      - name: All-dependency Critical audit
         run: npm audit --audit-level=critical
       - name: TypeScript
         run: npm run typecheck
