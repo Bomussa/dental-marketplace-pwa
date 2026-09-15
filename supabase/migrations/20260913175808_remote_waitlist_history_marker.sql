@@ -1,3 +1,3 @@
--- Remote migration history marker.
+-- Remote migration history marker: 20260913175808.
 -- The waitlist schema is consolidated and reproducible in the later canonical migration.
 -- This file intentionally contains no DDL; Supabase tracks migration history by timestamp.
