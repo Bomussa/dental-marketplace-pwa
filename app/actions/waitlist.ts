@@ -27,9 +27,18 @@ export async function joinBookingWaitlist(formData: FormData) {
 
   let patientProfileId = parsed.data.patient_profile_id;
   if (!patientProfileId) {
-    const { data: selfProfile } = await withOperationalTimeout(
-      admin.from("patient_profiles").select("id").eq("account_id", actorId).eq("relationship", "self").is("archived_at", null).maybeSingle(),
-    ).catch(() => ({ data: null }));
+    let profileLookupFailed = false;
+    let selfProfile: { id: string } | null = null;
+    try {
+      const result = await withOperationalTimeout(
+        admin.from("patient_profiles").select("id").eq("account_id", actorId).eq("relationship", "self").is("archived_at", null).maybeSingle(),
+      );
+      selfProfile = result.data;
+      if (result.error) profileLookupFailed = true;
+    } catch {
+      profileLookupFailed = true;
+    }
+    if (profileLookupFailed) redirect("/account?waitlist_error=unavailable");
     patientProfileId = selfProfile?.id;
   }
   if (!patientProfileId) redirect("/account?waitlist_error=profile");
