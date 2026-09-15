@@ -72,6 +72,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://bqvcukxfsnchvkgejolz.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_lFco4uohRGycibvOiZ8D1g_jlmXzgWl
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      PLAYWRIGHT_READ_ONLY_TARGET: "true"
       PLAYWRIGHT_WEB_SERVER_COMMAND: "npm run build && npm start"
     steps:
       - name: Checkout
@@ -85,5 +86,5 @@ jobs:
         run: npm ci
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Public E2E — production build, desktop and mobile
+      - name: Public E2E — production build, desktop and mobile (read-only)
         run: npm run test:e2e
