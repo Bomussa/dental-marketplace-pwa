@@ -16,7 +16,7 @@ type BookingRow = { id:string; booking_code:string; start_at:string; end_at:stri
 type ReviewRow = { booking_id:string; status:string; rating:number };
 type PatientProfileRow = { id:string; display_name:string; relationship:string; national_id:string | null; nationality:string | null; date_of_birth:string | null; phone:string | null; phone_verified_at:string | null; gender:string | null; created_at:string };
 type NotificationRow = { id:string; event_type:string; payload:unknown; created_at:string };
-type AccountSearchParams = { booking_error?: string; booking_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string; credentials_error?: string; credentials_success?: string; registration_success?: string; account_deletion_error?: string };
+type AccountSearchParams = { booking_error?: string; booking_success?: string; waitlist_error?: string; waitlist_success?: string; patient_profile_error?: string; patient_profile_success?: string; review_error?: string; review_success?: string; credentials_error?: string; credentials_success?: string; registration_success?: string; account_deletion_error?: string };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<AccountSearchParams> }) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
@@ -26,6 +26,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const dateTimeFormatter = new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Qatar" });
   const bookingErrorMessage = params.booking_error ? copy.bookingErrors[params.booking_error] ?? null : null;
   const bookingSuccessMessage = params.booking_success === "cancelled" ? copy.bookingSuccess : null;
+  const waitlistErrorMessage = params.waitlist_error ? (locale === "ar" ? "تعذر تنفيذ طلب قائمة الانتظار الآن. تحقق من الملف أو حاول لاحقًا." : "The waitlist request could not be completed now. Check the profile or try again later.") : null;
+  const waitlistSuccessMessage = params.waitlist_success === "joined" ? (locale === "ar" ? "تمت إضافتك إلى قائمة الانتظار بنجاح." : "You were added to the waitlist successfully.") : params.waitlist_success === "withdrawn" ? (locale === "ar" ? "تم إلغاء طلب قائمة الانتظار." : "Your waitlist request was withdrawn.") : null;
   const patientProfileErrorMessage = params.patient_profile_error ? copy.profileErrors[params.patient_profile_error] ?? null : null;
   const patientProfileSuccessMessage = params.patient_profile_success ? copy.profileSuccess[params.patient_profile_success] ?? null : null;
   const reviewErrorMessage = params.review_error ? copy.reviewErrors[params.review_error] ?? null : null;
@@ -57,7 +59,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     withOperationalTimeout(admin.from("bookings").select("id,booking_code,start_at,end_at,status,offer_snapshot,created_at").eq("booked_by_user_id", userId).order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
     withOperationalTimeout(admin.from("reviews").select("booking_id,status,rating").eq("patient_id", userId)).catch(() => ({ data: null })),
     withOperationalTimeout(admin.from("patient_profiles").select("id,display_name,relationship,national_id,nationality,date_of_birth,phone,phone_verified_at,gender,created_at").eq("account_id", userId).is("archived_at", null).order("created_at", { ascending: true })).catch(() => ({ data: null })),
-    withOperationalTimeout(admin.from("notification_outbox").select("id,event_type,payload,created_at").eq("recipient_user_id", userId).eq("channel", "in_app").eq("event_type", "booking_confirmed").order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
+    withOperationalTimeout(admin.from("notification_outbox").select("id,event_type,payload,created_at").eq("recipient_user_id", userId).eq("channel", "in_app").in("event_type", ["booking_confirmed", "waitlist_slot_opened"]).order("created_at", { ascending: false }).limit(20)).catch(() => ({ data: null })),
   ]);
 
   const bookings = (bookingData ?? []) as BookingRow[];
@@ -86,6 +88,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       </section>
 
       {registrationSuccessMessage && <div role="status" className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{registrationSuccessMessage}</div>}
+      {waitlistErrorMessage && <div role="alert" className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{waitlistErrorMessage}</div>}
+      {waitlistSuccessMessage && <div role="status" className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{waitlistSuccessMessage}</div>}
 
       {!hasLoginCredentials && <section className="mt-8"><Card className="p-5 sm:p-6"><p className="text-xs font-black uppercase tracking-[.18em] text-[#087d90]">{copy.credentialsKicker}</p><h2 className="mt-2 text-2xl font-black tracking-[-.025em] text-[#092b56]">{copy.credentialsTitle}</h2><p className="mt-2 max-w-3xl text-sm font-medium leading-7 text-slate-500">{copy.credentialsCopy}</p>{credentialsErrorMessage && <div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{credentialsErrorMessage}</div>}{credentialsSuccessMessage && <div role="status" className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{credentialsSuccessMessage}</div>}<form action={activateLoginCredentials} className="mt-5 grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.username}<Input name="username" autoComplete="username" dir="ltr" minLength={2} maxLength={10} pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,9}" title={locale === "ar" ? "2 إلى 10 أحرف أو أرقام إنجليزية، ويمكن استخدام . أو _ أو -" : "Use 2 to 10 English letters or numbers; . _ and - are allowed"} required /></label><label className="grid gap-1 text-xs font-extrabold text-slate-600">{copy.password}<Input name="password" type="password" autoComplete="new-password" dir="ltr" minLength={4} maxLength={10} pattern="[A-Za-z0-9]{4,10}" title={locale === "ar" ? "4 إلى 10 أحرف أو أرقام إنجليزية فقط" : "Use 4 to 10 English letters or numbers only"} required /></label><div className="sm:col-span-2"><Button>{copy.activateCredentials}</Button></div></form></Card></section>}
 

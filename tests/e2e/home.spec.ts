@@ -6,6 +6,17 @@ test.beforeEach(async ({ page }) => {
   if (!isReadOnlyExternalTarget) return;
   await page.route("**/api/device-installations", (route) => route.fulfill({ status: 204 }));
   await page.route("**/api/choices", (route) => route.fulfill({ status: 204 }));
+  await page.route("**/api/support", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    headers: { "cache-control": "no-store" },
+    body: JSON.stringify({
+      answer: "يمكنني المساعدة في الحجز والأسعار والتوفر والحسابات.",
+      safety_category: "standard",
+      sources: [],
+      access: "public",
+    }),
+  }));
 });
 
 async function selectAlternativeTreatment(page: Page) {
